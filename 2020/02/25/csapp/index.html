@@ -380,7 +380,9 @@
                 <h1 id="CSAPP—第一章"><a href="#CSAPP—第一章" class="headerlink" title="CSAPP—第一章"></a>CSAPP—第一章</h1><ul>
 <li><h4 id="信息就是位-上下文"><a href="#信息就是位-上下文" class="headerlink" title="信息就是位+上下文"></a><strong>信息就是位+上下文</strong></h4><p>​        以程序员在编辑器中创建并保存的 hello.c 文件为例，源程序实际上就是有0和1组成的序列，每个0或1为一位，每8位组成一个字节，每个字节表示一个ASCII字符。这种表示方法说明了一种思想：系统中的所有信息——包括磁盘文件、存储器中的程序、存储器中的用户数据以及网络上传送的数据，都是有一串位组成的。而区分不同数据对象的唯一方法就是读取这些数据的上下文。在不同的上下文中，一串字节序列可能被表示成不同的数据或者机器指令（这取决与这串字节序列所的系统总线）。</p>
 </li>
-<li><h4 id="程序被其他程序翻译成不同格式"><a href="#程序被其他程序翻译成不同格式" class="headerlink" title="程序被其他程序翻译成不同格式"></a><strong>程序被其他程序翻译成不同格式</strong></h4><p>​         hello.c 是由高级语言写成的文件，这种文件是人类可以读懂但计算机无法理解的。但是，为了能在计算机系统中运行 hello.c 文件，此程序必须被其他程序翻译成系统可以读懂的机器语言。这个翻译过程可以分为四个阶段，如图。执行这四个阶段的程序（预处理器、编译器、汇编器和链接器）一起构成了编译系统（compilation system）。         <img src="https://uploader.shimo.im/f/EFQ0DmXnDx0cAXxE.png!thumbnail" alt="img">       <strong>预处理阶段</strong> 。预处理器程序（cpp）根据以字符”#“开头的命令，修改原始的C程序。比如，#include<stdio>，就是告诉预处理器将头文件stdio中的内容添加到 hello.c 文件中，生成hello.i 文件。</p>
+<li><h4 id="程序被其他程序翻译成不同格式"><a href="#程序被其他程序翻译成不同格式" class="headerlink" title="程序被其他程序翻译成不同格式"></a><strong>程序被其他程序翻译成不同格式</strong></h4><p>​         hello.c 是由高级语言写成的文件，这种文件是人类可以读懂但计算机无法理解的。但是，为了能在计算机系统中运行 hello.c 文件，此程序必须被其他程序翻译成系统可以读懂的机器语言。这个翻译过程可以分为四个阶段，如图。执行这四个阶段的程序（预处理器、编译器、汇编器和链接器）一起构成了编译系统（compilation system）。         </p>
+<p><img src="E:%5Cblog%5Csource_posts%5Ccsapp%5Cimage.png" alt=""></p>
+<p><strong>预处理阶段</strong> 。预处理器程序（cpp）根据以字符”#“开头的命令，修改原始的C程序。比如，#include<stdio>，就是告诉预处理器将头文件stdio中的内容添加到 hello.c 文件中，生成hello.i 文件。</p>
 <p><strong>编译阶段</strong>。编译器（ccl）将 hello.i 文件通过一个<em>汇编语言程序，</em>将文件翻译为汇编语言的形式 保存为 hello.s。汇编语言的每条语句都确切的描述了一条低级的机器指令。汇编语言为不同的高级语言提供了一个统一的输出语言。</p>
 <p><strong>汇编阶段。</strong>汇编器（as）将 hello.s 文件翻译成机器语言指令，并将这些指令打包成一种叫做<em>可重定位目标程序</em>（relocatable object program）的格式，并保存在文件hello.o 中。hello.o 是二进制文件，它的字节编码为机器语言而不是字符。</p>
 <p><strong>链接阶段。</strong>链接器（ld）将hello.c 中调用到的库函数的预编译完成的文件与hello.o连接在一起，形成<em>可执行目标文件</em>hello，hello文件可以被加载到内存中，由系统执行。</p>
@@ -413,7 +415,9 @@
 <p><em>unix&gt;</em></p>
 <p>​        shell 是一个命令行解释器，它输入一个提示符，等待你输入一个命令，然后执行该命令。在此例中，shell 将加载并运行hello 程序，等待程序终止。hello 程序终止后，shell 随后输入一个提示符等待下一个命令的输入。</p>
 <p>1.<strong>系统的硬件组成</strong>    </p>
-<p>​        为了理解hello 运行时发生了什么，我们要了解一个典型系统的硬件组成。下图为 Intel Pentium 系统产品系列的模型，其他所有的系统都有类似的硬件组成。               <img src="https://uploader.shimo.im/f/4qvdIkTRKVsKGWh0.png!thumbnail" alt="img">       <strong>总线</strong></p>
+<p>​        为了理解hello 运行时发生了什么，我们要了解一个典型系统的硬件组成。下图为 Intel Pentium 系统产品系列的模型，其他所有的系统都有类似的硬件组成。      </p>
+<p>​     <img src="E:%5Cblog%5Csource_posts%5Ccsapp%5Cimage1.png" alt="img"></p>
+<p><strong>总线</strong></p>
 <p>总线是贯穿系统的一组电子管道，它携带着信息字节并负责在各个部件中传递。通常字节被设计成传送固定长度的字节块，被称作字（word）。字中的字节数通常是一个固定的参数，在不同系统中参数不尽相同。目前大多数机器字长有的是四个字节（32位），有的是八个字节（64位）。</p>
 <p><strong>I/O 设备</strong></p>
 <p>输入输出设备是系统与外界的联系通道。该示例系统有四个 I/O 设备：用户输入用到的鼠标和键盘，用户输出用到的显示器，用于长期储存数据和程序的磁盘。最初hello 程序就是存储在磁盘上。每个I/O设备都通过一个<em>控制器或适配器</em>与I/O 总线相连。它们的主要功能是在I/O设备与I/O总线间传递信息。</p>
@@ -429,7 +433,7 @@
 <ul>
 <li>开始时，shell等待我们输入一个命令。我们输入命令 “./hello” 后，shell程序将字符逐一读取到寄存器，然后把它存放在存储器中。     </li>
 </ul>
-<p>​                 <img src="https://uploader.shimo.im/f/uS19opMw20oap9rR.png!thumbnail" alt="img">      </p>
+<p>​                     <img src="E:%5Cblog%5Csource_posts%5Ccsapp%5Cimage2.png" alt=""></p>
 <ul>
 <li>当我们按下回车键时，shell 执行一系列指令加载可执行文件 hello ，利用DMA 技术将hello 文件中的代码和数据从磁盘复制到主存。                                   <img src="https://uploader.shimo.im/f/TnAjAS3kgT0mY2cd.png!thumbnail" alt="img">                                                                  </li>
 <li>处理器执行 hello 程序的 main 程序机器指令。这些指令将”hello world/n“字符串中的字节从主存复制到寄存器文件，再从寄存器文件复制到显示设备，最终显示到屏幕。                <img src="https://uploader.shimo.im/f/xIJvqA3bPF4xeSXZ.png!thumbnail" alt="img">      </li>
