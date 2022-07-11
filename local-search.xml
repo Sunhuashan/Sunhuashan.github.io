@@ -4,6 +4,70 @@
   
   
   <entry>
+    <title>一文搞懂YUV</title>
+    <link href="/2022/07/11/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82YUV/"/>
+    <url>/2022/07/11/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82YUV/</url>
+    
+    <content type="html"><![CDATA[]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>FFmpeg转封装</title>
+    <link href="/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/"/>
+    <url>/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/</url>
+    
+    <content type="html"><![CDATA[]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>FFmpeg命令</title>
+    <link href="/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/"/>
+    <url>/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/</url>
+    
+    <content type="html"><![CDATA[<h3 id="ffmpeg常用命令"><a href="#ffmpeg常用命令" class="headerlink" title="ffmpeg常用命令"></a><code>ffmpeg</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg --help<br></code></pre></td></tr></table></figure><p>查看<code>ffmpeg</code>的帮助信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -version<br></code></pre></td></tr></table></figure><p>查看<code>ffmpeg</code>的版本以及子模块的版本信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -formats<br></code></pre></td></tr></table></figure><p>查看<code>ffmpeg</code>支持的封装格式</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -codecs | ffmpeg -decoders | ffmpeg -encoders<br></code></pre></td></tr></table></figure><p>查看<code>ffmpeg</code>支持的编解码格式</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -filters<br></code></pre></td></tr></table></figure><p>查看<code>ffmpeg</code>支持的滤镜</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -h muxer/demuxer/encoder/decoder/filter=name<br></code></pre></td></tr></table></figure><p>查看特定<code>封装器</code>、<code>解封装器</code>、<code>编码器</code>、<code>解码器</code>、<code>滤镜</code>支持的操作参数</p><h3 id="ffprobe常用命令"><a href="#ffprobe常用命令" class="headerlink" title="ffprobe常用命令"></a><code>ffprobe</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe --help<br></code></pre></td></tr></table></figure><p>查看<code>ffprobe</code>的帮助信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_packets input.mp4<br>ffprobe -show_data -show_packets input.mp4<br></code></pre></td></tr></table></figure><p>查看<code>input.mp4</code>多媒体数据包信息 以及 具体数据</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffpeobe -show_format input.mp4<br></code></pre></td></tr></table></figure><p>查看<code>input.mp4</code>的多媒体封装格式</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_frames input.mp4<br></code></pre></td></tr></table></figure><p>查看<code>input.mp4</code>视频文件中的帧信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_streams input.mp4<br></code></pre></td></tr></table></figure><p>查看<code>input.mp4</code>多媒体文件中的流信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -print_format / -of xml/json/csv -show_packets / -show_format / ··· input.mp4<br></code></pre></td></tr></table></figure><p>使用<code>-print_format</code>或<code>-of</code>格式化输出相关内容，支持XML、INI、JSON、CSV、FLAT等格式</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_frames -of xml -select_streams a/v/s input.mp4<br></code></pre></td></tr></table></figure><p>使用<code>-select_streams</code>仅查看视频(v)，音频(a)，字幕(s) 信息</p><h3 id="ffplay常用命令"><a href="#ffplay常用命令" class="headerlink" title="ffplay常用命令"></a><code>ffplay</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay --help<br></code></pre></td></tr></table></figure><p>查看<code>ffplay</code>的帮助信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ss 10 input.mp4<br></code></pre></td></tr></table></figure><p>将<code>input.mp4</code>定位到第<code>10</code>秒开始播放</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ss 10 -t 20 input.mp4<br></code></pre></td></tr></table></figure><p>将<code>input.mp4</code>定位到第<code>10</code>秒开始播放，累计播放<code>20</code>秒后关闭</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;PLAY TEST&quot; input.mp4<br></code></pre></td></tr></table></figure><p>自定义播放器窗口显示的标题</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;网络直播流&quot; rtmp://up.v.test.com/live/stream<br></code></pre></td></tr></table></figure><p>使用<code>ffplay</code>打开网络直播流</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;PLAY TEST&quot; -ss 5 -t 10 -autoexit input.mp4<br></code></pre></td></tr></table></figure><p><code>-autoexit</code>使多媒体播放完毕后退出<code>ffplay</code>，默认情况下播放完毕后不退出</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -vcodec h264 input.mp4<br></code></pre></td></tr></table></figure><p><code>-vcodec</code>强制使用指定的解码器解码多媒体文件</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ast 5 -vst 4 -sst 3 input.ts<br></code></pre></td></tr></table></figure><p>视频流出现多个<code>Program</code>时，使用<code>-ast</code>指定播放的音频流，使用<code>-vst</code>指定播放的视频流，使用<code>-sst</code>指定播放的字幕流</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -vf &quot;subtitles=input.srt&quot; input.mp4<br></code></pre></td></tr></table></figure><p><code>-vf</code>设置视频滤镜，<code>subtitles</code>指定字幕滤镜，<code>.srt</code>为字幕文件</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -showmode 0/1/2 input.mp3<br></code></pre></td></tr></table></figure><p><code>-showmode</code>设置音频播放模式，可以用于音频可视化分析</p>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>音视频</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>FFmpeg</title>
+    <link href="/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/"/>
+    <url>/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/</url>
+    
+    <content type="html"><![CDATA[<h3 id="FFmpeg的组成"><a href="#FFmpeg的组成" class="headerlink" title="FFmpeg的组成"></a><code>FFmpeg</code>的组成</h3><ol><li><p>封装模块<code>AVFormat</code></p><p>封装格式可以理解为一种将音频流和视频流组装起来的协议，实现音频与视频的同步。如，MP4，FLV等。</p><p><code>AVFormat</code>模块实现了绝大多数的封装格式，可以进行封装和解封装。同时，可以自定义自己的封装格式。</p></li><li><p>编解码模块<code>AVCodec</code></p><p>编码格式可以理解为一种将音频或者视频进行压缩的协议，减少文件大小，提高传输效率。如，MP3，H.265等。</p><p><code>AVCodec</code>模块实现了绝大多数的编码格式，可以进行编码和解码。</p></li><li><p>滤镜模块<code>AVFilter</code></p><p><code>AVFilter</code>模块提供了一个通用的音频、视频、字幕等滤镜处理框架。下面是一个滤镜处理的例子.</p><p><img src="F:\Blogs\hexo-blog\source_posts\FFmpeg\AVFilter例子.png"></p><p>对应的命令行如下所示：</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">./ffmpeg -i INPUT -vf &quot;split [mian][tmp]; [tmp] crop=iw:ih/2:0:0, vflip [flip]; [main][flip] overlay=0:H/2&quot; OUTPUT<br></code></pre></td></tr></table></figure><p><code>split</code>滤镜 将视频流分割，并将第二部分打上<code>[tmp]</code>标签;</p><p><code>crop</code>滤镜 根据给定参数，对视频进行裁剪 ；</p><p><code>vflip</code>滤镜 根据给定参数，对视频进行纵坐标调换操作，打上<code>flip</code>标签；</p><p><code>overlay</code>滤镜 将一路输入覆盖到另一路之上，合并输出为一路视频 。    </p></li><li><p>视频图像转换计算模块<code>swscale</code></p><p><code>swscale</code>模块提供高级的图像转换API ,例如，可以实现1080P转720P的图片缩放， YUV转RGB的图片格式转换。</p></li><li><p>音频转换计算模块<code>swresample</code></p><p><code>swresample</code>模块提供高级的音频重采样API，可以实现音频采样，音频通道布局转换等。</p></li></ol><h3 id="编解码工具ffmpeg的使用"><a href="#编解码工具ffmpeg的使用" class="headerlink" title="编解码工具ffmpeg的使用"></a>编解码工具<code>ffmpeg</code>的使用</h3><p><code>ffmpeg</code>是<code>FFmpeg</code>编译后生成的一个可执行文件，下面一个例子介绍该工具的使用。</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -i input.mp4 -f avi output.avi<br></code></pre></td></tr></table></figure><p>该命令将<code>MP4</code>格式的文件转换为<code>AVI</code>格式的文件，通过<code>-i</code>参数获取<code>输入源</code>，通过<code>-f</code>参数规定<code>输出格式</code>。</p><p><code>ffmpeg</code>的主要工作流程包括:</p><ul><li>Demuxing(解封装)</li><li>Decoding(解码)</li><li>Encoding(编码)</li><li>Muxing(封装)</li></ul><p>转换步骤如下图</p><p><img src="F:\Blogs\hexo-blog\source_posts\FFmpeg\ffmpeg工作步骤.png"></p><h3 id="播放器工具ffplay的使用"><a href="#播放器工具ffplay的使用" class="headerlink" title="播放器工具ffplay的使用"></a>播放器工具<code>ffplay</code>的使用</h3><p><code>ffplay</code>也是<code>FFmpeg</code>编译后生成的一个可执行文件，提供了音视频显示和播放相关的图像信息、音频的波形信息等。</p><h3 id="多媒体分析器ffprobe的使用"><a href="#多媒体分析器ffprobe的使用" class="headerlink" title="多媒体分析器ffprobe的使用"></a>多媒体分析器<code>ffprobe</code>的使用</h3><p><code>ffplay</code>也是<code>FFmpeg</code>编译后生成的一个可执行文件，可以从媒体文件或者媒体流中获取媒体信息，比如音频的参数、视频的参数等等。</p>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>音视频</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>d2l-ch1</title>
     <link href="/2022/06/19/d2l-ch1/"/>
     <url>/2022/06/19/d2l-ch1/</url>

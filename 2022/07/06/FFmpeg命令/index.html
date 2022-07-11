@@ -16,19 +16,22 @@
   <meta name="author" content="sunhuashan">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
-<meta property="og:title" content="d2l-ch1">
-<meta property="og:url" content="http://example.com/2022/06/19/d2l-ch1/index.html">
+    <meta name="description" content="ffmpeg常用命令1ffmpeg --help  查看ffmpeg的帮助信息 1ffmpeg -version  查看ffmpeg的版本以及子模块的版本信息 1ffmpeg -formats  查看ffmpeg支持的封装格式 1ffmpeg -codecs | ffmpeg -decoders | ffmpeg -encoders  查看ffmpeg支持的编解码格式 1ffmpeg -filte">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FFmpeg命令">
+<meta property="og:url" content="http://example.com/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/index.html">
 <meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="ffmpeg常用命令1ffmpeg --help  查看ffmpeg的帮助信息 1ffmpeg -version  查看ffmpeg的版本以及子模块的版本信息 1ffmpeg -formats  查看ffmpeg支持的封装格式 1ffmpeg -codecs | ffmpeg -decoders | ffmpeg -encoders  查看ffmpeg支持的编解码格式 1ffmpeg -filte">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2022-06-19T03:10:22.000Z">
-<meta property="article:modified_time" content="2022-06-19T03:10:22.642Z">
+<meta property="article:published_time" content="2022-07-06T13:51:01.000Z">
+<meta property="article:modified_time" content="2022-07-08T02:38:18.302Z">
 <meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="音视频">
 <meta name="twitter:card" content="summary_large_image">
   
   
   
-  <title>d2l-ch1 - sunhuashan</title>
+  <title>FFmpeg命令 - sunhuashan</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -191,7 +194,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="d2l-ch1"></span>
+            <span id="subtitle" data-typed-text="FFmpeg命令"></span>
           
         </div>
 
@@ -202,8 +205,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2022-06-19 11:10" pubdate>
-          June 19, 2022 am
+        <time datetime="2022-07-06 21:51" pubdate>
+          July 6, 2022 pm
         </time>
       </span>
     
@@ -214,7 +217,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          0 words
+          1.5k words
         
       </span>
     
@@ -225,7 +228,7 @@
         
         
         
-          1 mins
+          13 mins
         
       </span>
     
@@ -271,17 +274,93 @@
         <div id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">d2l-ch1</h1>
+            <h1 style="display: none">FFmpeg命令</h1>
             
             <div class="markdown-body">
               
-              
+              <h3 id="ffmpeg常用命令"><a href="#ffmpeg常用命令" class="headerlink" title="ffmpeg常用命令"></a><code>ffmpeg</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg --help<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>ffmpeg</code>的帮助信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -version<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>ffmpeg</code>的版本以及子模块的版本信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -formats<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>ffmpeg</code>支持的封装格式</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -codecs | ffmpeg -decoders | ffmpeg -encoders<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>ffmpeg</code>支持的编解码格式</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -filters<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>ffmpeg</code>支持的滤镜</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -h muxer/demuxer/encoder/decoder/filter=name<br></code></pre></td></tr></table></figure>
+
+<p>查看特定<code>封装器</code>、<code>解封装器</code>、<code>编码器</code>、<code>解码器</code>、<code>滤镜</code>支持的操作参数</p>
+<h3 id="ffprobe常用命令"><a href="#ffprobe常用命令" class="headerlink" title="ffprobe常用命令"></a><code>ffprobe</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe --help<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>ffprobe</code>的帮助信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_packets input.mp4<br>ffprobe -show_data -show_packets input.mp4<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>input.mp4</code>多媒体数据包信息 以及 具体数据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffpeobe -show_format input.mp4<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>input.mp4</code>的多媒体封装格式</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_frames input.mp4<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>input.mp4</code>视频文件中的帧信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_streams input.mp4<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>input.mp4</code>多媒体文件中的流信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -print_format / -of xml/json/csv -show_packets / -show_format / ··· input.mp4<br></code></pre></td></tr></table></figure>
+
+<p>使用<code>-print_format</code>或<code>-of</code>格式化输出相关内容，支持XML、INI、JSON、CSV、FLAT等格式</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_frames -of xml -select_streams a/v/s input.mp4<br></code></pre></td></tr></table></figure>
+
+<p>使用<code>-select_streams</code>仅查看视频(v)，音频(a)，字幕(s) 信息</p>
+<h3 id="ffplay常用命令"><a href="#ffplay常用命令" class="headerlink" title="ffplay常用命令"></a><code>ffplay</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay --help<br></code></pre></td></tr></table></figure>
+
+<p>查看<code>ffplay</code>的帮助信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ss 10 input.mp4<br></code></pre></td></tr></table></figure>
+
+<p>将<code>input.mp4</code>定位到第<code>10</code>秒开始播放</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ss 10 -t 20 input.mp4<br></code></pre></td></tr></table></figure>
+
+<p>将<code>input.mp4</code>定位到第<code>10</code>秒开始播放，累计播放<code>20</code>秒后关闭</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;PLAY TEST&quot; input.mp4<br></code></pre></td></tr></table></figure>
+
+<p>自定义播放器窗口显示的标题</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;网络直播流&quot; rtmp://up.v.test.com/live/stream<br></code></pre></td></tr></table></figure>
+
+<p>使用<code>ffplay</code>打开网络直播流</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;PLAY TEST&quot; -ss 5 -t 10 -autoexit input.mp4<br></code></pre></td></tr></table></figure>
+
+<p><code>-autoexit</code>使多媒体播放完毕后退出<code>ffplay</code>，默认情况下播放完毕后不退出</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -vcodec h264 input.mp4<br></code></pre></td></tr></table></figure>
+
+<p><code>-vcodec</code>强制使用指定的解码器解码多媒体文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ast 5 -vst 4 -sst 3 input.ts<br></code></pre></td></tr></table></figure>
+
+<p>视频流出现多个<code>Program</code>时，使用<code>-ast</code>指定播放的音频流，使用<code>-vst</code>指定播放的视频流，使用<code>-sst</code>指定播放的字幕流</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -vf &quot;subtitles=input.srt&quot; input.mp4<br></code></pre></td></tr></table></figure>
+
+<p><code>-vf</code>设置视频滤镜，<code>subtitles</code>指定字幕滤镜，<code>.srt</code>为字幕文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -showmode 0/1/2 input.mp3<br></code></pre></td></tr></table></figure>
+
+<p><code>-showmode</code>设置音频播放模式，可以用于音频可视化分析</p>
+
               
             </div>
             <hr/>
             <div>
               <div class="post-metas my-3">
   
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%9F%B3%E8%A7%86%E9%A2%91/">#音视频</a>
+      
+    </div>
   
 </div>
 
@@ -291,8 +370,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>d2l-ch1</div>
-      <div>http://example.com/2022/06/19/d2l-ch1/</div>
+      <div>FFmpeg命令</div>
+      <div>http://example.com/2022/07/06/FFmpeg命令/</div>
     </div>
     <div class="license-meta">
       
@@ -304,7 +383,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>Posted on</div>
-          <div>June 19, 2022</div>
+          <div>July 6, 2022</div>
         </div>
       
       
@@ -334,15 +413,21 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/" title="FFmpeg">
+                      <a href="/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/" title="FFmpeg转封装">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">FFmpeg</span>
+                        <span class="hidden-mobile">FFmpeg转封装</span>
                         <span class="visible-mobile">Previous</span>
                       </a>
                     
                   </article>
                   <article class="post-next col-6">
                     
+                    
+                      <a href="/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/" title="FFmpeg">
+                        <span class="hidden-mobile">FFmpeg</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
                     
                   </article>
                 </div>
