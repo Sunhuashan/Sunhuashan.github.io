@@ -4,6 +4,25 @@
   
   
   <entry>
+    <title>Linux-01-虚拟机安装CentOS</title>
+    <link href="/2022/09/14/Linux-01-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85CentOS/"/>
+    <url>/2022/09/14/Linux-01-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85CentOS/</url>
+    
+    <content type="html"><![CDATA[<ul><li><p>VM和CentOS的关系</p><p>！<a href="VM%E5%92%8CCentOS%E7%9A%84%E5%85%B3%E7%B3%BB.png"></a></p></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>FFmpeg中使用x264编码</title>
     <link href="/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/"/>
     <url>/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/</url>
