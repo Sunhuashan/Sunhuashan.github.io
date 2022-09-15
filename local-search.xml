@@ -4,11 +4,30 @@
   
   
   <entry>
+    <title>搜索引擎及其使用技巧</title>
+    <link href="/2022/09/15/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E5%8F%8A%E5%85%B6%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7/"/>
+    <url>/2022/09/15/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E5%8F%8A%E5%85%B6%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7/</url>
+    
+    <content type="html"><![CDATA[<h3 id="baidu-com"><a href="#baidu-com" class="headerlink" title="baidu.com"></a><strong>baidu.com</strong></h3><ul><li><p>减除无关资料</p><p>如: “武侠小说 -古龙”；不含“古龙”信息的“武侠小说”</p></li><li><p>并行搜索</p><p>如:”图片 | 写真”；搜索“图片”或“写真”</p></li><li><p>搜索范围限制在网页标题中</p><p>如：”写真 intitle:林青霞“；</p></li><li><p>搜索范围限制在特定网站中</p><p>如：”写真 site:skycn.com”;</p></li><li><p>搜索范围限制在URL链接中</p></li></ul><p>​        如：“photoshop inurl:jijiao”;搜索的url必须包含”jijiao“</p><ul><li><p>精确匹配</p><p>如：“ “上海科技大学” “；双引号不拆分关键词</p><p>如：”《书籍名》“；书名号精确匹配书籍</p></li></ul><h3 id="google-com"><a href="#google-com" class="headerlink" title="google.com"></a>google.com</h3><ul><li><p>按链接搜索</p><p>如：“bit link:google.com”;找出所有指向“google.com”的包含关键词”bit”的网页</p></li><li><p>intitle、inurl、intext</p></li></ul><h3 id="scholar-google-com"><a href="#scholar-google-com" class="headerlink" title="scholar.google.com"></a>scholar.google.com</h3>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>信息检索</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Linux-01-虚拟机安装CentOS</title>
     <link href="/2022/09/14/Linux-01-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85CentOS/"/>
     <url>/2022/09/14/Linux-01-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85CentOS/</url>
     
-    <content type="html"><![CDATA[<ul><li><p>VM和CentOS的关系</p><p><img src="VM%E5%92%8CCentOS%E7%9A%84%E5%85%B3%E7%B3%BB.png"></p></li></ul>]]></content>
+    <content type="html"><![CDATA[<ul><li><p>VM和CentOS的关系</p><p><img src="VM%E5%92%8CCentOS%E7%9A%84%E5%85%B3%E7%B3%BB.png"></p></li><li><p>VM VirtualBox的下载</p><p><a href="https://www.virtualbox.org/wiki/Downloads">VirtualBox官网</a></p></li><li><p>CentOS 7.6的下载</p><p><a href="http://mirrors.aliyun.com/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-2009.iso">下载链接</a></p></li><li><p>虚拟机下安装CentOS</p><p><img src="%E7%AC%AC%E4%B8%80%E6%AD%A5.png" alt="第一步"></p><p><img src="%E7%AC%AC%E4%BA%8C%E6%AD%A5.png" alt="第二步"></p><p><img src="%E7%AC%AC%E4%B8%89%E6%AD%A5.png" alt="第三步"></p><p><img src="%E7%AC%AC%E5%9B%9B%E6%AD%A5.png" alt="第四步"></p><p><img src="%E7%AC%AC%E4%BA%94%E6%AD%A5.png" alt="第五步"></p><p><img src="%E7%AC%AC%E5%85%AD%E6%AD%A5.png" alt="第六步"></p></li></ul>]]></content>
     
     
     
