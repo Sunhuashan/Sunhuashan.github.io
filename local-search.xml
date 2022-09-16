@@ -4,11 +4,68 @@
   
   
   <entry>
+    <title>Linux-05-关机重启命令及用户管理</title>
+    <link href="/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/"/>
+    <url>/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/</url>
+    
+    <content type="html"><![CDATA[<h3 id="关机-amp-重启命令"><a href="#关机-amp-重启命令" class="headerlink" title="关机&amp;重启命令"></a>关机&amp;重启命令</h3><ul><li><p>关闭系统</p><ul><li><p>shutdown -h now </p><p>立刻进行关机</p></li><li><p>shutdown -h 1 “hello everyone ,一分钟后关机”</p><p>1分钟后关机并通知所有登陆到该系统的用户</p></li><li><p>shutdown -r now</p><p>立刻重启计算机</p></li><li><p>halt</p><p>关机，作用与”shutdown”相同</p></li><li><p>reboot</p><p>立刻重启计算机</p></li><li><p>sync</p><p>把内存数据写入到磁盘，一般在关机或重启前要执行</p></li></ul></li></ul><h3 id="用户注销与登录"><a href="#用户注销与登录" class="headerlink" title="用户注销与登录"></a>用户注销与登录</h3><ul><li><p>su - 用户名</p><p>用户切换</p><p><img src="%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png"></p></li><li><p>logout（在图形化界面无效，在运行级别3有效）</p><p>注销当前用户</p></li></ul><h3 id="用户管理"><a href="#用户管理" class="headerlink" title="用户管理"></a>用户管理</h3><ul><li><p>uesradd 用户名</p><p>添加用户</p></li><li><p>useradd -d 指定目录 用户名</p><p>添加用户并指定用户目录</p></li><li><p>passwd 用户名 </p><p>为指定用户修改密码</p></li><li><p>pwd</p><p>显示当前所在目录</p></li><li><p>userdel 用户名</p><p>删除用户账号，但是保留用户的目录</p></li><li><p>userdel -r 用户名（谨慎使用）</p><p>删除用户账号以及用户的目录</p></li><li></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux-04-vim</title>
+    <link href="/2022/09/16/Linux-04-vim/"/>
+    <url>/2022/09/16/Linux-04-vim/</url>
+    
+    <content type="html"><![CDATA[<ul><li><p>vim的模式及切换</p><p><img src="%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2.png"></p></li><li><p>快捷键的使用</p><ul><li><p>拷贝/粘贴（一般模式）</p><p>拷贝当前行：yy</p><p>拷贝当前行至下5行：5yy</p><p>粘贴：p</p></li><li><p>删除（一般模式）</p><p>删除当前行：dd</p><p>删除当前行至下5行：5dd</p></li><li><p>查找（/命令行模式）</p><p>输入 ”/“ 进入命令行模式，输入要查找的内容，按”n”切换匹配结果</p></li><li><p>设置/取消文件行号（:命令行模式）</p><p>设置行号：set nu</p><p>取消行号：set nonu</p></li><li><p>到达文件末行和首行(一般模式)</p><p>到达文件末行：G</p><p>到达文件首行：gg</p></li><li><p>撤销（一般模式）</p><p>撤销最新的动作：u</p></li><li><p>移动光标至指定行（一般模式）</p><p>光标移动到第23行：23G</p></li></ul></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux-03-远程</title>
+    <link href="/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/"/>
+    <url>/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/</url>
+    
+    <content type="html"><![CDATA[<h3 id="Linux服务器远程登陆"><a href="#Linux服务器远程登陆" class="headerlink" title="Linux服务器远程登陆"></a>Linux服务器远程登陆</h3><ul><li><p>Xshell的使用（远程登陆）</p><p><a href="https://www.netsarang.com/en/free-for-home-school/">下载连接</a></p><p>启动Xshell并新建会话</p><p><img src="%E6%96%B0%E5%BB%BA%E4%BC%9A%E8%AF%9D.png"></p></li><li><p>Xftp的使用（远程文件传输）</p><p><a href="https://www.netsarang.com/en/free-for-home-school">下载连接</a></p><p>启动Xftp并新建会话</p><p><img src="Xftp%E6%96%B0%E5%BB%BA%E4%BC%9A%E8%AF%9D.png"></p></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Linux-02-目录结构</title>
     <link href="/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/"/>
     <url>/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/</url>
     
-    <content type="html"><![CDATA[<blockquote><p>在Linux系统中，一切皆是文件</p></blockquote><ul><li><p>文件目录结构</p><p><img src="%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png"></p></li><li><p>/</p><p>根目录</p></li><li><p>/boot</p><p>存放系统启动时的核心文件</p></li><li><p>/bin</p><p>Binary的缩写，存放经常使用的命令</p></li><li><p>/etc</p><p>存放系统和应用程序的配置文件</p></li><li><p>/sbin</p><p>System Binary 的缩写，存放可对系统进行配置的命令</p></li><li><p>/home</p><p>存放普通用户的主目录，每个用户有一个目录，一般以用户名命名</p></li><li><p>/lib</p><p>存放最基础的动态链接共享库</p></li><li><p>/user</p><p>用户安装程序的默认目录，类似win下的“Program Files”</p></li><li><p>/user/local</p><p>应用程序的安装目录</p></li><li><p>/proc 、 /srv 、/sys </p><p>系统相关的文件[勿动]</p></li><li><p>/tmp</p><p>存放临时文件</p></li><li><p>/dev</p><p>将所有的硬件用文件的形式存储起来，类似win下的设备管理器</p></li><li><p>/mnt</p><p>为了让用户挂载外部存储空间，如虚拟机与母机直接的共享存储空间</p></li><li><p>/opt</p><p>应用程序安装包存放的目录</p></li><li><p>/var</p><p>存放着在不断扩充的东西，如日志文件</p></li></ul>]]></content>
+    <content type="html"><![CDATA[<blockquote><p>在Linux系统中，一切皆是文件</p></blockquote><ul><li><p>文件目录结构</p><p><img src="%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png"></p></li><li><p>/</p><p>根目录</p></li><li><p>/boot</p><p>存放系统启动时的核心文件</p></li><li><p>/bin</p><p>Binary的缩写，存放经常使用的命令</p></li><li><p>/etc</p><p>存放系统和应用程序的配置文件</p></li><li><p>/sbin</p><p>System Binary 的缩写，存放可对系统进行配置的命令</p></li><li><p>/home</p><p>存放普通用户的主目录，每个用户有一个目录，一般以用户名命名</p></li><li><p>/lib</p><p>存放最基础的动态链接共享库</p></li><li><p>/usr</p><p>用户安装程序的默认目录，类似win下的“Program Files”</p></li><li><p>/usr/local</p><p>应用程序的安装目录</p></li><li><p>/root</p><p>系统管理员的用户主目录</p></li><li><p>/proc 、 /srv 、/sys </p><p>系统相关的文件[勿动]</p></li><li><p>/tmp</p><p>存放临时文件</p></li><li><p>/dev</p><p>将所有的硬件用文件的形式存储起来，类似win下的设备管理器</p></li><li><p>/mnt</p><p>为了让用户挂载外部存储空间，如虚拟机与母机直接的共享存储空间</p></li><li><p>/opt</p><p>应用程序安装包存放的目录</p></li><li><p>/var</p><p>存放着在不断扩充的东西，如日志文件</p></li></ul>]]></content>
     
     
     

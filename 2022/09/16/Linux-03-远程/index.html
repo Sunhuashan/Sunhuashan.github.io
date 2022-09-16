@@ -16,24 +16,25 @@
   <meta name="author" content="sunhuashan">
   <meta name="keywords" content="">
   
-    <meta name="description" content="在Linux系统中，一切皆是文件   文件目录结构   &#x2F; 根目录  &#x2F;boot 存放系统启动时的核心文件  &#x2F;bin Binary的缩写，存放经常使用的命令  &#x2F;etc 存放系统和应用程序的配置文件  &#x2F;sbin System Binary 的缩写，存放可对系统进行配置的命令  &#x2F;home 存放普通用户的主目录，每个用户有一个目录，一般以用户名命名  &#x2F;lib 存放最基础的动态链接共享库  &#x2F;">
+    <meta name="description" content="Linux服务器远程登陆 Xshell的使用（远程登陆） 下载连接 启动Xshell并新建会话   Xftp的使用（远程文件传输） 下载连接 启动Xftp并新建会话">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Linux-02-目录结构">
-<meta property="og:url" content="http://example.com/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:title" content="Linux-03-远程">
+<meta property="og:url" content="http://example.com/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/index.html">
 <meta property="og:site_name" content="sunhuashan">
-<meta property="og:description" content="在Linux系统中，一切皆是文件   文件目录结构   &#x2F; 根目录  &#x2F;boot 存放系统启动时的核心文件  &#x2F;bin Binary的缩写，存放经常使用的命令  &#x2F;etc 存放系统和应用程序的配置文件  &#x2F;sbin System Binary 的缩写，存放可对系统进行配置的命令  &#x2F;home 存放普通用户的主目录，每个用户有一个目录，一般以用户名命名  &#x2F;lib 存放最基础的动态链接共享库  &#x2F;">
+<meta property="og:description" content="Linux服务器远程登陆 Xshell的使用（远程登陆） 下载连接 启动Xshell并新建会话   Xftp的使用（远程文件传输） 下载连接 启动Xftp并新建会话">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://example.com/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png">
-<meta property="article:published_time" content="2022-09-15T14:07:48.000Z">
-<meta property="article:modified_time" content="2022-09-16T11:28:28.717Z">
+<meta property="og:image" content="http://example.com/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/%E6%96%B0%E5%BB%BA%E4%BC%9A%E8%AF%9D.png">
+<meta property="og:image" content="http://example.com/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/Xftp%E6%96%B0%E5%BB%BA%E4%BC%9A%E8%AF%9D.png">
+<meta property="article:published_time" content="2022-09-16T11:29:03.000Z">
+<meta property="article:modified_time" content="2022-09-16T12:52:40.407Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="linux">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://example.com/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png">
+<meta name="twitter:image" content="http://example.com/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/%E6%96%B0%E5%BB%BA%E4%BC%9A%E8%AF%9D.png">
   
   
   
-  <title>Linux-02-目录结构 - sunhuashan</title>
+  <title>Linux-03-远程 - sunhuashan</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -196,7 +197,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="Linux-02-目录结构"></span>
+            <span id="subtitle" data-typed-text="Linux-03-远程"></span>
           
         </div>
 
@@ -207,8 +208,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2022-09-15 22:07" pubdate>
-          September 15, 2022 pm
+        <time datetime="2022-09-16 19:29" pubdate>
+          September 16, 2022 pm
         </time>
       </span>
     
@@ -219,7 +220,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          381 words
+          74 words
         
       </span>
     
@@ -230,7 +231,7 @@
         
         
         
-          4 mins
+          1 mins
         
       </span>
     
@@ -276,64 +277,20 @@
         <div id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">Linux-02-目录结构</h1>
+            <h1 style="display: none">Linux-03-远程</h1>
             
             <div class="markdown-body">
               
-              <blockquote>
-<p>在Linux系统中，一切皆是文件</p>
-</blockquote>
-<ul>
-<li><p>文件目录结构</p>
-<p><img src="%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png" srcset="/img/loading.gif" lazyload></p>
+              <h3 id="Linux服务器远程登陆"><a href="#Linux服务器远程登陆" class="headerlink" title="Linux服务器远程登陆"></a>Linux服务器远程登陆</h3><ul>
+<li><p>Xshell的使用（远程登陆）</p>
+<p><a target="_blank" rel="noopener" href="https://www.netsarang.com/en/free-for-home-school/">下载连接</a></p>
+<p>启动Xshell并新建会话</p>
+<p><img src="%E6%96%B0%E5%BB%BA%E4%BC%9A%E8%AF%9D.png" srcset="/img/loading.gif" lazyload></p>
 </li>
-<li><p>/</p>
-<p>根目录</p>
-</li>
-<li><p>/boot</p>
-<p>存放系统启动时的核心文件</p>
-</li>
-<li><p>/bin</p>
-<p>Binary的缩写，存放经常使用的命令</p>
-</li>
-<li><p>/etc</p>
-<p>存放系统和应用程序的配置文件</p>
-</li>
-<li><p>/sbin</p>
-<p>System Binary 的缩写，存放可对系统进行配置的命令</p>
-</li>
-<li><p>/home</p>
-<p>存放普通用户的主目录，每个用户有一个目录，一般以用户名命名</p>
-</li>
-<li><p>/lib</p>
-<p>存放最基础的动态链接共享库</p>
-</li>
-<li><p>/usr</p>
-<p>用户安装程序的默认目录，类似win下的“Program Files”</p>
-</li>
-<li><p>/usr/local</p>
-<p>应用程序的安装目录</p>
-</li>
-<li><p>/root</p>
-<p>系统管理员的用户主目录</p>
-</li>
-<li><p>/proc 、 /srv 、/sys </p>
-<p>系统相关的文件[勿动]</p>
-</li>
-<li><p>/tmp</p>
-<p>存放临时文件</p>
-</li>
-<li><p>/dev</p>
-<p>将所有的硬件用文件的形式存储起来，类似win下的设备管理器</p>
-</li>
-<li><p>/mnt</p>
-<p>为了让用户挂载外部存储空间，如虚拟机与母机直接的共享存储空间</p>
-</li>
-<li><p>/opt</p>
-<p>应用程序安装包存放的目录</p>
-</li>
-<li><p>/var</p>
-<p>存放着在不断扩充的东西，如日志文件</p>
+<li><p>Xftp的使用（远程文件传输）</p>
+<p><a target="_blank" rel="noopener" href="https://www.netsarang.com/en/free-for-home-school">下载连接</a></p>
+<p>启动Xftp并新建会话</p>
+<p><img src="Xftp%E6%96%B0%E5%BB%BA%E4%BC%9A%E8%AF%9D.png" srcset="/img/loading.gif" lazyload></p>
 </li>
 </ul>
 
@@ -359,8 +316,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>Linux-02-目录结构</div>
-      <div>http://example.com/2022/09/15/Linux-02-目录结构/</div>
+      <div>Linux-03-远程</div>
+      <div>http://example.com/2022/09/16/Linux-03-远程/</div>
     </div>
     <div class="license-meta">
       
@@ -372,7 +329,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>Posted on</div>
-          <div>September 15, 2022</div>
+          <div>September 16, 2022</div>
         </div>
       
       
@@ -402,9 +359,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/" title="Linux-03-远程">
+                      <a href="/2022/09/16/Linux-04-vim/" title="Linux-04-vim">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">Linux-03-远程</span>
+                        <span class="hidden-mobile">Linux-04-vim</span>
                         <span class="visible-mobile">Previous</span>
                       </a>
                     
@@ -412,8 +369,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2022/09/15/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E5%8F%8A%E5%85%B6%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7/" title="搜索引擎及其使用技巧">
-                        <span class="hidden-mobile">搜索引擎及其使用技巧</span>
+                      <a href="/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/" title="Linux-02-目录结构">
+                        <span class="hidden-mobile">Linux-02-目录结构</span>
                         <span class="visible-mobile">Next</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
