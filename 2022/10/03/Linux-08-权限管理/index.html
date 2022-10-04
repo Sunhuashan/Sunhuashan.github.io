@@ -16,22 +16,24 @@
   <meta name="author" content="sunhuashan">
   <meta name="keywords" content="">
   
-    <meta name="description" content="时间日期指令 date  显示当前时间  date +%Y  年 date +%m  月 date +%d  日 date “+%Y-%m-%d %H:%M:%S”  格式化字符串   date -s 字符串时间 设置系统时间  date -s “2022-09-22 12:23:30”   cal 查看当月日历  cal 2022 查看全年日历     搜索查找类指令 find [搜索范围] [">
+    <meta name="description" content="组文件的所有者，所在组，其他组概念   所有者 ls -ahl 可查看文件或目录的所有者 chown 指令改变文件或目录的所有者（change owner） 案例：chown tom apple.txt  所在组 文件默认属于用户所在的组 chgrp 指令改变文件或目录的所在组（change group） 案例：chgrp fruit orange.txt  其他组 除了文件所有者和文件所在组外，">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Linux-07-常用指令（续）">
-<meta property="og:url" content="http://example.com/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/index.html">
+<meta property="og:title" content="Linux-08-权限管理">
+<meta property="og:url" content="http://example.com/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/index.html">
 <meta property="og:site_name" content="sunhuashan">
-<meta property="og:description" content="时间日期指令 date  显示当前时间  date +%Y  年 date +%m  月 date +%d  日 date “+%Y-%m-%d %H:%M:%S”  格式化字符串   date -s 字符串时间 设置系统时间  date -s “2022-09-22 12:23:30”   cal 查看当月日历  cal 2022 查看全年日历     搜索查找类指令 find [搜索范围] [">
+<meta property="og:description" content="组文件的所有者，所在组，其他组概念   所有者 ls -ahl 可查看文件或目录的所有者 chown 指令改变文件或目录的所有者（change owner） 案例：chown tom apple.txt  所在组 文件默认属于用户所在的组 chgrp 指令改变文件或目录的所在组（change group） 案例：chgrp fruit orange.txt  其他组 除了文件所有者和文件所在组外，">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2022-09-20T15:01:07.000Z">
-<meta property="article:modified_time" content="2022-10-02T08:59:30.953Z">
+<meta property="og:image" content="http://example.com/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png">
+<meta property="article:published_time" content="2022-10-03T07:48:03.000Z">
+<meta property="article:modified_time" content="2022-10-04T08:50:33.632Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="linux">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png">
   
   
   
-  <title>Linux-07-常用指令（续） - sunhuashan</title>
+  <title>Linux-08-权限管理 - sunhuashan</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -194,7 +196,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="Linux-07-常用指令（续）"></span>
+            <span id="subtitle" data-typed-text="Linux-08-权限管理"></span>
           
         </div>
 
@@ -205,8 +207,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2022-09-20 23:01" pubdate>
-          September 20, 2022 pm
+        <time datetime="2022-10-03 15:48" pubdate>
+          October 3, 2022 pm
         </time>
       </span>
     
@@ -217,7 +219,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1k words
+          383 words
         
       </span>
     
@@ -228,7 +230,7 @@
         
         
         
-          9 mins
+          4 mins
         
       </span>
     
@@ -274,115 +276,40 @@
         <div id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">Linux-07-常用指令（续）</h1>
+            <h1 style="display: none">Linux-08-权限管理</h1>
             
             <div class="markdown-body">
               
-              <h3 id="时间日期指令"><a href="#时间日期指令" class="headerlink" title="时间日期指令"></a>时间日期指令</h3><ul>
-<li><p>date </p>
-<p>显示当前时间</p>
+              <h3 id="组"><a href="#组" class="headerlink" title="组"></a>组</h3><p>文件的<strong>所有者</strong>，<strong>所在组</strong>，<strong>其他组</strong>概念</p>
+<p><img src="%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png" srcset="/img/loading.gif" lazyload></p>
 <ul>
-<li>date +%Y  年</li>
-<li>date +%m  月</li>
-<li>date +%d  日</li>
-<li>date “+%Y-%m-%d %H:%M:%S”  格式化字符串</li>
-</ul>
+<li><p>所有者</p>
+<p>ls -ahl 可查看文件或目录的所有者</p>
+<p>chown 指令改变文件或目录的所有者（change owner）</p>
+<p>案例：chown tom apple.txt</p>
 </li>
-<li><p>date -s 字符串时间</p>
-<p>设置系统时间</p>
-<ul>
-<li>date -s “2022-09-22 12:23:30”</li>
-</ul>
+<li><p>所在组</p>
+<p>文件默认属于用户所在的组</p>
+<p>chgrp 指令改变文件或目录的所在组（change group）</p>
+<p>案例：chgrp fruit orange.txt</p>
 </li>
-<li><p>cal</p>
-<p>查看当月日历</p>
-<ul>
-<li><p>cal 2022</p>
-<p>查看全年日历</p>
+<li><p>其他组</p>
+<p>除了文件所有者和文件所在组外，其余用户对文件而言均在其他组</p>
 </li>
-</ul>
+<li><p>groupadd monster </p>
+<p>创建组</p>
 </li>
-</ul>
-<h3 id="搜索查找类指令"><a href="#搜索查找类指令" class="headerlink" title="搜索查找类指令"></a>搜索查找类指令</h3><ul>
-<li><p>find [搜索范围] [选项]</p>
-<p>查找指定文件或目录</p>
-<ul>
-<li><p>-name </p>
-<p>根据文件名查找目录或文件</p>
-<p>案例1：find /home -name hello.txt</p>
+<li><p>useradd -g monster fox</p>
+<p>创建用户并将其加入monster组</p>
 </li>
-<li><p>-user</p>
-<p>根据用户名查找文件或目录</p>
-<p>案例2：find /opt -user root</p>
+<li><p>usermod -g 组名 用户名</p>
+<p>修改用户所在组</p>
+<p>案例：cat /etc/group | grep “wudang”  查看组是否存在</p>
+<p>​            id zwj  查看用户是否存在</p>
+<p>​            usermod -g wudang zwj  修改用户所在组</p>
 </li>
-<li><p>-size</p>
-<p>根据大小查找文件或目录</p>
-<p>案例3：find / -size +200M/-200K/200G(大于200M/小于200K/等于200G) </p>
-</li>
-</ul>
-</li>
-<li><p>locate </p>
-<p>快速定位文件路径</p>
-<p>【定位前先使用 updatedb 指令更新数据库】</p>
-<ul>
-<li><p>locate hello.txt</p>
-<p>定位hello.txt的路径</p>
-</li>
-</ul>
-</li>
-<li><p>which</p>
-<p>定位指令路径</p>
-<p>which ls</p>
-<p>定位ls指令所在路径</p>
-</li>
-<li><p>grep配合“|”管道符号</p>
-<p>使用grep过滤查找后使用管道符将查找内容传递给后面的命令处理</p>
-<ul>
-<li><p>grep [选项] 查找内容 源文件</p>
-<ul>
-<li>-n 显示匹配行和行号</li>
-<li>-i 忽略字母大小写</li>
-</ul>
-<p>案例1：在“/home/hello.txt”文件中，查找“yes”所在行，显示行号</p>
-<p>cat /home/hello.txt | grep -n “yes” 或</p>
-<p>grep -n “yes” /home/hello.txt </p>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="压缩与解压"><a href="#压缩与解压" class="headerlink" title="压缩与解压"></a>压缩与解压</h3><ul>
-<li><p>gzip/gunzip 文件名/文件名.gz</p>
-<p>gzip用于压缩文件，gunzip用于解压文件</p>
-<p>案例1：gzip /home/hello.txt</p>
-</li>
-<li><p>zip [选项] XXX.zip 要压缩的内容</p>
-<p>压缩文件以及文件夹</p>
-<ul>
-<li>-r 递归压缩</li>
-</ul>
-<p>案例1：zip -r myhome.zip /home/  将home目录及其子文件夹压缩</p>
-</li>
-<li><p>unzip [选项] XXX.zip </p>
-<p>解压文件</p>
-<ul>
-<li>-d 目录名  指定解压后的目录</li>
-</ul>
-<p>案例1：unzip /home/myhome.zip  -d /opt/tmp</p>
-</li>
-<li><p>tar [选项] XXX.tar.gz 打包内容</p>
-<p>打包、解压或压缩文件及文件夹</p>
-<ul>
-<li>-c  产生.tar打包文件</li>
-<li>-v  显示详细信息</li>
-<li>-f  指定压缩后的文件名</li>
-<li>-z 打包同时压缩</li>
-<li>-x 解包.tar文件</li>
-<li>-C 指定解压位置</li>
-</ul>
-<p>案例1：tar -zcvf pc.tar.gz cat.txt pig.txt</p>
-<p>案例2：tar -zcvf myhome.tar.gz /home/</p>
-<p>案例3：tar -zxvf pc.tar.gz</p>
-<p>案例4：tar -zxvf myhome.tar.gz -C /opt/tmp</p>
+<li><p>usermod -d 目录名 用户名</p>
+<p>修改用户登录的默认初始目录（用户要有进入新目录的权限）</p>
 </li>
 </ul>
 
@@ -408,8 +335,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>Linux-07-常用指令（续）</div>
-      <div>http://example.com/2022/09/20/Linux-07-常用指令（续）/</div>
+      <div>Linux-08-权限管理</div>
+      <div>http://example.com/2022/10/03/Linux-08-权限管理/</div>
     </div>
     <div class="license-meta">
       
@@ -421,7 +348,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>Posted on</div>
-          <div>September 20, 2022</div>
+          <div>October 3, 2022</div>
         </div>
       
       
@@ -451,18 +378,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/" title="Linux-08-权限管理">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">Linux-08-权限管理</span>
-                        <span class="visible-mobile">Previous</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2022/09/18/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/" title="Linux-06-常用指令">
-                        <span class="hidden-mobile">Linux-06-常用指令</span>
+                      <a href="/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/" title="Linux-07-常用指令（续）">
+                        <span class="hidden-mobile">Linux-07-常用指令（续）</span>
                         <span class="visible-mobile">Next</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
