@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Linux-02-目录结构"/>
+
+
+
+
+  <meta name="keywords" content="linux," />
+
+
+
+
+
+  <link rel="alternate" href="/default" title="sunhuashan" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1" />
+
+
+
+<link rel="canonical" href="http://example.com/2022/09/15/Linux-02-目录结构/"/>
+
+
+<meta name="description" content="在Linux系统中，一切皆是文件   文件目录结构   &#x2F; 根目录  &#x2F;boot 存放系统启动时的核心文件  &#x2F;bin Binary的缩写，存放经常使用的命令  &#x2F;etc 存放系统和应用程序的配置文件  &#x2F;sbin System Binary 的缩写，存放可对系统进行配置的命令  &#x2F;home 存放普通用户的主目录，每个用户有一个目录，一般以用户名命名  &#x2F;lib 存放最基础的动态链接共享库  &#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux-02-目录结构">
+<meta property="og:url" content="http://example.com/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="在Linux系统中，一切皆是文件   文件目录结构   &#x2F; 根目录  &#x2F;boot 存放系统启动时的核心文件  &#x2F;bin Binary的缩写，存放经常使用的命令  &#x2F;etc 存放系统和应用程序的配置文件  &#x2F;sbin System Binary 的缩写，存放可对系统进行配置的命令  &#x2F;home 存放普通用户的主目录，每个用户有一个目录，一般以用户名命名  &#x2F;lib 存放最基础的动态链接共享库  &#x2F;">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png">
+<meta property="article:published_time" content="2022-09-15T14:07:48.000Z">
+<meta property="article:modified_time" content="2022-09-16T11:28:28.717Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1" />
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Linux-02-目录结构 - sunhuashan </title>
+  <meta name="generator" content="Hexo 5.4.2"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">sunhuashan</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Linux-02-目录结构
+        
+      </h1>
+
+      <time class="post-time">
+          Sep 15 2022
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <blockquote>
+<p>在Linux系统中，一切皆是文件</p>
+</blockquote>
+<ul>
+<li><p>文件目录结构</p>
+<p><img src="%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png"></p>
+</li>
+<li><p>/</p>
+<p>根目录</p>
+</li>
+<li><p>/boot</p>
+<p>存放系统启动时的核心文件</p>
+</li>
+<li><p>/bin</p>
+<p>Binary的缩写，存放经常使用的命令</p>
+</li>
+<li><p>/etc</p>
+<p>存放系统和应用程序的配置文件</p>
+</li>
+<li><p>/sbin</p>
+<p>System Binary 的缩写，存放可对系统进行配置的命令</p>
+</li>
+<li><p>/home</p>
+<p>存放普通用户的主目录，每个用户有一个目录，一般以用户名命名</p>
+</li>
+<li><p>/lib</p>
+<p>存放最基础的动态链接共享库</p>
+</li>
+<li><p>/usr</p>
+<p>用户安装程序的默认目录，类似win下的“Program Files”</p>
+</li>
+<li><p>/usr/local</p>
+<p>应用程序的安装目录</p>
+</li>
+<li><p>/root</p>
+<p>系统管理员的用户主目录</p>
+</li>
+<li><p>/proc 、 /srv 、/sys </p>
+<p>系统相关的文件[勿动]</p>
+</li>
+<li><p>/tmp</p>
+<p>存放临时文件</p>
+</li>
+<li><p>/dev</p>
+<p>将所有的硬件用文件的形式存储起来，类似win下的设备管理器</p>
+</li>
+<li><p>/mnt</p>
+<p>为了让用户挂载外部存储空间，如虚拟机与母机直接的共享存储空间</p>
+</li>
+<li><p>/opt</p>
+<p>应用程序安装包存放的目录</p>
+</li>
+<li><p>/var</p>
+<p>存放着在不断扩充的东西，如日志文件</p>
+</li>
+</ul>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/linux/">linux</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Linux-03-远程</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2022/09/15/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E5%8F%8A%E5%85%B6%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7/">
+        <span class="next-text nav-default">搜索引擎及其使用技巧</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2020 -
+    
+    2024
+    <span class="footer-author">sunhuashan.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
