@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
@@ -26,7 +26,7 @@
 <meta property="og:url" content="http://example.com/2022/09/18/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/index.html">
 <meta property="og:site_name" content="sunhuashan">
 <meta property="og:description" content="指定运行级别 运行级别介绍  0：关机 1：单用户【找回密码】 2：多用户状态无网络服务 3：多用户状态有网络服务 4：系统未使用保留给用户 5：图形界面 6：系统重启   init 0&#x2F;1&#x2F;2&#x2F;3&#x2F;4&#x2F;5&#x2F;6 切换运行级别  systemctl get-default 查看系统默认运行级别  systemctl set-default multi-user.target（3）&#x2F;graphical">
-<meta property="og:locale" content="en_US">
+<meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/2022/09/18/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/%E6%8C%89e.png">
 <meta property="og:image" content="http://example.com/2022/09/18/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/%E8%BF%BD%E5%8A%A0%E5%86%85%E5%AE%B9.png">
 <meta property="og:image" content="http://example.com/2022/09/18/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/%E8%BF%BD%E5%8A%A0%E5%90%8E.png">
@@ -48,7 +48,7 @@
     sidebar: "",
     isHome : false,
     isPost : true,
-    lang   : 'en'
+    lang   : 'zh-CN'
   };
 </script>
 
@@ -92,7 +92,7 @@
     <header class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-container">
   <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
+    <div class="toggle" aria-label="切换导航栏">
       <span class="toggle-line toggle-line-first"></span>
       <span class="toggle-line toggle-line-middle"></span>
       <span class="toggle-line toggle-line-last"></span>
@@ -121,12 +121,12 @@
   <ul id="menu" class="main-menu menu">
         <li class="menu-item menu-item-home">
 
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
 
   </li>
   </ul>
@@ -156,7 +156,7 @@
     
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/18/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -178,16 +178,16 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
-              <time title="Created: 2022-09-18 09:27:04" itemprop="dateCreated datePublished" datetime="2022-09-18T09:27:04+08:00">2022-09-18</time>
+              <time title="创建时间：2022-09-18 09:27:04" itemprop="dateCreated datePublished" datetime="2022-09-18T09:27:04+08:00">2022-09-18</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-09-20 22:52:54" itemprop="dateModified" datetime="2022-09-20T22:52:54+08:00">2022-09-20</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-09-20 22:52:54" itemprop="dateModified" datetime="2022-09-20T22:52:54+08:00">2022-09-20</time>
               </span>
 
           
@@ -438,10 +438,10 @@
 
       <ul class="sidebar-nav motion-element">
         <li class="sidebar-nav-toc">
-          Table of Contents
+          文章目录
         </li>
         <li class="sidebar-nav-overview">
-          Overview
+          站点概览
         </li>
       </ul>
 
@@ -462,12 +462,12 @@
           <a href="/archives/">
         
           <span class="site-state-item-count">17</span>
-          <span class="site-state-item-name">posts</span>
+          <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
         <span class="site-state-item-count">6</span>
-        <span class="site-state-item-name">tags</span>
+        <span class="site-state-item-name">标签</span>
       </div>
   </nav>
 </div>
@@ -499,7 +499,7 @@
   </span>
   <span class="author" itemprop="copyrightHolder">sunhuashan</span>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
   </div>
 
         
