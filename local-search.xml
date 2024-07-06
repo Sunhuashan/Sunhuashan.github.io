@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  
+  
+  
+  <entry>
+    <title>Linux-09-crond</title>
+    <link href="/2022/10/06/Linux-09-crond/"/>
+    <url>/2022/10/06/Linux-09-crond/</url>
+    
+    <content type="html"><![CDATA[<ul><li><p>crontab [选项]</p><p>进行定时任务的设置</p><ul><li><p>-e</p><p>编辑crontab定时任务</p></li><li><p>-l</p><p>查询crontab定时任务</p></li><li><p>-r</p><p>删除当前用户的所有crontab任务</p></li></ul></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>ML-01-简介</title>
+    <link href="/2022/10/05/ML-01-%E7%AE%80%E4%BB%8B/"/>
+    <url>/2022/10/05/ML-01-%E7%AE%80%E4%BB%8B/</url>
+    
+    <content type="html"><![CDATA[<blockquote><p>Machine Learning  ≈  Looking for Function</p></blockquote><ul><li><p><strong>regression</strong></p><p>寻找具有一个输出值的函数</p></li><li><p><strong>classification</strong></p></li></ul><p>​        寻找一个可以选择给定选项的函数</p><ul><li><p><strong>structured</strong> <strong>learning</strong></p><p> 让机器学会创造</p></li></ul><h3 id="How-to-find-a-function"><a href="#How-to-find-a-function" class="headerlink" title="How to find a function?"></a>How to find a function?</h3><p>案例：根据YouTube后台数据预测未来数据</p><ol><li><p><strong>function with unknown parameter</strong></p><p>根据经验提出含有未知参数的模型（model）<br>$$<br>y = b + wx_1<br>$$<br>y：预测值；b：bias；w：weight ；x：feature</p></li><li><p><strong>define loss from training data</strong></p><p>L(b,w)：损失函数</p><p><img src="loss.png"></p></li><li><p><strong>optimization</strong></p><ul><li>Gradient Descent</li></ul></li></ol><p>​        <img src="gradient.png"></p>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>machine-learning</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux-08-权限管理</title>
+    <link href="/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/"/>
+    <url>/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/</url>
+    
+    <content type="html"><![CDATA[<h3 id="组"><a href="#组" class="headerlink" title="组"></a>组</h3><p>文件的<strong>所有者</strong>，<strong>所在组</strong>，<strong>其他组</strong>概念</p><p><img src="%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png"></p><ul><li><p>所有者</p><p>ls -ahl 可查看文件或目录的所有者</p><p>chown 指令改变文件或目录的所有者（change owner）</p><p>案例：chown tom apple.txt</p></li><li><p>所在组</p><p>文件默认属于用户所在的组</p><p>chgrp 指令改变文件或目录的所在组（change group）</p><p>案例：chgrp fruit orange.txt</p></li><li><p>其他组</p><p>除了文件所有者和文件所在组外，其余用户对文件而言均在其他组</p></li><li><p>groupadd monster </p><p>创建组</p></li><li><p>useradd -g monster fox</p><p>创建用户并将其加入monster组</p></li><li><p>usermod -g 组名 用户名</p><p>修改用户所在组</p><p>案例：cat /etc/group | grep “wudang”  查看组是否存在</p><p>​            id zwj  查看用户是否存在</p><p>​            usermod -g wudang zwj  修改用户所在组</p></li><li><p>usermod -d 目录名 用户名</p><p>修改用户登录的默认初始目录（用户要有进入新目录的权限）</p></li></ul><h3 id="文件操作权限"><a href="#文件操作权限" class="headerlink" title="文件操作权限"></a>文件操作权限</h3><p>例如：-rwxrw—-</p><ul><li><p>0位—文件类型</p><ul><li><p>-代表普通文件</p></li><li><p>l  代表链接(link)</p></li><li><p>d 代表目录(directory)</p></li><li><p>c  代表字符设备文件（鼠标、键盘）(char)</p></li><li><p>b  代表块设备（硬盘）(block)</p></li></ul></li><li><p>rwx权限</p><ul><li>1-3位—文件所有者用户的权限</li><li>4-6位—文件所在组用户的权限</li><li>7-9位—文件其他组用户的权限</li></ul><p><strong>作用于文件</strong></p><p>r：可以读取文件（read）</p><p>w：可以写入文件（write）（但不可创建、删除文件，要有目录的w权限）</p><p>x：可以执行文件（execute）（要求是<strong>可执行文件</strong>）</p></li></ul><p>​        <strong>作用于目录</strong></p><p>​        r：可以读取目录下的内容（ls指令）</p><p>​        w：可以修改目录里的内容（在目录内创建、删除文件，重命名目录）</p><p>​        x：可以进入改目录（cd指令）</p><ul><li><p>chmod 指令</p><p>修改文件或者目录的权限</p><ul><li><p>方式1</p><p>u：所有者；  g：所在组； o：其他组；a：所有人</p><p>1.chmod u=rwx，g=rx，o=x  文件/目录名</p><p>2.chmod o+w  文件/目录名</p><p>3.chmod a-x 文件/目录名</p></li><li><p>方式2</p><p>r=4，w=2，x=1</p><p>1=–x</p><p>2=-w-</p><p>3=-wx</p><p>…</p><p>7=rwx</p><p>案例：chmod 751 hello.txt  将文件权限修改为 rwxr-x–x</p></li></ul></li><li><p>chown</p><p>chown newowner 文件/目录 —- 改变所有者</p><p>chown newowner:newgroup 文件目录 —- 改变所有者和所在组</p><ul><li>-R 当作用于目录上时，递归生效</li></ul><p>案例1：chown tom abc.txt</p></li><li><p>chgrp</p><p>chgrp newgroup 文件/目录名 —- 改变所在组</p><ul><li>-R 当作用于目录上时，递归生效</li></ul></li></ul><h3 id="权限管理实践"><a href="#权限管理实践" class="headerlink" title="权限管理实践"></a>权限管理实践</h3><ul><li><p>警察与土匪游戏</p><p><img src="%E5%AE%9E%E8%B7%B51-01.png"></p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs shell">root@<br>groupadd police<br>groupadd bandit<br>useradd jack -g police<br>useradd jerry -g police<br>useradd xh -g bandit<br>useradd xq -g bandit<br>passwd jack<br>passwd jerry<br>passwd xh<br>passwd xq<br><br>jack@<br>touch jackfile<br>chomd 640 jackfile<br>chmod g=rw,o=r jackfile<br><br>root@<br>usermod -g police xh<br><br>xh@<br>cd /home/jack/<br></code></pre></td></tr></table></figure><p>小结论：要对相应目录内的文件进行操作，首先要获取目录的权限</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">#</span><span class="language-bash">需要以下指令可以达到读写目的</span><br>jack@<br>chmod 770 /home/jack/ <br></code></pre></td></tr></table></figure></li><li><p>实践2</p><p><img src="%E5%AE%9E%E8%B7%B52.png"></p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs shell">root@<br>groupadd sx<br>groupadd yg<br>useradd tangs -g sx<br>useradd shas -g sx<br>useradd monkey -g yg<br>useradd pig -g yg<br>passwd tangs<br>passwd shas<br>passwd monkey<br>passwd pig<br><br>monkey@<br>vim Monkey.java<br>chmod g=rw Monkey.java<br><span class="hljs-meta prompt_">#</span><span class="language-bash">注意</span><br>chmod g+r+w+x /home/monkey/<br><br>pig@<br>cd /home/monkey/<br>vim Monkey.java<br><br>root@<br>usermod -g yg shas<br><br>shas@<br>cd /home/monkey/<br>vim Monkey.java<br></code></pre></td></tr></table></figure><p>小结论：对于目录的 rwx 权限的理解</p><ul><li>r：读的权限，查看目录里的内容（ls 指令）</li><li>w：写的权限，删除、创建目录里的文件</li><li>x：执行权限，可以进入目录，可以根据权限操作目录里的文件（不必获取目录读写权限）</li></ul></li><li><p>实践3</p><p><img src="%E5%AE%9E%E8%B7%B53.png"></p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs shell">root@<br>useradd mycentos<br>passwd mycentos<br><br>mycentos@<br>mkdir -p test/t11/t1/<br>cd test/t11/t1/<br>touch aa<br>vim aa<br>chmod u+x aa<br>./aa<br>rm -rf test/t11/t1/<br><br>root@<br>userdel -r mycentos<br>systemctl set-default graphical.target<br>reboot<br>shutdowm<br></code></pre></td></tr></table></figure></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux-07-常用指令（续）</title>
+    <link href="/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/"/>
+    <url>/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/</url>
+    
+    <content type="html"><![CDATA[<h3 id="时间日期指令"><a href="#时间日期指令" class="headerlink" title="时间日期指令"></a>时间日期指令</h3><ul><li><p>date </p><p>显示当前时间</p><ul><li>date +%Y  年</li><li>date +%m  月</li><li>date +%d  日</li><li>date “+%Y-%m-%d %H:%M:%S”  格式化字符串</li></ul></li><li><p>date -s 字符串时间</p><p>设置系统时间</p><ul><li>date -s “2022-09-22 12:23:30”</li></ul></li><li><p>cal</p><p>查看当月日历</p><ul><li><p>cal 2022</p><p>查看全年日历</p></li></ul></li></ul><h3 id="搜索查找类指令"><a href="#搜索查找类指令" class="headerlink" title="搜索查找类指令"></a>搜索查找类指令</h3><ul><li><p>find [搜索范围] [选项]</p><p>查找指定文件或目录</p><ul><li><p>-name </p><p>根据文件名查找目录或文件</p><p>案例1：find /home -name hello.txt</p></li><li><p>-user</p><p>根据用户名查找文件或目录</p><p>案例2：find /opt -user root</p></li><li><p>-size</p><p>根据大小查找文件或目录</p><p>案例3：find / -size +200M/-200K/200G(大于200M/小于200K/等于200G) </p></li></ul></li><li><p>locate </p><p>快速定位文件路径</p><p>【定位前先使用 updatedb 指令更新数据库】</p><ul><li><p>locate hello.txt</p><p>定位hello.txt的路径</p></li></ul></li><li><p>which</p><p>定位指令路径</p><p>which ls</p><p>定位ls指令所在路径</p></li><li><p>grep配合“|”管道符号</p><p>使用grep过滤查找后使用管道符将查找内容传递给后面的命令处理</p><ul><li><p>grep [选项] 查找内容 源文件</p><ul><li>-n 显示匹配行和行号</li><li>-i 忽略字母大小写</li></ul><p>案例1：在“/home/hello.txt”文件中，查找“yes”所在行，显示行号</p><p>cat /home/hello.txt | grep -n “yes” 或</p><p>grep -n “yes” /home/hello.txt </p></li></ul></li></ul><h3 id="压缩与解压"><a href="#压缩与解压" class="headerlink" title="压缩与解压"></a>压缩与解压</h3><ul><li><p>gzip/gunzip 文件名/文件名.gz</p><p>gzip用于压缩文件，gunzip用于解压文件</p><p>案例1：gzip /home/hello.txt</p></li><li><p>zip [选项] XXX.zip 要压缩的内容</p><p>压缩文件以及文件夹</p><ul><li>-r 递归压缩</li></ul><p>案例1：zip -r myhome.zip /home/  将home目录及其子文件夹压缩</p></li><li><p>unzip [选项] XXX.zip </p><p>解压文件</p><ul><li>-d 目录名  指定解压后的目录</li></ul><p>案例1：unzip /home/myhome.zip  -d /opt/tmp</p></li><li><p>tar [选项] XXX.tar.gz 打包内容</p><p>打包、解压或压缩文件及文件夹</p><ul><li>-c  产生.tar打包文件</li><li>-v  显示详细信息</li><li>-f  指定压缩后的文件名</li><li>-z 打包同时压缩</li><li>-x 解包.tar文件</li><li>-C 指定解压位置</li></ul><p>案例1：tar -zcvf pc.tar.gz cat.txt pig.txt</p><p>案例2：tar -zcvf myhome.tar.gz /home/</p><p>案例3：tar -zxvf pc.tar.gz</p><p>案例4：tar -zxvf myhome.tar.gz -C /opt/tmp</p></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux-06-常用指令</title>
+    <link href="/2022/09/18/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/"/>
+    <url>/2022/09/18/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/</url>
+    
+    <content type="html"><![CDATA[<h3 id="指定运行级别"><a href="#指定运行级别" class="headerlink" title="指定运行级别"></a>指定运行级别</h3><ul><li><p>运行级别介绍</p><ul><li>0：关机</li><li>1：单用户【找回密码】</li><li>2：多用户状态无网络服务</li><li><strong>3：多用户状态有网络服务</strong></li><li>4：系统未使用保留给用户</li><li><strong>5：图形界面</strong></li><li>6：系统重启</li></ul></li><li><p>init 0/1/2/3/4/5/6</p><p>切换运行级别</p></li><li><p>systemctl get-default</p><p>查看系统默认运行级别</p></li><li><p>systemctl set-default multi-user.target（3）/graphical.target（5）</p><p>设置系统的默认运行级别（CentOS7将运行级别简化为3和5）</p></li></ul><h3 id="找回root密码（CentOS7）"><a href="#找回root密码（CentOS7）" class="headerlink" title="找回root密码（CentOS7）"></a>找回root密码（CentOS7）</h3><p>在系统启动时按“e”，编辑所选项</p><p><img src="%E6%8C%89e.png"></p><p>将光标移动至红色方框处，并追加“init=/bin/sh”，追加后按 Ctrl + x 进入单用户模式</p><p><img src="%E8%BF%BD%E5%8A%A0%E5%86%85%E5%AE%B9.png"></p><p><img src="%E8%BF%BD%E5%8A%A0%E5%90%8E.png"></p><p>接着在光标闪烁出输入”mount -o remount,rw /“，按回车，输入”passwd”,按回车，连续输入新密码两次后光标继续闪烁</p><p><img src="%E6%96%B0%E5%AF%86%E7%A0%81.png"></p><p>接着输入“touch /.autorelabel”后按回车，再输入“exec /sbin/init“后回车，等待系统重启即成功重置密码</p><p><img src="%E9%87%8D%E7%BD%AE%E6%88%90%E5%8A%9F.png"></p><h3 id="帮助指令"><a href="#帮助指令" class="headerlink" title="帮助指令"></a>帮助指令</h3><ul><li><p>man 命令或者配置文件</p><p>获取相关命令的帮助信息</p></li><li><p>help 命令</p><p>获得shell内置命令的帮助信息</p></li></ul><h3 id="文件目录相关指令"><a href="#文件目录相关指令" class="headerlink" title="文件目录相关指令"></a>文件目录相关指令</h3><ul><li><p>pwd </p><p>显示当前工作目录的绝对路径</p></li><li><p>ls [选项] [文件或目录]</p><ul><li>-a 显示所有，包括隐藏的（.开头）</li><li>-l 以列表方式显示信息</li><li>-al / -la 组合使用</li></ul></li><li><p>cd [目录]</p></li></ul><p>​        切换至指定目录</p><p>​        cd ~ 切换至当前用户的家目录</p><p>​        cd ../ 切换至上一级目录pwd</p><ul><li><p>mkdir [选项] 要创建的目录</p><ul><li><p>-p 创建多级目录</p><p>案例1：mkdir /home/dog 创建一个目录</p><p>案例2：mkdir -p /home/animal/dog 创建多级目录</p></li></ul></li><li><p>rmdir [选项] 要删除的空目录</p><ul><li><p>rm -rf 强制删除目录（无论是否为空）</p><p>案例一：rmdir /home/dog</p><p>案例二：rm -rf /home/animal/dog</p></li></ul></li><li><p>touch 文件名</p><p>创建新的空文件</p></li><li><p>cp [选项] 源文件/目录 目标目录</p><ul><li>-r 递归复制整个目录</li><li>\cp 强制覆盖原有的旧文件</li></ul></li><li><p>rm [选项] 要删除的文件或目录</p><ul><li>-r 递归删除目录</li><li>-f 强制删除，不提示</li></ul></li><li><p>mv 旧名 新名</p><p>重命名文件或目录</p></li><li><p>mv 文件或目录  新目录</p><p>移动文件或目录</p></li><li><p>cat [选项] 要查看的文件</p><p>查看文件</p><ul><li>-n 显示行号</li></ul></li><li><p>more  要查看的文件</p><p>按页显示文件</p><ul><li>空格键 向下翻一页</li><li>Enter 向下翻一行</li><li>q 离开more不在显示文件</li><li>Ctrl + f 向下滚动一屏</li><li>Ctrl + b 向上滚动一屏</li><li>= 输出当前行的行号</li><li>:f 输出文件名和当前行的行号</li></ul></li><li><p>less 要查看的文件（适合查看较大的文件）</p><p>分屏查看文件内容，支持各种显示终端，并非一次全部加载整个文件，而是根据显示的需要加载</p><ul><li>空格键 向下翻一页</li><li>pagedown 向下翻一页</li><li>pageup 向上翻一页</li><li>/字串 向下搜寻字串；”n“向下查找；”N”向上查找</li><li>?字串 向上搜寻字串；”n”向上查找；”N”向下查找</li><li>q 离开less</li></ul></li><li><p>echo [选项] 输出内容</p><p>输出内容至控制台</p></li></ul><p>​        案例1：echo $PATH ;输出环境变量</p><p>​        案例2：echo $HOSTNAME;输出主机名</p><p>​        案例3：echo “hello,world”;输出指定内容</p><ul><li><p>“&gt;”  目标文件（覆盖写）</p><p>输出重定向指令，将输出内容重新覆盖到目标文件</p><p>案例1：ls -l &gt; 文件</p><p>案例2：cat 文件1 &gt; 文件2</p></li><li><p>“&gt;&gt;” 目标文件（追加写）</p><p>输出重定向指令，将输出内容重新追加到目标文件</p><p>案例1：echo “追加内容” &gt;&gt; 目标文件</p><p>案例2：cal  &gt;&gt; /home/mycal  (cal命令输出当前日期)</p></li><li><p>head [选项] 文件</p><p>查看文件前10行内容</p><ul><li>-n 指定显示行数</li></ul></li><li><p>tail [选项] 文件</p><p>查看文件后10行内容</p><ul><li>-n 指定显示行数</li><li>-f  实时监控文件的追加内容（Ctrl + c 退出）</li></ul></li><li><p>ln -s [源文件或目录] [软链接名]</p><p>为原文件创建一个软链接</p></li><li><p>history </p><p>查看操作历史</p><p>案例1：history 10 ；显示最新十条</p><p>案例2：!5;重新执行编号为5的指令</p></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux-05-关机重启命令及用户管理</title>
+    <link href="/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/"/>
+    <url>/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/</url>
+    
+    <content type="html"><![CDATA[<h3 id="关机-amp-重启命令"><a href="#关机-amp-重启命令" class="headerlink" title="关机&amp;重启命令"></a>关机&amp;重启命令</h3><ul><li><p>关闭系统</p><ul><li><p>shutdown -h now </p><p>立刻进行关机</p></li><li><p>shutdown -h 1 “hello everyone ,一分钟后关机”</p><p>1分钟后关机并通知所有登陆到该系统的用户</p></li><li><p>shutdown -r now</p><p>立刻重启计算机</p></li><li><p>halt</p><p>关机，作用与”shutdown”相同</p></li><li><p>reboot</p><p>立刻重启计算机</p></li><li><p>sync</p><p>把内存数据写入到磁盘，一般在关机或重启前要执行</p></li></ul></li></ul><h3 id="用户注销与登录"><a href="#用户注销与登录" class="headerlink" title="用户注销与登录"></a>用户注销与登录</h3><ul><li><p>su - 用户名</p><p>用户切换</p><p><img src="%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png"></p></li><li><p>logout（在图形化界面无效，在运行级别3有效）</p><p>注销当前用户</p></li></ul><h3 id="用户管理"><a href="#用户管理" class="headerlink" title="用户管理"></a>用户管理</h3><ul><li><p>uesradd 用户名</p><p>添加用户</p></li><li><p>useradd -d 指定目录 用户名</p><p>添加用户并指定用户目录</p></li><li><p>passwd 用户名 </p><p>为指定用户修改密码</p></li><li><p>pwd</p><p>显示当前所在目录</p></li><li><p>userdel 用户名</p><p>删除用户账号，但是保留用户的目录</p></li><li><p>userdel -r 用户名（谨慎使用）</p><p>删除用户账号以及用户的目录</p></li><li><p>id 用户名</p><p>查询用户信息（用户id，组id，用户组id）</p></li><li><p>whoami/who am i</p><p>查询当前用户</p></li></ul><h5 id="用户组"><a href="#用户组" class="headerlink" title="用户组"></a>用户组</h5><p>类似于角色，系统对有共性（权限）的多个用户进行统一管理</p><ul><li><p>groupadd 组名</p><p>添加用户组</p></li><li><p>groupdel 组名</p><p>删除用户组</p></li><li><p>useradd -g 用户组名 用户名</p><p>添加用户至指定组</p></li><li><p>usermod -g 用户组名 用户名</p><p>修改用户所在的用户组</p></li></ul><h5 id="用户和组的相关文件"><a href="#用户和组的相关文件" class="headerlink" title="用户和组的相关文件"></a>用户和组的相关文件</h5><ul><li><p>/etc/passwd 文件（用户信息配置文件）</p><p>格式  用户名：口令：uid：gid：注释性描述：主目录：登陆shell</p></li><li><p>/etc/shadow文件（口令配置文件）</p><p>格式  登录名：加密口令：最后一次修改时间：最小时间间隔：最大时间间隔：警告时间：不活动时间：失效时间：标志</p></li><li><p>/etc/group文件 （组配置文件）</p><p>格式 组名：口令：组标识号：组内用户列表</p></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux-04-vim</title>
+    <link href="/2022/09/16/Linux-04-vim/"/>
+    <url>/2022/09/16/Linux-04-vim/</url>
+    
+    <content type="html"><![CDATA[<ul><li><p>vim的模式及切换</p><p><img src="%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2.png"></p></li><li><p>快捷键的使用</p><ul><li><p>拷贝/粘贴（一般模式）</p><p>拷贝当前行：yy</p><p>拷贝当前行至下5行：5yy</p><p>粘贴：p</p></li><li><p>删除（一般模式）</p><p>删除当前行：dd</p><p>删除当前行至下5行：5dd</p></li><li><p>查找（/命令行模式）</p><p>输入 ”/“ 进入命令行模式，输入要查找的内容，按”n”切换匹配结果</p></li><li><p>设置/取消文件行号（:命令行模式）</p><p>设置行号：set nu</p><p>取消行号：set nonu</p></li><li><p>到达文件末行和首行(一般模式)</p><p>到达文件末行：G</p><p>到达文件首行：gg</p></li><li><p>撤销（一般模式）</p><p>撤销最新的动作：u</p></li><li><p>移动光标至指定行（一般模式）</p><p>光标移动到第23行：23G</p></li></ul></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux-03-远程</title>
+    <link href="/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/"/>
+    <url>/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/</url>
+    
+    <content type="html"><![CDATA[<h3 id="Linux服务器远程登陆"><a href="#Linux服务器远程登陆" class="headerlink" title="Linux服务器远程登陆"></a>Linux服务器远程登陆</h3><ul><li><p>Xshell的使用（远程登陆）</p><p><a href="https://www.netsarang.com/en/free-for-home-school/">下载连接</a></p><p>启动Xshell并新建会话</p><p><img src="%E6%96%B0%E5%BB%BA%E4%BC%9A%E8%AF%9D.png"></p></li><li><p>Xftp的使用（远程文件传输）</p><p><a href="https://www.netsarang.com/en/free-for-home-school">下载连接</a></p><p>启动Xftp并新建会话</p><p><img src="Xftp%E6%96%B0%E5%BB%BA%E4%BC%9A%E8%AF%9D.png"></p></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux-02-目录结构</title>
+    <link href="/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/"/>
+    <url>/2022/09/15/Linux-02-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/</url>
+    
+    <content type="html"><![CDATA[<blockquote><p>在Linux系统中，一切皆是文件</p></blockquote><ul><li><p>文件目录结构</p><p><img src="%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png"></p></li><li><p>/</p><p>根目录</p></li><li><p>/boot</p><p>存放系统启动时的核心文件</p></li><li><p>/bin</p><p>Binary的缩写，存放经常使用的命令</p></li><li><p>/etc</p><p>存放系统和应用程序的配置文件</p></li><li><p>/sbin</p><p>System Binary 的缩写，存放可对系统进行配置的命令</p></li><li><p>/home</p><p>存放普通用户的主目录，每个用户有一个目录，一般以用户名命名</p></li><li><p>/lib</p><p>存放最基础的动态链接共享库</p></li><li><p>/usr</p><p>用户安装程序的默认目录，类似win下的“Program Files”</p></li><li><p>/usr/local</p><p>应用程序的安装目录</p></li><li><p>/root</p><p>系统管理员的用户主目录</p></li><li><p>/proc 、 /srv 、/sys </p><p>系统相关的文件[勿动]</p></li><li><p>/tmp</p><p>存放临时文件</p></li><li><p>/dev</p><p>将所有的硬件用文件的形式存储起来，类似win下的设备管理器</p></li><li><p>/mnt</p><p>为了让用户挂载外部存储空间，如虚拟机与母机直接的共享存储空间</p></li><li><p>/opt</p><p>应用程序安装包存放的目录</p></li><li><p>/var</p><p>存放着在不断扩充的东西，如日志文件</p></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>搜索引擎及其使用技巧</title>
+    <link href="/2022/09/15/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E5%8F%8A%E5%85%B6%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7/"/>
+    <url>/2022/09/15/%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%E5%8F%8A%E5%85%B6%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7/</url>
+    
+    <content type="html"><![CDATA[<h3 id="baidu-com"><a href="#baidu-com" class="headerlink" title="baidu.com"></a><strong>baidu.com</strong></h3><ul><li><p>减除无关资料</p><p>如: “武侠小说 -古龙”；不含“古龙”信息的“武侠小说”</p></li><li><p>并行搜索</p><p>如:”图片 | 写真”；搜索“图片”或“写真”</p></li><li><p>搜索范围限制在网页标题中</p><p>如：”写真 intitle:林青霞“；</p></li><li><p>搜索范围限制在特定网站中</p><p>如：”写真 site:skycn.com”;</p></li><li><p>搜索范围限制在URL链接中</p></li></ul><p>​        如：“photoshop inurl:jijiao”;搜索的url必须包含”jijiao“</p><ul><li><p>精确匹配</p><p>如：“ “上海科技大学” “；双引号不拆分关键词</p><p>如：”《书籍名》“；书名号精确匹配书籍</p></li></ul><h3 id="google-com"><a href="#google-com" class="headerlink" title="google.com"></a>google.com</h3><ul><li><p>按链接搜索</p><p>如：“bit link:google.com”;找出所有指向“google.com”的包含关键词”bit”的网页</p></li><li><p>intitle、inurl、intext</p></li></ul><h3 id="scholar-google-com"><a href="#scholar-google-com" class="headerlink" title="scholar.google.com"></a>scholar.google.com</h3>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>信息检索</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Linux-01-虚拟机安装CentOS</title>
+    <link href="/2022/09/14/Linux-01-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85CentOS/"/>
+    <url>/2022/09/14/Linux-01-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85CentOS/</url>
+    
+    <content type="html"><![CDATA[<ul><li><p>VM和CentOS的关系</p><p><img src="VM%E5%92%8CCentOS%E7%9A%84%E5%85%B3%E7%B3%BB.png"></p></li><li><p>VM VirtualBox的下载</p><p><a href="https://www.virtualbox.org/wiki/Downloads">VirtualBox官网</a></p></li><li><p>CentOS 7.6的下载</p><p><a href="http://mirrors.aliyun.com/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-2009.iso">下载链接</a></p></li><li><p>虚拟机下安装CentOS</p><p><img src="%E7%AC%AC%E4%B8%80%E6%AD%A5.png" alt="第一步"></p><p><img src="%E7%AC%AC%E4%BA%8C%E6%AD%A5.png" alt="第二步"></p><p><img src="%E7%AC%AC%E4%B8%89%E6%AD%A5.png" alt="第三步"></p><p><img src="%E7%AC%AC%E5%9B%9B%E6%AD%A5.png" alt="第四步"></p><p><img src="%E7%AC%AC%E4%BA%94%E6%AD%A5.png" alt="第五步"></p><p><img src="%E7%AC%AC%E5%85%AD%E6%AD%A5.png" alt="第六步"></p><p><img src="%E7%AC%AC%E4%B8%83%E6%AD%A5.png" alt="第七步"></p><p><img src="%E7%AC%AC%E5%85%AB%E6%AD%A5.png" alt="第八步"></p><p><img src="%E7%AC%AC%E4%B9%9D%E6%AD%A5.png" alt="第九步"></p><p><img src="%E7%AC%AC%E5%8D%81%E6%AD%A5.png" alt="第十步"></p><p><img src="%E7%AC%AC%E5%8D%81%E4%B8%80%E6%AD%A5.png" alt="第十一步"></p><p><img src="%E5%AE%89%E8%A3%85%E6%88%90%E5%8A%9F.png" alt="安装成功"></p></li><li><p>虚拟机系统的网络连接方式</p><p><img src="%E7%BD%91%E7%BB%9C%E8%BF%9E%E6%8E%A5%E6%96%B9%E5%BC%8F.png"></p><p><img src="%E4%B8%89%E7%A7%8D%E7%BD%91%E7%BB%9C%E8%BF%9E%E6%8E%A5%E6%A8%A1%E5%BC%8F.png"></p></li><li><p>虚拟机的克隆</p><ol><li>直接在文件资源管理器复制虚拟机的安装文件夹即可</li></ol></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>FFmpeg中使用x264编码</title>
+    <link href="/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/"/>
+    <url>/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/</url>
+    
+    <content type="html"><![CDATA[<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -h encoder=libx264<br></code></pre></td></tr></table></figure><p>查看<code>x264</code>编码器的帮助信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -i input.mp4 -vcodec libx264 -preset [字符串] output.mp4<br></code></pre></td></tr></table></figure><p>使用<code>x264</code>进行转码操作，<code>-vcodec</code>指定编解码器。</p><p><code>-preset</code>为编码预设参数，方便了<code>x264</code>的使用，预设参数的详细设置如下：</p><ul><li><code>ultrafast</code>：最快的编码方式</li><li><code>superfast</code>：超级快的编码方式</li><li><code>veryfast</code>：非常快的编码方式</li><li><code>faster</code>：稍微快的编码方式</li><li><code>fast</code>：快速的编码方式</li><li><code>medium</code>：折中的编码方式，该方式参数均为默认设置</li><li><code>slow</code>：慢的编码方式</li><li><code>slower</code>：更慢的编码方式</li><li><code>veryslow</code>：非常慢的编码方式</li><li><code>placebo</code>：最慢的编码方式</li></ul><p>设置不同的预设参数，很多编码参数会被影响，所编码出的视频清晰度也有所不同。</p>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>FFmpeg</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>FFmpeg转封装</title>
+    <link href="/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/"/>
+    <url>/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/</url>
+    
+    <content type="html"><![CDATA[]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>FFmpeg命令</title>
+    <link href="/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/"/>
+    <url>/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/</url>
+    
+    <content type="html"><![CDATA[<h3 id="ffmpeg常用命令"><a href="#ffmpeg常用命令" class="headerlink" title="ffmpeg常用命令"></a><code>ffmpeg</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg --help<br></code></pre></td></tr></table></figure><p>查看<code>ffmpeg</code>的帮助信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -version<br></code></pre></td></tr></table></figure><p>查看<code>ffmpeg</code>的版本以及子模块的版本信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -formats<br></code></pre></td></tr></table></figure><p>查看<code>ffmpeg</code>支持的封装格式</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -codecs | ffmpeg -decoders | ffmpeg -encoders<br></code></pre></td></tr></table></figure><p>查看<code>ffmpeg</code>支持的编解码格式</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -filters<br></code></pre></td></tr></table></figure><p>查看<code>ffmpeg</code>支持的滤镜</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -h muxer/demuxer/encoder/decoder/filter=name<br></code></pre></td></tr></table></figure><p>查看特定<code>封装器</code>、<code>解封装器</code>、<code>编码器</code>、<code>解码器</code>、<code>滤镜</code>支持的操作参数</p><h3 id="ffprobe常用命令"><a href="#ffprobe常用命令" class="headerlink" title="ffprobe常用命令"></a><code>ffprobe</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe --help<br></code></pre></td></tr></table></figure><p>查看<code>ffprobe</code>的帮助信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_packets input.mp4<br>ffprobe -show_data -show_packets input.mp4<br></code></pre></td></tr></table></figure><p>查看<code>input.mp4</code>多媒体数据包信息 以及 具体数据</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffpeobe -show_format input.mp4<br></code></pre></td></tr></table></figure><p>查看<code>input.mp4</code>的多媒体封装格式</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_frames input.mp4<br></code></pre></td></tr></table></figure><p>查看<code>input.mp4</code>视频文件中的帧信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_streams input.mp4<br></code></pre></td></tr></table></figure><p>查看<code>input.mp4</code>多媒体文件中的流信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -print_format / -of xml/json/csv -show_packets / -show_format / ··· input.mp4<br></code></pre></td></tr></table></figure><p>使用<code>-print_format</code>或<code>-of</code>格式化输出相关内容，支持XML、INI、JSON、CSV、FLAT等格式</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_frames -of xml -select_streams a/v/s input.mp4<br></code></pre></td></tr></table></figure><p>使用<code>-select_streams</code>仅查看视频(v)，音频(a)，字幕(s) 信息</p><h3 id="ffplay常用命令"><a href="#ffplay常用命令" class="headerlink" title="ffplay常用命令"></a><code>ffplay</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay --help<br></code></pre></td></tr></table></figure><p>查看<code>ffplay</code>的帮助信息</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ss 10 input.mp4<br></code></pre></td></tr></table></figure><p>将<code>input.mp4</code>定位到第<code>10</code>秒开始播放</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ss 10 -t 20 input.mp4<br></code></pre></td></tr></table></figure><p>将<code>input.mp4</code>定位到第<code>10</code>秒开始播放，累计播放<code>20</code>秒后关闭</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;PLAY TEST&quot; input.mp4<br></code></pre></td></tr></table></figure><p>自定义播放器窗口显示的标题</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;网络直播流&quot; rtmp://up.v.test.com/live/stream<br></code></pre></td></tr></table></figure><p>使用<code>ffplay</code>打开网络直播流</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;PLAY TEST&quot; -ss 5 -t 10 -autoexit input.mp4<br></code></pre></td></tr></table></figure><p><code>-autoexit</code>使多媒体播放完毕后退出<code>ffplay</code>，默认情况下播放完毕后不退出</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -vcodec h264 input.mp4<br></code></pre></td></tr></table></figure><p><code>-vcodec</code>强制使用指定的解码器解码多媒体文件</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ast 5 -vst 4 -sst 3 input.ts<br></code></pre></td></tr></table></figure><p>视频流出现多个<code>Program</code>时，使用<code>-ast</code>指定播放的音频流，使用<code>-vst</code>指定播放的视频流，使用<code>-sst</code>指定播放的字幕流</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -vf &quot;subtitles=input.srt&quot; input.mp4<br></code></pre></td></tr></table></figure><p><code>-vf</code>设置视频滤镜，<code>subtitles</code>指定字幕滤镜，<code>.srt</code>为字幕文件</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -showmode 0/1/2 input.mp3<br></code></pre></td></tr></table></figure><p><code>-showmode</code>设置音频播放模式，可以用于音频可视化分析</p>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>音视频</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>FFmpeg的组成</title>
+    <link href="/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/"/>
+    <url>/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/</url>
+    
+    <content type="html"><![CDATA[<h3 id="FFmpeg的组成"><a href="#FFmpeg的组成" class="headerlink" title="FFmpeg的组成"></a><code>FFmpeg</code>的组成</h3><ol><li><p>封装模块<code>AVFormat</code></p><p>封装格式可以理解为一种将音频流和视频流组装起来的协议，实现音频与视频的同步。如，MP4，FLV等。</p><p><code>AVFormat</code>模块实现了绝大多数的封装格式，可以进行封装和解封装。同时，可以自定义自己的封装格式。</p></li><li><p>编解码模块<code>AVCodec</code></p><p>编码格式可以理解为一种将音频或者视频进行压缩的协议，减少文件大小，提高传输效率。如，MP3，H.265等。</p><p><code>AVCodec</code>模块实现了绝大多数的编码格式，可以进行编码和解码。</p></li><li><p>滤镜模块<code>AVFilter</code></p><p><code>AVFilter</code>模块提供了一个通用的音频、视频、字幕等滤镜处理框架。下面是一个滤镜处理的例子.</p><p><img src="AVFilter%E4%BE%8B%E5%AD%90.png"></p><p>对应的命令行如下所示：</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">./ffmpeg -i INPUT -vf &quot;split [mian][tmp]; [tmp] crop=iw:ih/2:0:0, vflip [flip]; [main][flip] overlay=0:H/2&quot; OUTPUT<br></code></pre></td></tr></table></figure><p><code>split</code>滤镜 将视频流分割，并将第二部分打上<code>[tmp]</code>标签;</p><p><code>crop</code>滤镜 根据给定参数，对视频进行裁剪 ；</p><p><code>vflip</code>滤镜 根据给定参数，对视频进行纵坐标调换操作，打上<code>flip</code>标签；</p><p><code>overlay</code>滤镜 将一路输入覆盖到另一路之上，合并输出为一路视频 。    </p></li><li><p>视频图像转换计算模块<code>swscale</code></p><p><code>swscale</code>模块提供高级的图像转换API ,例如，可以实现1080P转720P的图片缩放， YUV转RGB的图片格式转换。</p></li><li><p>音频转换计算模块<code>swresample</code></p><p><code>swresample</code>模块提供高级的音频重采样API，可以实现音频采样，音频通道布局转换等。</p></li></ol><h3 id="编解码工具ffmpeg的使用"><a href="#编解码工具ffmpeg的使用" class="headerlink" title="编解码工具ffmpeg的使用"></a>编解码工具<code>ffmpeg</code>的使用</h3><p><code>ffmpeg</code>是<code>FFmpeg</code>编译后生成的一个可执行文件，下面一个例子介绍该工具的使用。</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -i input.mp4 -f avi output.avi<br></code></pre></td></tr></table></figure><p>该命令将<code>MP4</code>格式的文件转换为<code>AVI</code>格式的文件，通过<code>-i</code>参数获取<code>输入源</code>，通过<code>-f</code>参数规定<code>输出格式</code>。</p><p><code>ffmpeg</code>的主要工作流程包括:</p><ul><li>Demuxing(解封装)</li><li>Decoding(解码)</li><li>Encoding(编码)</li><li>Muxing(封装)</li></ul><p>转换步骤如下图</p><p><img src="ffmpeg%E5%B7%A5%E4%BD%9C%E6%AD%A5%E9%AA%A4.png"></p><h3 id="播放器工具ffplay的使用"><a href="#播放器工具ffplay的使用" class="headerlink" title="播放器工具ffplay的使用"></a>播放器工具<code>ffplay</code>的使用</h3><p><code>ffplay</code>也是<code>FFmpeg</code>编译后生成的一个可执行文件，提供了音视频显示和播放相关的图像信息、音频的波形信息等。</p><h3 id="多媒体分析器ffprobe的使用"><a href="#多媒体分析器ffprobe的使用" class="headerlink" title="多媒体分析器ffprobe的使用"></a>多媒体分析器<code>ffprobe</code>的使用</h3><p><code>ffplay</code>也是<code>FFmpeg</code>编译后生成的一个可执行文件，可以从媒体文件或者媒体流中获取媒体信息，比如音频的参数、视频的参数等等。</p>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>音视频</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>d2l-ch1</title>
+    <link href="/2022/06/19/d2l-ch1/"/>
+    <url>/2022/06/19/d2l-ch1/</url>
+    
+    <content type="html"><![CDATA[]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>一文搞懂YUV</title>
+    <link href="/2021/07/11/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82YUV/"/>
+    <url>/2021/07/11/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82YUV/</url>
+    
+    <content type="html"><![CDATA[<h3 id="RGB-vs-YUV"><a href="#RGB-vs-YUV" class="headerlink" title="RGB vs YUV"></a>RGB vs YUV</h3><p><code>RGB</code>颜色编码是使用红色(Red)、绿色(Green)和蓝色(Blue)三原色以不同比例混合，用来表示其他各种颜色。其中，每种颜色占8bit，一个像素点占24bit，也就是3byte。</p><blockquote><p>人体生命科学研究表明，人眼对于明暗的感知要比对色彩的感知更加敏感。</p></blockquote><p>因此，可以在颜色编码中将<code>亮度</code>与<code>色度</code>分离开，再将部分<code>色度</code>息忽略，进而压缩图像，这就是<code>YUV</code>颜色编码。其中，Y表示亮度，U、V表示色度。</p><p>由于图像在采集后和显示时均使用<code>RGB</code>模型表示，而为了方便传输，对图像进行压缩传输时需使用<code>YUV</code>模型表示。这就需要图像在采集后由<code>RGB</code>模型转换为<code>YUV</code>模型，传输到显示端后(假设需要传输)，再由<code>YUV</code>模型转换为<code>RGB</code>模型。二者相互转换的公式如下所示：</p><p><img src="RGB%E4%B8%8EYUV%E7%9A%84%E8%BD%AC%E6%8D%A2.png"></p><h3 id="YUV采样格式"><a href="#YUV采样格式" class="headerlink" title="YUV采样格式"></a>YUV采样格式</h3><ol><li><p><code>YUV4:4:4</code>采样</p><p>假如图像像素为：[Y0 U0 V0]、[Y1 U1 V1]、[Y2 U2 V2]、[Y3 U3 V3] </p><p>那么采样的码流为：Y0 U0 V0 Y1 U1 V1 Y2 U2 V2 Y3 U3 V3  </p><p>最后映射出的像素点依旧为 [Y0 U0 V0]、[Y1 U1 V1]、[Y2 U2 V2]、[Y3 U3 V3] </p></li><li><p><code>YUV4:2:2</code>采样</p><p> 假如图像像素为：[Y0 U0 V0]、[Y1 U1 V1]、[Y2 U2 V2]、[Y3 U3 V3]  </p><p>那么采样的码流为：Y0 U0 Y1 V1 Y2 U2 Y3 V3   </p><p>其中，每采样过一个像素点，都会采样其 Y 分量，而 U、V 分量就会间隔一个采集一个。  </p><p>最后映射出的像素点为 [Y0 U0 V1]、[Y1 U0 V1]、[Y2 U2 V3]、[Y3 U2 V3]</p></li><li><p><code>YUV4:2:0</code>采样</p><p>假设图像像素为：  </p><p>[Y0 U0 V0]、[Y1 U1 V1]、 [Y2 U2 V2]、 [Y3 U3 V3] </p><p>[Y5 U5 V5]、[Y6 U6 V6]、 [Y7 U7 V7] 、[Y8 U8 V8]  </p><p>那么采样的码流为：Y0 U0 Y1 Y2 U2 Y3 Y5 V5 Y6 Y7 V7 Y8  </p><p>其中，每采样过一个像素点，都会采样其 Y 分量，而 U、V 分量就会间隔一行按照 2 : 1 进行采样。  </p><p>最后映射出的像素点为： </p><p>[Y0 U0 V5]、[Y1 U0 V5]、[Y2 U2 V7]、[Y3 U2 V7] </p><p>[Y5 U0 V5]、[Y6 U0 V5]、[Y7 U2 V7]、[Y8 U2 V7]</p></li></ol><h3 id="YUV存储格式"><a href="#YUV存储格式" class="headerlink" title="YUV存储格式"></a>YUV存储格式</h3><p>YUV 的存储格式有三种：</p><ul><li><p><code>planar</code> 三平面格式</p><ul><li>指先连续存储所有像素点的 Y 分量，然后存储 U 分量，最后是 V 分量。</li></ul></li><li><p><code>semi-planar</code> 两平面格式</p><ul><li>先存储所有的 Y 分量，然后交替存储 U、V 分量。</li></ul></li><li><p><code>packed</code> 打包模式</p><ul><li>指每个像素点的 Y、U、V 分量是连续交替存储的。</li></ul></li></ul><h4 id="基于YUV4-2-2的存储格式"><a href="#基于YUV4-2-2的存储格式" class="headerlink" title="基于YUV4:2:2的存储格式"></a>基于<code>YUV4:2:2</code>的存储格式</h4><ol><li><p><code>YUYV格式</code>为 <code>packed</code> 打包模式</p><p>每两个像素点使用 4 个分量存储，排列顺序如下：</p><blockquote><p>Y0 U0 Y1 V1 ···</p></blockquote></li><li><p><code>UYVY格式</code>为 <code>packet</code> 打包模式</p><p>每两个像素点使用 4 个分量存储，排列顺序如下：</p><blockquote><p>U0 Y0 V1 Y1 ···</p></blockquote></li><li><p><code>YUV422p格式</code> 为<code>planar</code> 三平面格式</p><p>先存储所有的 Y 分量，再存储所有的 U 分量，再存储所有的 V 分量。</p></li></ol><h4 id="基于YUV4-2-0的存储格式"><a href="#基于YUV4-2-0的存储格式" class="headerlink" title="基于YUV4:2:0的存储格式"></a>基于<code>YUV4:2:0</code>的存储格式</h4><ol><li><p><code>YUV420p格式</code> 为 <code>planar</code> 三平面格式</p><p>先存储所有的 Y 分量，再存储所有的 U，V 分量，根据存储 U、V 分量的先后顺序分为 <code>YU12格式</code>（又名<code>I420格式</code>） 和 <code>YV12格式</code>。</p></li><li><p><code>YUV420sp格式</code> 为 <code>semi-planar</code> 两平面格式</p><p>先存储所有的 Y 分量，再交替存储 U，V 分量，存储 U、V 分量时，使用<code>UVUVUV···</code>方式存储的格式被称为<code>NV12格式</code>，使用<code>VUVUVU···</code>方式存储的格式被称为<code>NV21格式</code>。</p></li></ol><p>更加全面的存储格式 ，见表格总结：</p><table><thead><tr><th>采样形式</th><th>像素组织形式</th><th>格式名称</th><th>第一平面</th><th>第二平面</th><th>第三平面</th></tr></thead><tbody><tr><td>YUV4:4:4</td><td>Planar</td><td>I444</td><td>YYYYYY…</td><td>UUUUU…</td><td>VVVVVV…</td></tr><tr><td>YUV4:2:2</td><td></td><td>YUYV</td><td></td><td></td><td></td></tr><tr><td>YUV4:2:2</td><td></td><td>UYVY</td><td></td><td></td><td></td></tr><tr><td>YUV4:2:2</td><td></td><td>YUV422p</td><td></td><td></td><td></td></tr><tr><td>YUV4:2:0</td><td></td><td>YU12 / I420</td><td></td><td></td><td></td></tr><tr><td>YUV4:2:0</td><td></td><td>YV12</td><td></td><td></td><td></td></tr><tr><td>YUV4:2:0</td><td></td><td>NV12</td><td></td><td></td><td></td></tr><tr><td>YUV4:2:0</td><td></td><td>NV21</td><td></td><td></td><td></td></tr></tbody></table><h3 id="YUV像素数据处理"><a href="#YUV像素数据处理" class="headerlink" title="YUV像素数据处理"></a>YUV像素数据处理</h3><ul><li><p>分离<code>YU12/I420</code>存储格式文件的 Y、U、V 分量</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment">* 将 YUV420P(YU12/I420) 文件中的Y、U、V分量分离出来</span><br><span class="hljs-comment">*/</span><br><span class="hljs-type">void</span> <span class="hljs-title function_">yuv420p_splite</span> <span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *filename, <span class="hljs-type">int</span> height, <span class="hljs-type">int</span> width, <span class="hljs-type">int</span> frames)</span> <br>&#123;<br>FILE *f1 = fopen(filename, <span class="hljs-string">&quot;rb+&quot;</span>);<br>FILE *f2 = fopen(<span class="hljs-string">&quot;yuv420_y.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br>FILE *f3 = fopen(<span class="hljs-string">&quot;yuv420_u.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br>FILE *f4 = fopen(<span class="hljs-string">&quot;yuv420_v.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br><br><span class="hljs-type">int</span> size_y = height * width;<br><span class="hljs-type">int</span> size_u = height * width / <span class="hljs-number">4</span>;<br><span class="hljs-type">int</span> size_v = height * width / <span class="hljs-number">4</span>;<br><span class="hljs-type">int</span> size_frame = size_y + size_u + size_v;<br><span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> *buffer = (<span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> *)<span class="hljs-built_in">malloc</span>(size_frame);<br><br><span class="hljs-keyword">if</span> (buffer == <span class="hljs-literal">NULL</span>)<br><span class="hljs-keyword">return</span>;<br><br><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; frames; i++)<br>&#123;<br>fread(buffer, <span class="hljs-number">1</span>, size_frame, f1);<br><br>fwrite(buffer, <span class="hljs-number">1</span>, size_y, f2);<br><br>fwrite(buffer + size_y, <span class="hljs-number">1</span>, size_u, f3);<br><br>fwrite(buffer + size_y + size_u, <span class="hljs-number">1</span>, size_v, f4);<br>&#125;<br><br><span class="hljs-built_in">free</span>(buffer);<br>fclose(f1);<br>fclose(f2);<br>fclose(f3);<br>fclose(f4);<br>&#125;<br></code></pre></td></tr></table></figure></li><li><p>分离<code>I444</code>存储格式文件的 Y、U、V 分量</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment">* 将 YUV444P 文件中的 Y、U、V 分量分离出来</span><br><span class="hljs-comment">*/</span><br><span class="hljs-type">void</span> <span class="hljs-title function_">yuv444p_splite</span> <span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span>* filename, <span class="hljs-type">int</span> height, <span class="hljs-type">int</span> width, <span class="hljs-type">int</span> frames)</span><br>&#123;<br>FILE* f1 = fopen(filename, <span class="hljs-string">&quot;rb+&quot;</span>);<br>FILE* f2 = fopen(<span class="hljs-string">&quot;yuv444p_y.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br>FILE* f3 = fopen(<span class="hljs-string">&quot;yuv444p_u.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br>FILE* f4 = fopen(<span class="hljs-string">&quot;yuv444p_v.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br><br><span class="hljs-type">int</span> size_y = height * width;<br><span class="hljs-type">int</span> size_u = height * width;<br><span class="hljs-type">int</span> size_v = height * width;<br><span class="hljs-type">int</span> size_f = size_y + size_u + size_v;<br><span class="hljs-type">unsigned</span> <span class="hljs-type">char</span>* buffer = (<span class="hljs-type">unsigned</span> <span class="hljs-type">char</span>*)<span class="hljs-built_in">malloc</span>(size_f);<br><br><span class="hljs-keyword">if</span> (buffer == <span class="hljs-literal">NULL</span>)<br>&#123;<br><span class="hljs-keyword">return</span>;<br>&#125;<br><br><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; frames; i++)<br>&#123;<br>fread(buffer, <span class="hljs-number">1</span>, size_f, f1);<br><br>fwrite(buffer, <span class="hljs-number">1</span>, size_y, f2);<br>fwrite(buffer + size_y, <span class="hljs-number">1</span>, size_u, f3);<br>fwrite(buffer + size_y + size_u, <span class="hljs-number">1</span>, size_v, f4);<br>&#125;<br><br><span class="hljs-built_in">free</span>(buffer);<br>fclose(f1);<br>fclose(f2);<br>fclose(f3);<br>fclose(f4);<br>&#125;<br></code></pre></td></tr></table></figure></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>视频编解码</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  
+</search>

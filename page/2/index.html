@@ -1,1055 +1,656 @@
+
+
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
 <head>
   <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 5.4.2">
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
-  <link rel="mask-icon" href="/images/logo.svg" color="#222">
-
-<link rel="stylesheet" href="/css/main.css">
-
-
-<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
-
-<script id="hexo-configurations">
-    var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
-  </script>
-
-  <meta property="og:type" content="website">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="sunhuashan">
+  <meta name="keywords" content="">
+  
+    <meta property="og:type" content="website">
 <meta property="og:title" content="sunhuashan">
 <meta property="og:url" content="http://example.com/page/2/index.html">
 <meta property="og:site_name" content="sunhuashan">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:author" content="sunhuashan">
-<meta name="twitter:card" content="summary">
-
-<link rel="canonical" href="http://example.com/page/2/">
-
-
-<script id="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome : true,
-    isPost : false,
-    lang   : 'zh-CN'
-  };
-</script>
-
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
   <title>sunhuashan</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
   
 
 
 
 
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.1","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":"ture","follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"c8zId0xWOoAurzaBaRY58NVS-MdYXbMMI","app_key":"sDTCFnKWQE3a2c1vLheRuUmh","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+
+  
+<meta name="generator" content="Hexo 5.4.2"></head>
 
 
-  <noscript>
-  <style>
-  .use-motion .brand,
-  .use-motion .menu-item,
-  .sidebar-inner,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header { opacity: initial; }
+<body>
+  
 
-  .use-motion .site-title,
-  .use-motion .site-subtitle {
-    opacity: initial;
-    top: initial;
-  }
+  <header>
+    
 
-  .use-motion .logo-line-before i { left: initial; }
-  .use-motion .logo-line-after i { right: initial; }
-  </style>
-</noscript>
-
-</head>
-
-<body itemscope itemtype="http://schema.org/WebPage">
-  <div class="container use-motion">
-    <div class="headband"></div>
-
-    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-container">
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="切换导航栏">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
-    </div>
-  </div>
-
-  <div class="site-meta">
-
-    <a href="/" class="brand" rel="start">
-      <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">sunhuashan</h1>
-      <span class="logo-line-after"><i></i></span>
+<div class="header-inner" style="height: 100vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Sun Huashan</strong>
     </a>
-  </div>
 
-  <div class="site-nav-right">
-    <div class="toggle popup-trigger">
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
     </div>
   </div>
-</div>
-
-
-
-
-<nav class="site-nav">
-  <ul id="menu" class="main-menu menu">
-        <li class="menu-item menu-item-home">
-
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
-
-  </li>
-        <li class="menu-item menu-item-archives">
-
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
-
-  </li>
-  </ul>
 </nav>
 
-
-
-
-</div>
-    </header>
-
-    
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
-  </div>
-
-
-    <main class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          
-
-          <div class="content index posts-expand">
-            
-      
   
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/14/Linux-01-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85CentOS/">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
           
-            <a href="/2022/09/14/Linux-01-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85CentOS/" class="post-title-link" itemprop="url">Linux-01-虚拟机安装CentOS</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-09-14 22:41:26" itemprop="dateCreated datePublished" datetime="2022-09-14T22:41:26+08:00">2022-09-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-09-15 22:06:55" itemprop="dateModified" datetime="2022-09-15T22:06:55+08:00">2022-09-15</time>
-              </span>
-
+            <span id="subtitle" data-typed-text="To love oneself is the beginning of a lifelong romance."></span>
           
-
         </div>
-      </header>
 
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ul>
-<li><p>VM和CentOS的关系</p>
-<p><img src="VM%E5%92%8CCentOS%E7%9A%84%E5%85%B3%E7%B3%BB.png"></p>
-</li>
-<li><p>VM VirtualBox的下载</p>
-<p><a target="_blank" rel="noopener" href="https://www.virtualbox.org/wiki/Downloads">VirtualBox官网</a></p>
-</li>
-<li><p>CentOS 7.6的下载</p>
-<p><a target="_blank" rel="noopener" href="http://mirrors.aliyun.com/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-2009.iso">下载链接</a></p>
-</li>
-<li><p>虚拟机下安装CentOS</p>
-<p><img src="%E7%AC%AC%E4%B8%80%E6%AD%A5.png" alt="第一步"></p>
-<p><img src="%E7%AC%AC%E4%BA%8C%E6%AD%A5.png" alt="第二步"></p>
-<p><img src="%E7%AC%AC%E4%B8%89%E6%AD%A5.png" alt="第三步"></p>
-<p><img src="%E7%AC%AC%E5%9B%9B%E6%AD%A5.png" alt="第四步"></p>
-<p><img src="%E7%AC%AC%E4%BA%94%E6%AD%A5.png" alt="第五步"></p>
-<p><img src="%E7%AC%AC%E5%85%AD%E6%AD%A5.png" alt="第六步"></p>
-<p><img src="%E7%AC%AC%E4%B8%83%E6%AD%A5.png" alt="第七步"></p>
-<p><img src="%E7%AC%AC%E5%85%AB%E6%AD%A5.png" alt="第八步"></p>
-<p><img src="%E7%AC%AC%E4%B9%9D%E6%AD%A5.png" alt="第九步"></p>
-<p><img src="%E7%AC%AC%E5%8D%81%E6%AD%A5.png" alt="第十步"></p>
-<p><img src="%E7%AC%AC%E5%8D%81%E4%B8%80%E6%AD%A5.png" alt="第十一步"></p>
-<p><img src="%E5%AE%89%E8%A3%85%E6%88%90%E5%8A%9F.png" alt="安装成功"></p>
-</li>
-<li><p>虚拟机系统的网络连接方式</p>
-<p><img src="%E7%BD%91%E7%BB%9C%E8%BF%9E%E6%8E%A5%E6%96%B9%E5%BC%8F.png"></p>
-<p><img src="%E4%B8%89%E7%A7%8D%E7%BD%91%E7%BB%9C%E8%BF%9E%E6%8E%A5%E6%A8%A1%E5%BC%8F.png"></p>
-</li>
-<li><p>虚拟机的克隆</p>
-<ol>
-<li>直接在文件资源管理器复制虚拟机的安装文件夹即可</li>
-</ol>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">FFmpeg中使用x264编码</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-07-13 19:15:41 / 修改时间：21:53:17" itemprop="dateCreated datePublished" datetime="2022-07-13T19:15:41+08:00">2022-07-13</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -h encoder=libx264<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>x264</code>编码器的帮助信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -i input.mp4 -vcodec libx264 -preset [字符串] output.mp4<br></code></pre></td></tr></table></figure>
-
-<p>使用<code>x264</code>进行转码操作，<code>-vcodec</code>指定编解码器。</p>
-<p><code>-preset</code>为编码预设参数，方便了<code>x264</code>的使用，预设参数的详细设置如下：</p>
-<ul>
-<li><code>ultrafast</code>：最快的编码方式</li>
-<li><code>superfast</code>：超级快的编码方式</li>
-<li><code>veryfast</code>：非常快的编码方式</li>
-<li><code>faster</code>：稍微快的编码方式</li>
-<li><code>fast</code>：快速的编码方式</li>
-<li><code>medium</code>：折中的编码方式，该方式参数均为默认设置</li>
-<li><code>slow</code>：慢的编码方式</li>
-<li><code>slower</code>：更慢的编码方式</li>
-<li><code>veryslow</code>：非常慢的编码方式</li>
-<li><code>placebo</code>：最慢的编码方式</li>
-</ul>
-<p>设置不同的预设参数，很多编码参数会被影响，所编码出的视频清晰度也有所不同。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/" class="post-title-link" itemprop="url">FFmpeg转封装</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-07-08 10:39:42" itemprop="dateCreated datePublished" datetime="2022-07-08T10:39:42+08:00">2022-07-08</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">FFmpeg命令</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-07-06 21:51:01" itemprop="dateCreated datePublished" datetime="2022-07-06T21:51:01+08:00">2022-07-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-07-08 10:38:18" itemprop="dateModified" datetime="2022-07-08T10:38:18+08:00">2022-07-08</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="ffmpeg常用命令"><a href="#ffmpeg常用命令" class="headerlink" title="ffmpeg常用命令"></a><code>ffmpeg</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg --help<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>ffmpeg</code>的帮助信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -version<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>ffmpeg</code>的版本以及子模块的版本信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -formats<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>ffmpeg</code>支持的封装格式</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -codecs | ffmpeg -decoders | ffmpeg -encoders<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>ffmpeg</code>支持的编解码格式</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -filters<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>ffmpeg</code>支持的滤镜</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -h muxer/demuxer/encoder/decoder/filter=name<br></code></pre></td></tr></table></figure>
-
-<p>查看特定<code>封装器</code>、<code>解封装器</code>、<code>编码器</code>、<code>解码器</code>、<code>滤镜</code>支持的操作参数</p>
-<h3 id="ffprobe常用命令"><a href="#ffprobe常用命令" class="headerlink" title="ffprobe常用命令"></a><code>ffprobe</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe --help<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>ffprobe</code>的帮助信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_packets input.mp4<br>ffprobe -show_data -show_packets input.mp4<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>input.mp4</code>多媒体数据包信息 以及 具体数据</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffpeobe -show_format input.mp4<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>input.mp4</code>的多媒体封装格式</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_frames input.mp4<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>input.mp4</code>视频文件中的帧信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_streams input.mp4<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>input.mp4</code>多媒体文件中的流信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -print_format / -of xml/json/csv -show_packets / -show_format / ··· input.mp4<br></code></pre></td></tr></table></figure>
-
-<p>使用<code>-print_format</code>或<code>-of</code>格式化输出相关内容，支持XML、INI、JSON、CSV、FLAT等格式</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffprobe -show_frames -of xml -select_streams a/v/s input.mp4<br></code></pre></td></tr></table></figure>
-
-<p>使用<code>-select_streams</code>仅查看视频(v)，音频(a)，字幕(s) 信息</p>
-<h3 id="ffplay常用命令"><a href="#ffplay常用命令" class="headerlink" title="ffplay常用命令"></a><code>ffplay</code>常用命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay --help<br></code></pre></td></tr></table></figure>
-
-<p>查看<code>ffplay</code>的帮助信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ss 10 input.mp4<br></code></pre></td></tr></table></figure>
-
-<p>将<code>input.mp4</code>定位到第<code>10</code>秒开始播放</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ss 10 -t 20 input.mp4<br></code></pre></td></tr></table></figure>
-
-<p>将<code>input.mp4</code>定位到第<code>10</code>秒开始播放，累计播放<code>20</code>秒后关闭</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;PLAY TEST&quot; input.mp4<br></code></pre></td></tr></table></figure>
-
-<p>自定义播放器窗口显示的标题</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;网络直播流&quot; rtmp://up.v.test.com/live/stream<br></code></pre></td></tr></table></figure>
-
-<p>使用<code>ffplay</code>打开网络直播流</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -window_title &quot;PLAY TEST&quot; -ss 5 -t 10 -autoexit input.mp4<br></code></pre></td></tr></table></figure>
-
-<p><code>-autoexit</code>使多媒体播放完毕后退出<code>ffplay</code>，默认情况下播放完毕后不退出</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -vcodec h264 input.mp4<br></code></pre></td></tr></table></figure>
-
-<p><code>-vcodec</code>强制使用指定的解码器解码多媒体文件</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -ast 5 -vst 4 -sst 3 input.ts<br></code></pre></td></tr></table></figure>
-
-<p>视频流出现多个<code>Program</code>时，使用<code>-ast</code>指定播放的音频流，使用<code>-vst</code>指定播放的视频流，使用<code>-sst</code>指定播放的字幕流</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -vf &quot;subtitles=input.srt&quot; input.mp4<br></code></pre></td></tr></table></figure>
-
-<p><code>-vf</code>设置视频滤镜，<code>subtitles</code>指定字幕滤镜，<code>.srt</code>为字幕文件</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffplay -showmode 0/1/2 input.mp3<br></code></pre></td></tr></table></figure>
-
-<p><code>-showmode</code>设置音频播放模式，可以用于音频可视化分析</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/" class="post-title-link" itemprop="url">FFmpeg的组成</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-07-06 10:20:00" itemprop="dateCreated datePublished" datetime="2022-07-06T10:20:00+08:00">2022-07-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-07-11 16:22:48" itemprop="dateModified" datetime="2022-07-11T16:22:48+08:00">2022-07-11</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="FFmpeg的组成"><a href="#FFmpeg的组成" class="headerlink" title="FFmpeg的组成"></a><code>FFmpeg</code>的组成</h3><ol>
-<li><p>封装模块<code>AVFormat</code></p>
-<p>封装格式可以理解为一种将音频流和视频流组装起来的协议，实现音频与视频的同步。如，MP4，FLV等。</p>
-<p><code>AVFormat</code>模块实现了绝大多数的封装格式，可以进行封装和解封装。同时，可以自定义自己的封装格式。</p>
-</li>
-<li><p>编解码模块<code>AVCodec</code></p>
-<p>编码格式可以理解为一种将音频或者视频进行压缩的协议，减少文件大小，提高传输效率。如，MP3，H.265等。</p>
-<p><code>AVCodec</code>模块实现了绝大多数的编码格式，可以进行编码和解码。</p>
-</li>
-<li><p>滤镜模块<code>AVFilter</code></p>
-<p><code>AVFilter</code>模块提供了一个通用的音频、视频、字幕等滤镜处理框架。下面是一个滤镜处理的例子.</p>
-<p><img src="AVFilter%E4%BE%8B%E5%AD%90.png"></p>
-<p>对应的命令行如下所示：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">./ffmpeg -i INPUT -vf &quot;split [mian][tmp]; [tmp] crop=iw:ih/2:0:0, vflip [flip]; [main][flip] overlay=0:H/2&quot; OUTPUT<br></code></pre></td></tr></table></figure>
-
-<p><code>split</code>滤镜 将视频流分割，并将第二部分打上<code>[tmp]</code>标签;</p>
-<p><code>crop</code>滤镜 根据给定参数，对视频进行裁剪 ；</p>
-<p><code>vflip</code>滤镜 根据给定参数，对视频进行纵坐标调换操作，打上<code>flip</code>标签；</p>
-<p><code>overlay</code>滤镜 将一路输入覆盖到另一路之上，合并输出为一路视频 。    </p>
-</li>
-<li><p>视频图像转换计算模块<code>swscale</code></p>
-<p><code>swscale</code>模块提供高级的图像转换API ,例如，可以实现1080P转720P的图片缩放， YUV转RGB的图片格式转换。</p>
-</li>
-<li><p>音频转换计算模块<code>swresample</code></p>
-<p><code>swresample</code>模块提供高级的音频重采样API，可以实现音频采样，音频通道布局转换等。</p>
-</li>
-</ol>
-<h3 id="编解码工具ffmpeg的使用"><a href="#编解码工具ffmpeg的使用" class="headerlink" title="编解码工具ffmpeg的使用"></a>编解码工具<code>ffmpeg</code>的使用</h3><p><code>ffmpeg</code>是<code>FFmpeg</code>编译后生成的一个可执行文件，下面一个例子介绍该工具的使用。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -i input.mp4 -f avi output.avi<br></code></pre></td></tr></table></figure>
-
-<p>该命令将<code>MP4</code>格式的文件转换为<code>AVI</code>格式的文件，通过<code>-i</code>参数获取<code>输入源</code>，通过<code>-f</code>参数规定<code>输出格式</code>。</p>
-<p><code>ffmpeg</code>的主要工作流程包括:</p>
-<ul>
-<li>Demuxing(解封装)</li>
-<li>Decoding(解码)</li>
-<li>Encoding(编码)</li>
-<li>Muxing(封装)</li>
-</ul>
-<p>转换步骤如下图</p>
-<p><img src="ffmpeg%E5%B7%A5%E4%BD%9C%E6%AD%A5%E9%AA%A4.png"></p>
-<h3 id="播放器工具ffplay的使用"><a href="#播放器工具ffplay的使用" class="headerlink" title="播放器工具ffplay的使用"></a>播放器工具<code>ffplay</code>的使用</h3><p><code>ffplay</code>也是<code>FFmpeg</code>编译后生成的一个可执行文件，提供了音视频显示和播放相关的图像信息、音频的波形信息等。</p>
-<h3 id="多媒体分析器ffprobe的使用"><a href="#多媒体分析器ffprobe的使用" class="headerlink" title="多媒体分析器ffprobe的使用"></a>多媒体分析器<code>ffprobe</code>的使用</h3><p><code>ffplay</code>也是<code>FFmpeg</code>编译后生成的一个可执行文件，可以从媒体文件或者媒体流中获取媒体信息，比如音频的参数、视频的参数等等。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/06/19/d2l-ch1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/06/19/d2l-ch1/" class="post-title-link" itemprop="url">d2l-ch1</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-06-19 11:10:22" itemprop="dateCreated datePublished" datetime="2022-06-19T11:10:22+08:00">2022-06-19</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2021/07/11/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82YUV/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/11/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82YUV/" class="post-title-link" itemprop="url">一文搞懂YUV</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2021-07-11 16:10:35" itemprop="dateCreated datePublished" datetime="2021-07-11T16:10:35+08:00">2021-07-11</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2024-07-06 21:44:35" itemprop="dateModified" datetime="2024-07-06T21:44:35+08:00">2024-07-06</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="RGB-vs-YUV"><a href="#RGB-vs-YUV" class="headerlink" title="RGB vs YUV"></a>RGB vs YUV</h3><p><code>RGB</code>颜色编码是使用红色(Red)、绿色(Green)和蓝色(Blue)三原色以不同比例混合，用来表示其他各种颜色。其中，每种颜色占8bit，一个像素点占24bit，也就是3byte。</p>
-<blockquote>
-<p>人体生命科学研究表明，人眼对于明暗的感知要比对色彩的感知更加敏感。</p>
-</blockquote>
-<p>因此，可以在颜色编码中将<code>亮度</code>与<code>色度</code>分离开，再将部分<code>色度</code>息忽略，进而压缩图像，这就是<code>YUV</code>颜色编码。其中，Y表示亮度，U、V表示色度。</p>
-<p>由于图像在采集后和显示时均使用<code>RGB</code>模型表示，而为了方便传输，对图像进行压缩传输时需使用<code>YUV</code>模型表示。这就需要图像在采集后由<code>RGB</code>模型转换为<code>YUV</code>模型，传输到显示端后(假设需要传输)，再由<code>YUV</code>模型转换为<code>RGB</code>模型。二者相互转换的公式如下所示：</p>
-<p><img src="RGB%E4%B8%8EYUV%E7%9A%84%E8%BD%AC%E6%8D%A2.png"></p>
-<h3 id="YUV采样格式"><a href="#YUV采样格式" class="headerlink" title="YUV采样格式"></a>YUV采样格式</h3><ol>
-<li><p><code>YUV4:4:4</code>采样</p>
-<p>假如图像像素为：[Y0 U0 V0]、[Y1 U1 V1]、[Y2 U2 V2]、[Y3 U3 V3] </p>
-<p>那么采样的码流为：Y0 U0 V0 Y1 U1 V1 Y2 U2 V2 Y3 U3 V3  </p>
-<p>最后映射出的像素点依旧为 [Y0 U0 V0]、[Y1 U1 V1]、[Y2 U2 V2]、[Y3 U3 V3] </p>
-</li>
-<li><p><code>YUV4:2:2</code>采样</p>
-<p> 假如图像像素为：[Y0 U0 V0]、[Y1 U1 V1]、[Y2 U2 V2]、[Y3 U3 V3]  </p>
-<p>那么采样的码流为：Y0 U0 Y1 V1 Y2 U2 Y3 V3   </p>
-<p>其中，每采样过一个像素点，都会采样其 Y 分量，而 U、V 分量就会间隔一个采集一个。  </p>
-<p>最后映射出的像素点为 [Y0 U0 V1]、[Y1 U0 V1]、[Y2 U2 V3]、[Y3 U2 V3]</p>
-</li>
-<li><p><code>YUV4:2:0</code>采样</p>
-<p>假设图像像素为：  </p>
-<p>[Y0 U0 V0]、[Y1 U1 V1]、 [Y2 U2 V2]、 [Y3 U3 V3] </p>
-<p>[Y5 U5 V5]、[Y6 U6 V6]、 [Y7 U7 V7] 、[Y8 U8 V8]  </p>
-<p>那么采样的码流为：Y0 U0 Y1 Y2 U2 Y3 Y5 V5 Y6 Y7 V7 Y8  </p>
-<p>其中，每采样过一个像素点，都会采样其 Y 分量，而 U、V 分量就会间隔一行按照 2 : 1 进行采样。  </p>
-<p>最后映射出的像素点为： </p>
-<p>[Y0 U0 V5]、[Y1 U0 V5]、[Y2 U2 V7]、[Y3 U2 V7] </p>
-<p>[Y5 U0 V5]、[Y6 U0 V5]、[Y7 U2 V7]、[Y8 U2 V7]</p>
-</li>
-</ol>
-<h3 id="YUV存储格式"><a href="#YUV存储格式" class="headerlink" title="YUV存储格式"></a>YUV存储格式</h3><p>YUV 的存储格式有三种：</p>
-<ul>
-<li><p><code>planar</code> 三平面格式</p>
-<ul>
-<li>指先连续存储所有像素点的 Y 分量，然后存储 U 分量，最后是 V 分量。</li>
-</ul>
-</li>
-<li><p><code>semi-planar</code> 两平面格式</p>
-<ul>
-<li>先存储所有的 Y 分量，然后交替存储 U、V 分量。</li>
-</ul>
-</li>
-<li><p><code>packed</code> 打包模式</p>
-<ul>
-<li>指每个像素点的 Y、U、V 分量是连续交替存储的。</li>
-</ul>
-</li>
-</ul>
-<h4 id="基于YUV4-2-2的存储格式"><a href="#基于YUV4-2-2的存储格式" class="headerlink" title="基于YUV4:2:2的存储格式"></a>基于<code>YUV4:2:2</code>的存储格式</h4><ol>
-<li><p><code>YUYV格式</code>为 <code>packed</code> 打包模式</p>
-<p>每两个像素点使用 4 个分量存储，排列顺序如下：</p>
-<blockquote>
-<p>Y0 U0 Y1 V1 ···</p>
-</blockquote>
-</li>
-<li><p><code>UYVY格式</code>为 <code>packet</code> 打包模式</p>
-<p>每两个像素点使用 4 个分量存储，排列顺序如下：</p>
-<blockquote>
-<p>U0 Y0 V1 Y1 ···</p>
-</blockquote>
-</li>
-<li><p><code>YUV422p格式</code> 为<code>planar</code> 三平面格式</p>
-<p>先存储所有的 Y 分量，再存储所有的 U 分量，再存储所有的 V 分量。</p>
-</li>
-</ol>
-<h4 id="基于YUV4-2-0的存储格式"><a href="#基于YUV4-2-0的存储格式" class="headerlink" title="基于YUV4:2:0的存储格式"></a>基于<code>YUV4:2:0</code>的存储格式</h4><ol>
-<li><p><code>YUV420p格式</code> 为 <code>planar</code> 三平面格式</p>
-<p>先存储所有的 Y 分量，再存储所有的 U，V 分量，根据存储 U、V 分量的先后顺序分为 <code>YU12格式</code>（又名<code>I420格式</code>） 和 <code>YV12格式</code>。</p>
-</li>
-<li><p><code>YUV420sp格式</code> 为 <code>semi-planar</code> 两平面格式</p>
-<p>先存储所有的 Y 分量，再交替存储 U，V 分量，存储 U、V 分量时，使用<code>UVUVUV···</code>方式存储的格式被称为<code>NV12格式</code>，使用<code>VUVUVU···</code>方式存储的格式被称为<code>NV21格式</code>。</p>
-</li>
-</ol>
-<p>更加全面的存储格式 ，见表格总结：</p>
-<table>
-<thead>
-<tr>
-<th>采样形式</th>
-<th>像素组织形式</th>
-<th>格式名称</th>
-<th>第一平面</th>
-<th>第二平面</th>
-<th>第三平面</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>YUV4:4:4</td>
-<td>Planar</td>
-<td>I444</td>
-<td>YYYYYY…</td>
-<td>UUUUU…</td>
-<td>VVVVVV…</td>
-</tr>
-<tr>
-<td>YUV4:2:2</td>
-<td></td>
-<td>YUYV</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>YUV4:2:2</td>
-<td></td>
-<td>UYVY</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>YUV4:2:2</td>
-<td></td>
-<td>YUV422p</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>YUV4:2:0</td>
-<td></td>
-<td>YU12 / I420</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>YUV4:2:0</td>
-<td></td>
-<td>YV12</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>YUV4:2:0</td>
-<td></td>
-<td>NV12</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>YUV4:2:0</td>
-<td></td>
-<td>NV21</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-</tbody></table>
-<h3 id="YUV像素数据处理"><a href="#YUV像素数据处理" class="headerlink" title="YUV像素数据处理"></a>YUV像素数据处理</h3><ul>
-<li><p>分离<code>YU12/I420</code>存储格式文件的 Y、U、V 分量</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment">* 将 YUV420P(YU12/I420) 文件中的Y、U、V分量分离出来</span><br><span class="hljs-comment">*/</span><br><span class="hljs-type">void</span> <span class="hljs-title function_">yuv420p_splite</span> <span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *filename, <span class="hljs-type">int</span> height, <span class="hljs-type">int</span> width, <span class="hljs-type">int</span> frames)</span> <br>&#123;<br>	FILE *f1 = fopen(filename, <span class="hljs-string">&quot;rb+&quot;</span>);<br>	FILE *f2 = fopen(<span class="hljs-string">&quot;yuv420_y.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br>	FILE *f3 = fopen(<span class="hljs-string">&quot;yuv420_u.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br>	FILE *f4 = fopen(<span class="hljs-string">&quot;yuv420_v.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br><br>	<span class="hljs-type">int</span> size_y = height * width;<br>	<span class="hljs-type">int</span> size_u = height * width / <span class="hljs-number">4</span>;<br>	<span class="hljs-type">int</span> size_v = height * width / <span class="hljs-number">4</span>;<br>	<span class="hljs-type">int</span> size_frame = size_y + size_u + size_v;<br>	<span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> *buffer = (<span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> *)<span class="hljs-built_in">malloc</span>(size_frame);<br><br>	<span class="hljs-keyword">if</span> (buffer == <span class="hljs-literal">NULL</span>)<br>		<span class="hljs-keyword">return</span>;<br><br>	<span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; frames; i++)<br>	&#123;<br>		fread(buffer, <span class="hljs-number">1</span>, size_frame, f1);<br><br>		fwrite(buffer, <span class="hljs-number">1</span>, size_y, f2);<br><br>		fwrite(buffer + size_y, <span class="hljs-number">1</span>, size_u, f3);<br><br>		fwrite(buffer + size_y + size_u, <span class="hljs-number">1</span>, size_v, f4);<br>	&#125;<br><br>	<span class="hljs-built_in">free</span>(buffer);<br>	fclose(f1);<br>	fclose(f2);<br>	fclose(f3);<br>	fclose(f4);<br>&#125;<br></code></pre></td></tr></table></figure></li>
-<li><p>分离<code>I444</code>存储格式文件的 Y、U、V 分量</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment">* 将 YUV444P 文件中的 Y、U、V 分量分离出来</span><br><span class="hljs-comment">*/</span><br><span class="hljs-type">void</span> <span class="hljs-title function_">yuv444p_splite</span> <span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span>* filename, <span class="hljs-type">int</span> height, <span class="hljs-type">int</span> width, <span class="hljs-type">int</span> frames)</span><br>&#123;<br>	FILE* f1 = fopen(filename, <span class="hljs-string">&quot;rb+&quot;</span>);<br>	FILE* f2 = fopen(<span class="hljs-string">&quot;yuv444p_y.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br>	FILE* f3 = fopen(<span class="hljs-string">&quot;yuv444p_u.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br>	FILE* f4 = fopen(<span class="hljs-string">&quot;yuv444p_v.y&quot;</span>, <span class="hljs-string">&quot;wb+&quot;</span>);<br><br>	<span class="hljs-type">int</span> size_y = height * width;<br>	<span class="hljs-type">int</span> size_u = height * width;<br>	<span class="hljs-type">int</span> size_v = height * width;<br>	<span class="hljs-type">int</span> size_f = size_y + size_u + size_v;<br>	<span class="hljs-type">unsigned</span> <span class="hljs-type">char</span>* buffer = (<span class="hljs-type">unsigned</span> <span class="hljs-type">char</span>*)<span class="hljs-built_in">malloc</span>(size_f);<br><br>	<span class="hljs-keyword">if</span> (buffer == <span class="hljs-literal">NULL</span>)<br>	&#123;<br>		<span class="hljs-keyword">return</span>;<br>	&#125;<br><br>	<span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; frames; i++)<br>	&#123;<br>		fread(buffer, <span class="hljs-number">1</span>, size_f, f1);<br><br>		fwrite(buffer, <span class="hljs-number">1</span>, size_y, f2);<br>		fwrite(buffer + size_y, <span class="hljs-number">1</span>, size_u, f3);<br>		fwrite(buffer + size_y + size_u, <span class="hljs-number">1</span>, size_v, f4);<br>	&#125;<br>	<br>	<span class="hljs-built_in">free</span>(buffer);<br>	fclose(f1);<br>	fclose(f2);<br>	fclose(f3);<br>	fclose(f4);<br>&#125;<br></code></pre></td></tr></table></figure></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
-  
-  <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
-  </nav>
-
-
-
-          </div>
-          
-
-<script>
-  window.addEventListener('tabs:register', () => {
-    let { activeClass } = CONFIG.comments;
-    if (CONFIG.comments.storage) {
-      activeClass = localStorage.getItem('comments_active') || activeClass;
-    }
-    if (activeClass) {
-      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
-      if (activeTab) {
-        activeTab.click();
-      }
-    }
-  });
-  if (CONFIG.comments.storage) {
-    window.addEventListener('tabs:click', event => {
-      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      let commentClass = event.target.classList[1];
-      localStorage.setItem('comments_active', commentClass);
-    });
-  }
-</script>
-
-        </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
-
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          文章目录
-        </li>
-        <li class="sidebar-nav-overview">
-          站点概览
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">sunhuashan</p>
-  <div class="site-description" itemprop="description"></div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
         
-          <span class="site-state-item-count">17</span>
-          <span class="site-state-item-name">日志</span>
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      <div class="container nopadding-x-md">
+        <div id="board"
+          style="margin-top: 0">
+          
+          <div class="container">
+            <div class="row">
+              <div class="col-12 col-md-10 m-auto">
+                
+
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2022/09/14/Linux-01-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85CentOS/" target="_self">
+          Linux-01-虚拟机安装CentOS
         </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2022/09/14/Linux-01-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85CentOS/" target="_self">
+        <div>
+          VM和CentOS的关系   VM VirtualBox的下载 VirtualBox官网  CentOS 7.6的下载 下载链接  虚拟机下安装CentOS              虚拟机系统的网络连接方式    虚拟机的克隆  直接在文件资源管理器复制虚拟机的安装文件夹即可
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-09-14 22:41" pubdate>
+              2022-09-14
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/linux/">#linux</a>
+            
+          </div>
+        
       </div>
-      <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">6</span>
-        <span class="site-state-item-name">标签</span>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/" target="_self">
+          FFmpeg中使用x264编码
+        </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/" target="_self">
+        <div>
+          1ffmpeg -h encoder&#x3D;libx264  查看x264编码器的帮助信息 1ffmpeg -i input.mp4 -vcodec libx264 -preset [字符串] output.mp4  使用x264进行转码操作，-vcodec指定编解码器。 -preset为编码预设参数，方便了x264的使用，预设参数的详细设置如下：  ultrafast：最快的编码方式 superfas
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-07-13 19:15" pubdate>
+              2022-07-13
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/FFmpeg/">#FFmpeg</a>
+            
+          </div>
+        
       </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/" target="_self">
+          FFmpeg转封装
+        </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/" target="_self">
+        <div>
+          
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-07-08 10:39" pubdate>
+              2022-07-08
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/" target="_self">
+          FFmpeg命令
+        </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/" target="_self">
+        <div>
+          ffmpeg常用命令1ffmpeg --help  查看ffmpeg的帮助信息 1ffmpeg -version  查看ffmpeg的版本以及子模块的版本信息 1ffmpeg -formats  查看ffmpeg支持的封装格式 1ffmpeg -codecs | ffmpeg -decoders | ffmpeg -encoders  查看ffmpeg支持的编解码格式 1ffmpeg -filte
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-07-06 21:51" pubdate>
+              2022-07-06
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E9%9F%B3%E8%A7%86%E9%A2%91/">#音视频</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/" target="_self">
+          FFmpeg的组成
+        </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/" target="_self">
+        <div>
+          FFmpeg的组成 封装模块AVFormat 封装格式可以理解为一种将音频流和视频流组装起来的协议，实现音频与视频的同步。如，MP4，FLV等。 AVFormat模块实现了绝大多数的封装格式，可以进行封装和解封装。同时，可以自定义自己的封装格式。  编解码模块AVCodec 编码格式可以理解为一种将音频或者视频进行压缩的协议，减少文件大小，提高传输效率。如，MP3，H.265等。 AVCodec模
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-07-06 10:20" pubdate>
+              2022-07-06
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E9%9F%B3%E8%A7%86%E9%A2%91/">#音视频</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2022/06/19/d2l-ch1/" target="_self">
+          d2l-ch1
+        </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2022/06/19/d2l-ch1/" target="_self">
+        <div>
+          
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-06-19 11:10" pubdate>
+              2022-06-19
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2021/07/11/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82YUV/" target="_self">
+          一文搞懂YUV
+        </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2021/07/11/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82YUV/" target="_self">
+        <div>
+          RGB vs YUVRGB颜色编码是使用红色(Red)、绿色(Green)和蓝色(Blue)三原色以不同比例混合，用来表示其他各种颜色。其中，每种颜色占8bit，一个像素点占24bit，也就是3byte。  人体生命科学研究表明，人眼对于明暗的感知要比对色彩的感知更加敏感。  因此，可以在颜色编码中将亮度与色度分离开，再将部分色度息忽略，进而压缩图像，这就是YUV颜色编码。其中，Y表示亮度，U、V
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2021-07-11 16:10" pubdate>
+              2021-07-11
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E8%A7%86%E9%A2%91%E7%BC%96%E8%A7%A3%E7%A0%81/">#视频编解码</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+
+
+  <nav aria-label="navigation">
+    <span class="pagination" id="pagination">
+      <a class="extend prev" rel="prev" href="/"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+    </span>
   </nav>
-</div>
 
 
 
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+    
 
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
     </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
-
-
-      </div>
-    </main>
-
-    <footer class="footer">
-      <div class="footer-inner">
-        
-
-        
-
-<div class="copyright">
-  
-  &copy; 
-  <span itemprop="copyrightYear">2024</span>
-  <span class="with-love">
-    <i class="fa fa-heart"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+  </div>
 </div>
-  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
-  </div>
 
-        
+    
 
+    
+  </main>
 
-
-
-
-
-
-
-      </div>
-    </footer>
-  </div>
-
+  <footer>
+    <div class="footer-inner">
   
-  <script src="/lib/anime.min.js"></script>
-  <script src="/lib/velocity/velocity.min.js"></script>
-  <script src="/lib/velocity/velocity.ui.min.js"></script>
-
-<script src="/js/utils.js"></script>
-
-<script src="/js/motion.js"></script>
-
-
-<script src="/js/schemes/muse.js"></script>
-
-
-<script src="/js/next-boot.js"></script>
-
-
-
-
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
+    <div class="statistics">
+  
   
 
   
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
 
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
 </body>
 </html>
