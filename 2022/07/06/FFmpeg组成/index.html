@@ -204,7 +204,7 @@
 <p><code>AVFilter</code>模块提供了一个通用的音频、视频、字幕等滤镜处理框架。下面是一个滤镜处理的例子.</p>
 <p><img src="AVFilter%E4%BE%8B%E5%AD%90.png"></p>
 <p>对应的命令行如下所示：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">./ffmpeg -i INPUT -vf &quot;split [mian][tmp]; [tmp] crop=iw:ih/2:0:0, vflip [flip]; [main][flip] overlay=0:H/2&quot; OUTPUT<br></code></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./ffmpeg -i INPUT -vf &quot;split [mian][tmp]; [tmp] crop=iw:ih/2:0:0, vflip [flip]; [main][flip] overlay=0:H/2&quot; OUTPUT</span><br></pre></td></tr></table></figure>
 
 <p><code>split</code>滤镜 将视频流分割，并将第二部分打上<code>[tmp]</code>标签;</p>
 <p><code>crop</code>滤镜 根据给定参数，对视频进行裁剪 ；</p>
@@ -219,7 +219,7 @@
 </li>
 </ol>
 <h3 id="编解码工具ffmpeg的使用"><a href="#编解码工具ffmpeg的使用" class="headerlink" title="编解码工具ffmpeg的使用"></a>编解码工具<code>ffmpeg</code>的使用</h3><p><code>ffmpeg</code>是<code>FFmpeg</code>编译后生成的一个可执行文件，下面一个例子介绍该工具的使用。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -i input.mp4 -f avi output.avi<br></code></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i input.mp4 -f avi output.avi</span><br></pre></td></tr></table></figure>
 
 <p>该命令将<code>MP4</code>格式的文件转换为<code>AVI</code>格式的文件，通过<code>-i</code>参数获取<code>输入源</code>，通过<code>-f</code>参数规定<code>输出格式</code>。</p>
 <p><code>ffmpeg</code>的主要工作流程包括:</p>

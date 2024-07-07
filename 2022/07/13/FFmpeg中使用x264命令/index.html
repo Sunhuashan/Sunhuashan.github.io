@@ -188,10 +188,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -h encoder=libx264<br></code></pre></td></tr></table></figure>
+        <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -h encoder=libx264</span><br></pre></td></tr></table></figure>
 
 <p>查看<code>x264</code>编码器的帮助信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ffmpeg -i input.mp4 -vcodec libx264 -preset [字符串] output.mp4<br></code></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i input.mp4 -vcodec libx264 -preset [字符串] output.mp4</span><br></pre></td></tr></table></figure>
 
 <p>使用<code>x264</code>进行转码操作，<code>-vcodec</code>指定编解码器。</p>
 <p><code>-preset</code>为编码预设参数，方便了<code>x264</code>的使用，预设参数的详细设置如下：</p>
