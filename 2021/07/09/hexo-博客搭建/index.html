@@ -20,22 +20,23 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="vim的模式及切换   快捷键的使用  拷贝&#x2F;粘贴（一般模式） 拷贝当前行：yy 拷贝当前行至下5行：5yy 粘贴：p  删除（一般模式） 删除当前行：dd 删除当前行至下5行：5dd  查找（&#x2F;命令行模式） 输入 ”&#x2F;“ 进入命令行模式，输入要查找的内容，按”n”切换匹配结果  设置&#x2F;取消文件行号（:命令行模式） 设置行号：set nu 取消行号：set">
+  <meta name="description" content="本文介绍如何使用 Github Pages + Hexo 搭建个人博客，在使用 .github.io 的域名时，完全免费，所有内容都经过亲测，绝对可用。 准备工作1、GitHub账号需要有一个GitHub账号，没有的话可以到 Github 官网 申请一个。 2、安装Git在自己电脑上安装好Git，hexo部署到GitHub时要用，网上找篇教程参考 。 3、安装NodeJS在自己电脑上安装好Node">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Linux-04-vim">
-<meta property="og:url" content="http://example.com/2022/09/16/Linux-04-vim/index.html">
+<meta property="og:title" content="使用 Github Pages + Hexo 搭建个人博客网站">
+<meta property="og:url" content="http://example.com/2021/07/09/hexo-%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/index.html">
 <meta property="og:site_name" content="sunhuashan">
-<meta property="og:description" content="vim的模式及切换   快捷键的使用  拷贝&#x2F;粘贴（一般模式） 拷贝当前行：yy 拷贝当前行至下5行：5yy 粘贴：p  删除（一般模式） 删除当前行：dd 删除当前行至下5行：5dd  查找（&#x2F;命令行模式） 输入 ”&#x2F;“ 进入命令行模式，输入要查找的内容，按”n”切换匹配结果  设置&#x2F;取消文件行号（:命令行模式） 设置行号：set nu 取消行号：set">
+<meta property="og:description" content="本文介绍如何使用 Github Pages + Hexo 搭建个人博客，在使用 .github.io 的域名时，完全免费，所有内容都经过亲测，绝对可用。 准备工作1、GitHub账号需要有一个GitHub账号，没有的话可以到 Github 官网 申请一个。 2、安装Git在自己电脑上安装好Git，hexo部署到GitHub时要用，网上找篇教程参考 。 3、安装NodeJS在自己电脑上安装好Node">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2.png">
-<meta property="article:published_time" content="2022-09-16T12:59:14.000Z">
-<meta property="article:modified_time" content="2024-07-07T06:56:11.114Z">
+<meta property="og:image" content="http://example.com/create_repository.png">
+<meta property="og:image" content="http://example.com/github-pages.png">
+<meta property="article:published_time" content="2021-07-09T12:42:23.000Z">
+<meta property="article:modified_time" content="2024-07-09T13:09:01.936Z">
 <meta property="article:author" content="sunhuashan">
-<meta property="article:tag" content="linux">
+<meta property="article:tag" content="tools">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2.png">
+<meta name="twitter:image" content="http://example.com/create_repository.png">
 
-<link rel="canonical" href="http://example.com/2022/09/16/Linux-04-vim/">
+<link rel="canonical" href="http://example.com/2021/07/09/hexo-%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/">
 
 
 <script id="page-configurations">
@@ -48,7 +49,7 @@
   };
 </script>
 
-  <title>Linux-04-vim | sunhuashan</title>
+  <title>使用 Github Pages + Hexo 搭建个人博客网站 | sunhuashan</title>
   
 
 
@@ -163,7 +164,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/16/Linux-04-vim/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/07/09/hexo-%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jfif">
@@ -176,7 +177,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Linux-04-vim
+          使用 Github Pages + Hexo 搭建个人博客网站
         </h1>
 
         <div class="post-meta">
@@ -186,7 +187,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2022-09-16 20:59:14" itemprop="dateCreated datePublished" datetime="2022-09-16T20:59:14+08:00">2022-09-16</time>
+              <time title="创建时间：2021-07-09 20:42:23" itemprop="dateCreated datePublished" datetime="2021-07-09T20:42:23+08:00">2021-07-09</time>
             </span>
 
           
@@ -200,41 +201,18 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <ul>
-<li><p>vim的模式及切换</p>
-<p><img src="/%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2.png"></p>
-</li>
-<li><p>快捷键的使用</p>
-<ul>
-<li><p>拷贝&#x2F;粘贴（一般模式）</p>
-<p>拷贝当前行：yy</p>
-<p>拷贝当前行至下5行：5yy</p>
-<p>粘贴：p</p>
-</li>
-<li><p>删除（一般模式）</p>
-<p>删除当前行：dd</p>
-<p>删除当前行至下5行：5dd</p>
-</li>
-<li><p>查找（&#x2F;命令行模式）</p>
-<p>输入 ”&#x2F;“ 进入命令行模式，输入要查找的内容，按”n”切换匹配结果</p>
-</li>
-<li><p>设置&#x2F;取消文件行号（:命令行模式）</p>
-<p>设置行号：set nu</p>
-<p>取消行号：set nonu</p>
-</li>
-<li><p>到达文件末行和首行(一般模式)</p>
-<p>到达文件末行：G</p>
-<p>到达文件首行：gg</p>
-</li>
-<li><p>撤销（一般模式）</p>
-<p>撤销最新的动作：u</p>
-</li>
-<li><p>移动光标至指定行（一般模式）</p>
-<p>光标移动到第23行：23G</p>
-</li>
-</ul>
-</li>
-</ul>
+        <p>本文介绍如何使用 Github Pages + Hexo 搭建个人博客，在使用 .github.io 的域名时，完全免费，所有内容都经过亲测，绝对可用。</p>
+<h3 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h3><p><strong>1、GitHub账号</strong><br>需要有一个GitHub账号，没有的话可以到 <a target="_blank" rel="noopener" href="https://github.com/">Github 官网</a> 申请一个。</p>
+<p><strong>2、安装Git</strong><br>在自己电脑上安装好Git，hexo部署到GitHub时要用，网上找篇教程参考 。</p>
+<p><strong>3、安装NodeJS</strong><br>在自己电脑上安装好NodeJS，Hexo是基于NodeJS编写的，所以需要安装NodeJS和npm工具。<br>官网下载地址：<a target="_blank" rel="noopener" href="https://nodejs.org/zh-cn/download/%EF%BC%8C%E4%B8%8B%E8%BD%BD%E5%AE%8C%E6%88%90%E5%90%8E%E4%B8%80%E8%B7%AF">https://nodejs.org/zh-cn/download/，下载完成后一路</a> next 安装即可，安装完成后可以使用 <code>node -v</code> 查看是否安装成功。</p>
+<h3 id="创建-Github-仓库"><a href="#创建-Github-仓库" class="headerlink" title="创建 Github 仓库"></a>创建 Github 仓库</h3><p><strong>1、仓库名</strong><br>仓库名必须为 &lt;用户名&gt;.github.io<br><img src="/create_repository.png" alt="创建sunhuashan.github.io"></p>
+<p><strong>2、创建一个新文件</strong><br>新文件名为 <code>index.html</code>，作为我们网站的主页面，内容可以如下所示：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span> <span class="attr">lang</span>=<span class="string">&quot;en&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">&quot;UTF-8&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>sunhuashan<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">h1</span>&gt;</span>sunhuashan<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">h1</span>&gt;</span>Hello ~<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>下面直接提交即可</p>
+<p><strong>3、访问网站主页</strong> </p>
+<p>如果上面都顺利的话，可以在仓库的 <code>Settings-&gt;Pages</code> 页面看到如下内容</p>
+<p><img src="/github-pages.png" alt="Settings-&gt;Pages界面下可以看到网站地址"></p>
+<p>或者直接访问 https:&#x2F;&#x2F;<username>.github.io&#x2F; 网页</p>
 
     </div>
 
@@ -244,7 +222,7 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/linux/" rel="tag"># linux</a>
+              <a href="/tags/tools/" rel="tag"># tools</a>
           </div>
 
         
@@ -252,13 +230,10 @@
 
         
     <div class="post-nav">
+      <div class="post-nav-item"></div>
       <div class="post-nav-item">
-    <a href="/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/" rel="prev" title="Linux-03-远程">
-      <i class="fa fa-chevron-left"></i> Linux-03-远程
-    </a></div>
-      <div class="post-nav-item">
-    <a href="/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/" rel="next" title="Linux-05-关机重启命令及用户管理">
-      Linux-05-关机重启命令及用户管理 <i class="fa fa-chevron-right"></i>
+    <a href="/2021/07/11/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82YUV/" rel="next" title="一文搞懂YUV">
+      一文搞懂YUV <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -318,6 +293,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-number">1.</span> <span class="nav-text">准备工作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA-Github-%E4%BB%93%E5%BA%93"><span class="nav-number">2.</span> <span class="nav-text">创建 Github 仓库</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
