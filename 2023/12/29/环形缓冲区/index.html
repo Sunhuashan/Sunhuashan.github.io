@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="最开始接触到环形缓冲区（ring buffer）还是在上《数据结构》这门课时，当时对这种数据结构没有多深的认识，这种情况的原因是因为缺少对其在项目中实际应用的认识。最近，在项目中遇到了类似任务间通信的需求，所以再来研究研究这位“老朋友”。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【数据结构与算法】环形缓冲区：原理，实现，与应用">
+<meta property="og:url" content="http://example.com/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="最开始接触到环形缓冲区（ring buffer）还是在上《数据结构》这门课时，当时对这种数据结构没有多深的认识，这种情况的原因是因为缺少对其在项目中实际应用的认识。最近，在项目中遇到了类似任务间通信的需求，所以再来研究研究这位“老朋友”。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710142139984.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710142414945.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710142820341.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710143203426.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710143544356.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710145030364.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710145440396.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710145946921.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710150240979.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710150559152.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710153116787.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710153221068.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710153957277.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710154031511.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710162150120.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710163030722.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710175241132.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710190309909.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710191316282.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710191854828.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710192206347.png">
+<meta property="article:published_time" content="2023-12-29T12:20:27.000Z">
+<meta property="article:modified_time" content="2024-07-10T11:23:06.215Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="数据结构 &amp; 算法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710142139984.png">
+
+<link rel="canonical" href="http://example.com/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【数据结构与算法】环形缓冲区：原理，实现，与应用 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【数据结构与算法】环形缓冲区：原理，实现，与应用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-12-29 20:20:27" itemprop="dateCreated datePublished" datetime="2023-12-29T20:20:27+08:00">2023-12-29</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E5%99%A8%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">计算器基础</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>最开始接触到环形缓冲区（ring buffer）还是在上《数据结构》这门课时，当时对这种数据结构没有多深的认识，这种情况的原因是因为缺少对其在项目中实际应用的认识。最近，在项目中遇到了类似任务间通信的需求，所以再来研究研究这位“老朋友”。</p>
+<span id="more"></span>
+
+<h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>环形缓冲区是一种抽象的数据结构，顾名思义，其通常来充当数据的 “缓冲”。例如，在网卡接收数据时，CPU 并不一定会去及时的读取它，这时，缓冲区就派上用场了。缓冲区可以理解为一片内存空间，网卡中断服务程序会在收到网卡中断时，及时的从网卡将数据读取到缓冲区中，之后，这些数据就等待被进程读取了。</p>
+<p>而使用环形缓冲区这种抽象，是因为其如下特点：</p>
+<ul>
+<li>当一个数据元素被读取出后，其余数据元素不需要移动其存储位置；</li>
+<li>缓冲区的容量（长度）一般固定，可以用一个静态数组来充当缓冲区，无需重复申请内存；</li>
+</ul>
+<h3 id="简单实现"><a href="#简单实现" class="headerlink" title="简单实现"></a>简单实现</h3><p>由于计算机内存是线性地址空间，因此 <strong>环形缓冲区（ring buffer）</strong> 需要特别的算法设计才可以从逻辑上实现。</p>
+<h4 id="简单的例子"><a href="#简单的例子" class="headerlink" title="简单的例子"></a>简单的例子</h4><p>如下是一个空间大小为 8 的环形缓冲区，左边是其抽象数据结构，后面使其具体在计算机上的实现</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710142139984.png" alt="image-20240710142139984"></p>
+<p>下面我们向缓冲区内写入一个数据，可以看到数据被写入到了 <code>0x04 </code>  这个地址</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710142414945.png" alt="image-20240710142414945"></p>
+<p>我们继续向缓冲区内写数据，下一个可以写入的位置是 <code>0x05</code>  这个地址，这一次我们多写几个数据，直到 <code>0x07</code></p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710142820341.png" alt="image-20240710142820341"></p>
+<p>这时，我们发现右边已经到达了缓冲区末尾，如果还想继续写入数据该怎么办呢？</p>
+<p>很明显，从左边的抽象数据结构可以看出，末尾的下个可用位置就是开头 <code>0x00</code> 这个地址，我们继续插入</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710143203426.png" alt="image-20240710143203426"></p>
+<p>这一次，我们直接把缓冲区写满了！！这时候该怎么办呢？一般有两种方案：</p>
+<ul>
+<li>覆盖掉老数据，假设我们继续向缓冲区写入一个数据：</li>
+</ul>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710143544356.png" alt="image-20240710143544356"></p>
+<p>可以看到，我们最先写入的 <code>21</code> 这个数据被<code>45</code> 覆盖了</p>
+<ul>
+<li>第二种也比较简单，直接告诉想要写入的进程：”我已经满了，不能再写了“，返回一个错误信息即可</li>
+</ul>
+<h4 id="试着实现"><a href="#试着实现" class="headerlink" title="试着实现"></a>试着实现</h4><p>上面的大致流程我们已经了解了，那具体的细节还有什么要注意的呢？<br>一般的，对一个环形缓冲区进行读写操作，最少需要4个信息：</p>
+<ul>
+<li>在内存中的实际<strong>开始位置</strong>（例如：一片内存的头指针，数组的第一个元素指针）；</li>
+<li>在内存中的实际<strong>结束位置</strong>（也可以是缓冲区实际空间大小，结合开始位置，可以算出结束位置）；</li>
+<li>在缓冲区中进行写操作时的<strong>写索引</strong>值；</li>
+<li>在缓冲区中进行读操作时的<strong>读索引</strong>值。</li>
+</ul>
+<p>这一次，带着这些细节，再看一次缓冲区的读写操作，初始状态如下所示：</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710145030364.png" alt="image-20240710145030364"></p>
+<p>向缓冲区写入一个数据：</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710145440396.png" alt="image-20240710145440396"></p>
+<p>继续写入数据，这次直接写到了缓冲区结束的位置，此时，按照环形的逻辑，我们应该将写指针放到下一个写入的位置，也就是缓冲区开头：</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710145946921.png" alt="image-20240710145946921"></p>
+<p>接着，我们试着读取一个数据，可以看到，读指针向后移动的一位：</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710150240979.png" alt="image-20240710150240979"></p>
+<p>最后，我们把缓冲区填满，写、读指针再次相遇：</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710150559152.png" alt="image-20240710150559152"></p>
+<h4 id="尴尬的读写指针"><a href="#尴尬的读写指针" class="headerlink" title="尴尬的读写指针"></a>尴尬的读写指针</h4><p>在我们上面的描述中，初始时，读写指针都指向了 <code>0x02</code> 地址的数据，此时，缓冲区是<strong>空的</strong>，什么数据都没有。在我们描述的最后，读写指针都指向了 <code>0x03</code> 地址的数据，此时，缓冲区是<strong>满的</strong>，无法在插入新数据（除非覆盖）。</p>
+<p>有什么不对劲的地方吗？</p>
+<p>是的，我们的缓冲区在<strong>空</strong>和<strong>满</strong> 的时候，四个指针的状态是一致的！这显然是没法满足需求的，因为我们没法给想要写入数据的进程提供正确的信息，即现在缓冲区是不是满了。</p>
+<p>如何解决这个问题呢？有一个简单的方法，原则就是让读写指针在<strong>空</strong>和<strong>满</strong>时，保持一个不一样的状态</p>
+<h4 id="一个能用的版本"><a href="#一个能用的版本" class="headerlink" title="一个能用的版本"></a>一个能用的版本</h4><p>上面我们提到，只要打破”读写指针在缓冲区空和满时指向相同的位置”这一状态即可</p>
+<p><strong>1、空的时候指向同一位置，满的时候差一位</strong> </p>
+<p><strong>空：</strong> </p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710153116787.png" alt="image-20240710153116787"></p>
+<p><strong>满：</strong></p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710153221068.png" alt="image-20240710153221068"></p>
+<p><strong>2、空的时候差一位，满的时候指向同一位置</strong> </p>
+<p><strong>空：</strong></p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710153957277.png" alt="image-20240710153957277"></p>
+<p><strong>满：</strong></p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710154031511.png" alt="image-20240710154031511"></p>
+<h4 id="C语言实现"><a href="#C语言实现" class="headerlink" title="C语言实现"></a>C语言实现</h4><ul>
+<li><p>抽象出我们需要的 4 个要素：起始地址，读指针，写指针，结束地址</p>
+<p>这里使用缓存区的长度，代指结束地址，使用数组索引代指读指针</p>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="type">char</span> *start;</span><br><span class="line">    <span class="type">int</span> read_idx;</span><br><span class="line">    <span class="type">int</span> write_idx;</span><br><span class="line">    <span class="type">int</span> buflen;</span><br><span class="line">&#125; <span class="type">ring_buffer_t</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>读取之前需要判断缓冲区<strong>是否为空</strong> (这里我们使用上面提到的第一种方式)</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">rbuf_is_empty</span><span class="params">(<span class="type">ring_buffer_t</span> *buf)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span>(buf.read_idx == buf.write_idx)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>读取</strong>一个数据：先根据读指针的位置写入数据，然后再移动读指针的位置，移动时要判断<strong>是否到了缓冲区末尾</strong></li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">rbuf_write_char</span><span class="params">(<span class="type">ring_buffer_t</span> *buf, <span class="type">char</span> *ch)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> next_idx;</span><br><span class="line">    <span class="keyword">if</span> (rbuf_is_empty())</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    <span class="comment">/* 根据读指针读取 */</span></span><br><span class="line">    next_idx = buf.read_idx;</span><br><span class="line">    *ch = *(buf.start + next_idx);</span><br><span class="line">    <span class="comment">/* 更新读指针位置 */</span></span><br><span class="line">    next_idx++;</span><br><span class="line">    buf.read_idx = next_idx % buf.len;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>写入之前需要判断缓冲区<strong>是否已满</strong>：</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">rbuf_is_full</span><span class="params">(<span class="type">ring_buffer_t</span> *buf)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span>((buf.write_idx + <span class="number">1</span>) % buf.len == buf.read_idx)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>写入</strong>一个数据：先根据写指针的位置写入数据，然后再移动写指针的位置，移动时要判断<strong>是否到了缓冲区末尾</strong></li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">rbuf_write_char</span><span class="params">(<span class="type">ring_buffer_t</span> *buf, <span class="type">char</span> ch)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> next_idx;</span><br><span class="line">    <span class="keyword">if</span> (rbuf_is_full())</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    <span class="comment">/* 根据写指针写入 */</span></span><br><span class="line">    next_idx = buf.write_idx;</span><br><span class="line">    *(buf.start + next_idx) = ch;</span><br><span class="line">    <span class="comment">/* 更新写指针位置 */</span></span><br><span class="line">    next_idx++;</span><br><span class="line">    buf.write_idx = next_idx % buf.len;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>获取缓冲区有效数据大小</strong> ：</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">rbuf_size</span><span class="params">(<span class="type">ring_buffer_t</span> *buf)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> (buf.write - buf.read + buf.len) % buf.len;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>稍微解释下缓冲区数据大小的计算：</p>
+<ul>
+<li><p>当 <code>write</code> 指针大于 <code>read</code> 指针时，加上的 <code>buf.len</code> 会在取余时被忽略掉，结果就等于<code>write - read</code></p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710162150120.png" alt="image-20240710162150120"></p>
+</li>
+<li><p>当 <code>write</code> 指针小于 <code>read</code> 指针时，加上的 <code>buf.len</code> 相当于将 <code>write</code> 指针拓展到了 <code>2 * buf.len</code> 的范围中</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710163030722.png" alt="image-20240710163030722"></p>
+</li>
+</ul>
+<h3 id="再进一步"><a href="#再进一步" class="headerlink" title="再进一步"></a>再进一步</h3><p>我们上述的简单实现中，为了避免缓冲区<strong>空</strong>和<strong>满</strong>时状态一致，舍弃了一个存储空间，打破了上述一致状态。当然，一单位存储空间的浪费还不足以让我们摒弃上面的实现方法，更重要的是，上面的方法中，充斥着大量的 <code>%</code> 求余运算。求余运算的操作比较耗时，在对性能要求较高的场景下，我们的实现还有优化的空间。</p>
+<h4 id="重新审视-‘-’-取余操作"><a href="#重新审视-‘-’-取余操作" class="headerlink" title="重新审视 ‘%’ 取余操作"></a>重新审视 ‘%’ 取余操作</h4><p>在汇编指令的实现中，取余操作往往意味着需要进行除法运算，这涉及到使用的除法指令，如 x86 下的 <code>IDIV</code>。</p>
+<p>计算机支持的运算中，算数运算耗费的时间远远大于<strong>位运算</strong>的时间，其中除法更甚，往往能到达几十个时钟周期，而<strong>位运算</strong>通常只需要一个时钟周期，所以，使用位运算替代算数运算，能极大提高程序性能。</p>
+<p>取余运算也是如此，当<strong>模</strong> 为<strong>2的a次幂</strong>时（0b10000…）可以使用位运算，取代取模运算，提高性能</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">m % n == m &amp; (n - <span class="number">1</span>), 其中 n 满足 n &amp; (n - <span class="number">1</span>) == <span class="number">0</span>, 即 n == <span class="number">2</span>^a</span><br><span class="line">m % (<span class="number">0b1000</span>...) = m &amp; (<span class="number">0b0111</span>...)</span><br></pre></td></tr></table></figure>
+
+<p> 因此，第一个可以优化的地方出现了，<strong>保证缓冲区的长度等于2的幂，使用位运算取代取模运算</strong> </p>
+<h4 id="镜像指位法"><a href="#镜像指位法" class="headerlink" title="镜像指位法"></a>镜像指位法</h4><p>在简单的实现版本中，我们把读写指针放在了 <code>[0, n - 1]</code> 这个区间内，使得缓冲区<strong>满</strong>和<strong>空</strong>两种时，读写指针的状态相同，指向了同一个位置，除了通过舍弃一位来避免这种情况外，还有什么更好的方法吗?</p>
+<p>考虑这样的办法，假设缓冲区大小仍为 <code>n</code>，但是将读写指针放在 <code>[0, 2n - 1]</code> 区间内，缓冲区为空时，<code>write == read</code>：</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710175241132.png" alt="image-20240710175241132"></p>
+<p>当缓冲区已满时，此时的写指针真正的超越了缓冲区容量大小，真实指向位置通过 <code>write &amp; (len - 1) </code>计算得出：</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710190309909.png" alt="image-20240710190309909"></p>
+<p>紧接着，将数据从缓冲区读出，直到缓冲区为空：</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710191316282.png" alt="image-20240710191316282"></p>
+<p>此时，继续缓冲区写入数据，直到缓冲区再次被填满：</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710191854828.png" alt="image-20240710191854828"></p>
+<p>最后，我们将所有的数据读出：</p>
+<p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710192206347.png" alt="image-20240710192206347"></p>
+<p>如何确定缓冲区何时为<strong>空</strong>何时已<strong>满</strong>呢？</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84-%E7%AE%97%E6%B3%95/" rel="tag"># 数据结构 & 算法</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/10/06/Linux-09-crond/" rel="prev" title="Linux-09-crond">
+      <i class="fa fa-chevron-left"></i> Linux-09-crond
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">简单实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="nav-number">2.1.</span> <span class="nav-text">简单的例子</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%95%E7%9D%80%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.2.</span> <span class="nav-text">试着实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B0%B4%E5%B0%AC%E7%9A%84%E8%AF%BB%E5%86%99%E6%8C%87%E9%92%88"><span class="nav-number">2.3.</span> <span class="nav-text">尴尬的读写指针</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E8%83%BD%E7%94%A8%E7%9A%84%E7%89%88%E6%9C%AC"><span class="nav-number">2.4.</span> <span class="nav-text">一个能用的版本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.5.</span> <span class="nav-text">C语言实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%8D%E8%BF%9B%E4%B8%80%E6%AD%A5"><span class="nav-number">3.</span> <span class="nav-text">再进一步</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%87%8D%E6%96%B0%E5%AE%A1%E8%A7%86-%E2%80%98-%E2%80%99-%E5%8F%96%E4%BD%99%E6%93%8D%E4%BD%9C"><span class="nav-number">3.1.</span> <span class="nav-text">重新审视 ‘%’ 取余操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%95%9C%E5%83%8F%E6%8C%87%E4%BD%8D%E6%B3%95"><span class="nav-number">3.2.</span> <span class="nav-text">镜像指位法</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
