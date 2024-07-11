@@ -20,12 +20,12 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="最开始接触到环形缓冲区（ring buffer）还是在上《数据结构》这门课时，当时对这种数据结构没有多深的认识，这种情况的原因是因为缺少对其在项目中实际应用的认识。最近，在项目中遇到了类似任务间通信的需求，所以再来研究研究这位“老朋友”。">
+  <meta name="description" content="最开始接触到环形缓冲区（ring buffer）还是在上《数据结构》这门课时，当时对这种数据结构没有多深的认识，这是因为对其在项目中实际应用缺少足够的认识。最近，由于在项目中遇到了类似任务间通信的需求，所以再来研究研究这位“老朋友”。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="【数据结构与算法】环形缓冲区：原理，实现，与应用">
 <meta property="og:url" content="http://example.com/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/index.html">
 <meta property="og:site_name" content="sunhuashan">
-<meta property="og:description" content="最开始接触到环形缓冲区（ring buffer）还是在上《数据结构》这门课时，当时对这种数据结构没有多深的认识，这种情况的原因是因为缺少对其在项目中实际应用的认识。最近，在项目中遇到了类似任务间通信的需求，所以再来研究研究这位“老朋友”。">
+<meta property="og:description" content="最开始接触到环形缓冲区（ring buffer）还是在上《数据结构》这门课时，当时对这种数据结构没有多深的认识，这是因为对其在项目中实际应用缺少足够的认识。最近，由于在项目中遇到了类似任务间通信的需求，所以再来研究研究这位“老朋友”。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710142139984.png">
 <meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710142414945.png">
@@ -49,7 +49,7 @@
 <meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710191854828.png">
 <meta property="og:image" content="http://example.com/imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710192206347.png">
 <meta property="article:published_time" content="2023-12-29T12:20:27.000Z">
-<meta property="article:modified_time" content="2024-07-10T11:23:06.215Z">
+<meta property="article:modified_time" content="2024-07-10T14:18:35.802Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="数据结构 &amp; 算法">
 <meta name="twitter:card" content="summary">
@@ -229,7 +229,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>最开始接触到环形缓冲区（ring buffer）还是在上《数据结构》这门课时，当时对这种数据结构没有多深的认识，这种情况的原因是因为缺少对其在项目中实际应用的认识。最近，在项目中遇到了类似任务间通信的需求，所以再来研究研究这位“老朋友”。</p>
+        <p>最开始接触到环形缓冲区（ring buffer）还是在上《数据结构》这门课时，当时对这种数据结构没有多深的认识，这是因为对其在项目中实际应用缺少足够的认识。最近，由于在项目中遇到了类似任务间通信的需求，所以再来研究研究这位“老朋友”。</p>
 <span id="more"></span>
 
 <h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>环形缓冲区是一种抽象的数据结构，顾名思义，其通常来充当数据的 “缓冲”。例如，在网卡接收数据时，CPU 并不一定会去及时的读取它，这时，缓冲区就派上用场了。缓冲区可以理解为一片内存空间，网卡中断服务程序会在收到网卡中断时，及时的从网卡将数据读取到缓冲区中，之后，这些数据就等待被进程读取了。</p>
@@ -338,17 +338,40 @@
 
 <p> 因此，第一个可以优化的地方出现了，<strong>保证缓冲区的长度等于2的幂，使用位运算取代取模运算</strong> </p>
 <h4 id="镜像指位法"><a href="#镜像指位法" class="headerlink" title="镜像指位法"></a>镜像指位法</h4><p>在简单的实现版本中，我们把读写指针放在了 <code>[0, n - 1]</code> 这个区间内，使得缓冲区<strong>满</strong>和<strong>空</strong>两种时，读写指针的状态相同，指向了同一个位置，除了通过舍弃一位来避免这种情况外，还有什么更好的方法吗?</p>
-<p>考虑这样的办法，假设缓冲区大小仍为 <code>n</code>，但是将读写指针放在 <code>[0, 2n - 1]</code> 区间内，缓冲区为空时，<code>write == read</code>：</p>
+<p>考虑这样的办法，假设缓冲区大小仍为 <code>n</code>，但是将读写指针的范围扩大到 <code>[0, 2n - 1]</code> ，其中 <code>[0, n - 1]</code> 的范围为真实的缓冲区区间，<code>[n, 2n - 1]</code> 作为镜像区间，用来辅助判断缓冲区是否为空。当读写指针落在镜像区间时，其对应到真实区间的索引为 <code> write &amp; (n - 1)</code> 或 <code>read &amp; (n - 1)</code> 。</p>
+<p>缓冲区为空时，<code>write == read</code> 或者说，<code> write &amp; (n - 1) == read &amp; (n - 1)</code> 并且二者都落在真实区间：</p>
 <p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710175241132.png" alt="image-20240710175241132"></p>
-<p>当缓冲区已满时，此时的写指针真正的超越了缓冲区容量大小，真实指向位置通过 <code>write &amp; (len - 1) </code>计算得出：</p>
+<p>当缓冲区已满时，此时的写指针真正的超越了缓冲区容量大小，真实指向位置通过 <code>write &amp; (n - 1) </code>计算得出。在这种情况下，<code> write &amp; (n - 1) == read &amp; (n - 1)</code> 并且一个在真实区间，一个在镜像区间：</p>
 <p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710190309909.png" alt="image-20240710190309909"></p>
-<p>紧接着，将数据从缓冲区读出，直到缓冲区为空：</p>
+<p>紧接着，将数据从缓冲区读出，直到缓冲区为空，在这种情况下，<code> write &amp; (n - 1) == read &amp; (n - 1)</code> 并且二者都落在镜像区间：</p>
 <p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710191316282.png" alt="image-20240710191316282"></p>
-<p>此时，继续缓冲区写入数据，直到缓冲区再次被填满：</p>
+<p>此时，继续缓冲区写入数据，直到缓冲区再次被填满，<code> write &amp; (n - 1) == read &amp; (n - 1)</code> 并且一个在真实区间，一个在镜像区间：</p>
 <p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710191854828.png" alt="image-20240710191854828"></p>
-<p>最后，我们将所有的数据读出：</p>
+<p>最后，我们将所有的数据读出，缓冲区再次被清空，此时，<code> write &amp; (n - 1) == read &amp; (n - 1)</code> 并且二者都落在真实区间：</p>
 <p><img src="/./imgs/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/image-20240710192206347.png" alt="image-20240710192206347"></p>
-<p>如何确定缓冲区何时为<strong>空</strong>何时已<strong>满</strong>呢？</p>
+<p>如何确定缓冲区何时为<strong>空</strong>何时已<strong>满</strong>呢？从上面的描述中已经可以清晰地看出：</p>
+<ul>
+<li><p><code>write &amp; (n - 1) == read &amp; (n - 1)</code> 并且 二者在同一区间时，缓冲区为空</p>
+</li>
+<li><p><code>write &amp; (n - 1) == read &amp; (n - 1)</code> 并且 二者不在同一区间时，缓冲区为空</p>
+</li>
+</ul>
+<p>很自然的，我们可以各使用一个比特位，代表读指针和写指针所在的区间，如 <code>0</code>代表在真实区间，<code>1</code>代表在镜像区间。</p>
+<h4 id="C语言实现-1"><a href="#C语言实现-1" class="headerlink" title="C语言实现"></a>C语言实现</h4><ul>
+<li>比起最简单的版本，我们需要额外的位来表示读写指针所在的区间，可以抽象出下面的数据结构：</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="type">char</span> *start;</span><br><span class="line">    <span class="type">int</span> read_mirror : <span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span> read_ptr : <span class="number">31</span>;</span><br><span class="line">    <span class="type">int</span> write_mirror : <span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span> write_ptr : <span class="number">31</span>;</span><br><span class="line">    <span class="type">int</span> buflen;				<span class="comment">/* buflen &amp; (buflen - 1) == 0 */</span></span><br><span class="line">&#125; <span class="type">ring_buffer_t</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>之前实现的版本一次只能插入一个字符，为了使我们的代码更通用，这里的实现可以读写任意大小的内容。在读取或者写入前，要先知道当前缓冲区的剩余空间：</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">rbuf_size</span><span class="params">(<span class="type">ring_buffer_t</span> *buf)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> contain;</span><br><span class="line">    <span class="type">int</span> len = buf-&gt;buflen;</span><br><span class="line">	<span class="type">int</span> read_idx = buf-&gt;read_ptr &amp; (len - <span class="number">1</span>);</span><br><span class="line">    <span class="type">int</span> weitr_idx = buf-&gt;write_ptr &amp; (len - <span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* full or empty */</span></span><br><span class="line">    <span class="keyword">if</span> (read_idx == write_idx) &#123;</span><br><span class="line">        <span class="keyword">if</span> (buf-&gt;read_mirror ^ buf-&gt;write_mirror) <span class="comment">/* full */</span></span><br><span class="line">        	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            <span class="keyword">return</span> len; <span class="comment">/* empty */</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* contained but not full */</span></span><br><span class="line">    <span class="keyword">if</span> (write_idx &gt; read_idx)</span><br><span class="line">        contain = (write_idx - read_idx;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        contain = len + write_idx - read_idx;</span><br><span class="line">    </span><br><span class="line">	<span class="keyword">return</span> len - contain;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>写入数据</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">rbuf_write</span><span class="params">(<span class="type">ring_buffer_t</span> *buf, <span class="type">const</span> <span class="type">char</span> *buf, <span class="type">int</span> count)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> len;</span><br><span class="line">    <span class="type">int</span> size = rbuf_size(buf);</span><br><span class="line">    <span class="keyword">if</span> (size == <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    </span><br><span class="line">    len = min(count, )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 
     </div>
 
@@ -370,7 +393,10 @@
     <a href="/2022/10/06/Linux-09-crond/" rel="prev" title="Linux-09-crond">
       <i class="fa fa-chevron-left"></i> Linux-09-crond
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/" rel="next" title="【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？">
+      【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？ <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -429,7 +455,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">简单实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="nav-number">2.1.</span> <span class="nav-text">简单的例子</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%95%E7%9D%80%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.2.</span> <span class="nav-text">试着实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B0%B4%E5%B0%AC%E7%9A%84%E8%AF%BB%E5%86%99%E6%8C%87%E9%92%88"><span class="nav-number">2.3.</span> <span class="nav-text">尴尬的读写指针</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E8%83%BD%E7%94%A8%E7%9A%84%E7%89%88%E6%9C%AC"><span class="nav-number">2.4.</span> <span class="nav-text">一个能用的版本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.5.</span> <span class="nav-text">C语言实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%8D%E8%BF%9B%E4%B8%80%E6%AD%A5"><span class="nav-number">3.</span> <span class="nav-text">再进一步</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%87%8D%E6%96%B0%E5%AE%A1%E8%A7%86-%E2%80%98-%E2%80%99-%E5%8F%96%E4%BD%99%E6%93%8D%E4%BD%9C"><span class="nav-number">3.1.</span> <span class="nav-text">重新审视 ‘%’ 取余操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%95%9C%E5%83%8F%E6%8C%87%E4%BD%8D%E6%B3%95"><span class="nav-number">3.2.</span> <span class="nav-text">镜像指位法</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">简单实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="nav-number">2.1.</span> <span class="nav-text">简单的例子</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%95%E7%9D%80%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.2.</span> <span class="nav-text">试着实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B0%B4%E5%B0%AC%E7%9A%84%E8%AF%BB%E5%86%99%E6%8C%87%E9%92%88"><span class="nav-number">2.3.</span> <span class="nav-text">尴尬的读写指针</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E8%83%BD%E7%94%A8%E7%9A%84%E7%89%88%E6%9C%AC"><span class="nav-number">2.4.</span> <span class="nav-text">一个能用的版本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.5.</span> <span class="nav-text">C语言实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%8D%E8%BF%9B%E4%B8%80%E6%AD%A5"><span class="nav-number">3.</span> <span class="nav-text">再进一步</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%87%8D%E6%96%B0%E5%AE%A1%E8%A7%86-%E2%80%98-%E2%80%99-%E5%8F%96%E4%BD%99%E6%93%8D%E4%BD%9C"><span class="nav-number">3.1.</span> <span class="nav-text">重新审视 ‘%’ 取余操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%95%9C%E5%83%8F%E6%8C%87%E4%BD%8D%E6%B3%95"><span class="nav-number">3.2.</span> <span class="nav-text">镜像指位法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0-1"><span class="nav-number">3.3.</span> <span class="nav-text">C语言实现</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -445,18 +471,18 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-count">20</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">9</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

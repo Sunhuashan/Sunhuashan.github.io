@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="在 Linux 上打开一个字符设备文件会经历哪些过程？这是一道非常经典的面试题，面试官之所以爱问，是因为这个问题如果想要回答好，至少需要掌握 Linux 系统调用、文件系统、字符设备驱动程序等模块的实现原理。下面我们就沿着内核注册字符设备驱动程序开始，到用户层打开设备文件，再到调用到内核的驱动程序，最后返回到用户空间这一过程，试着回答下这个问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？">
+<meta property="og:url" content="http://example.com/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="在 Linux 上打开一个字符设备文件会经历哪些过程？这是一道非常经典的面试题，面试官之所以爱问，是因为这个问题如果想要回答好，至少需要掌握 Linux 系统调用、文件系统、字符设备驱动程序等模块的实现原理。下面我们就沿着内核注册字符设备驱动程序开始，到用户层打开设备文件，再到调用到内核的驱动程序，最后返回到用户空间这一过程，试着回答下这个问题。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/imgs/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/image-20240711160156915.png">
+<meta property="og:image" content="http://example.com/imgs/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/image-20240711185728622.png">
+<meta property="og:image" content="http://example.com/imgs/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/image-20240711214043086.png">
+<meta property="article:published_time" content="2024-07-11T11:09:03.000Z">
+<meta property="article:modified_time" content="2024-07-11T13:40:47.481Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="linux-driver">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/imgs/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/image-20240711160156915.png">
+
+<link rel="canonical" href="http://example.com/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？ | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-07-11 19:09:03" itemprop="dateCreated datePublished" datetime="2024-07-11T19:09:03+08:00">2024-07-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%9D%A2%E8%AF%95%E9%A2%98-%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" itemprop="url" rel="index"><span itemprop="name">面试题 字符设备驱动</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在 Linux 上打开一个字符设备文件会经历哪些过程？这是一道非常经典的面试题，面试官之所以爱问，是因为这个问题如果想要回答好，至少需要掌握 Linux 系统调用、文件系统、字符设备驱动程序等模块的实现原理。下面我们就沿着内核注册字符设备驱动程序开始，到用户层打开设备文件，再到调用到内核的驱动程序，最后返回到用户空间这一过程，试着回答下这个问题。</p>
+<span id="more"></span>
+<h3 id="从驱动程序开始"><a href="#从驱动程序开始" class="headerlink" title="从驱动程序开始"></a>从驱动程序开始</h3><p>这里默认读者都有编写简单字符设备驱动程序的经验，所以很多细枝末节的驱动实现我们就忽略不谈，只来看看，驱动程序是如何暴露给用户层使用的。</p>
+<h4 id="cdev-add-添加字符设备"><a href="#cdev-add-添加字符设备" class="headerlink" title="cdev_add 添加字符设备"></a>cdev_add 添加字符设备</h4><p>我们都知道，在使用 <code>总线</code>-<code>设备</code>-<code>驱动</code> 模型编写字符设备驱动程序时，需要在 <code>probe</code> 函数中进行设备的初始化工作，以及今天的主题—— <code>cdev_add</code> 向内核注册&#x2F;添加一个  <code>cdev</code> 字符设备。下面是 <code>cdev</code> 结构体的抽象：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">cdev</span> &#123;</span></span><br><span class="line">	...</span><br><span class="line">	<span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> *<span class="title">ops</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">list</span>;</span></span><br><span class="line">	<span class="type">dev_t</span> dev;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">int</span> count;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>可以看到，<code>cdev</code> 结构体十分简单，其中：</p>
+<ul>
+<li><strong>ops</strong> ：<code>file_operations</code> 是一个由函数指针构成的接口，定义了一组对文件的统一操作，如 <code>open</code>, <code>read</code>, <code>write</code>, <code>release</code> 等</li>
+<li><strong>list</strong>：链表节点，用于将内核中的 <code>cdev</code> 以链表的形式组织起来</li>
+<li><strong>dev_t</strong>：设备号，其中主设备号代表设备使用的驱动程序，次设备号代表具体设备</li>
+<li><strong>count</strong>：与该设备相对应的连续次设备号的数量</li>
+</ul>
+<p>那么内核是如何将 <code>cdev</code> 组织起来，进行管理的呢？这里我们力求简单，画了一个简单的示意图：</p>
+<img src="./imgs/打开一个字符设备文件-从应用到内核/image-20240711160156915.png" alt="image-20240711160156915" style="zoom:80%;" />
+
+<p>熟悉数据结构的读者肯定看出来了，这就是一个以 <code>n % 255</code> 作为哈希函数的哈希表，利用链表解决地址冲突。这个哈希表名为 <code>cdev_map</code> 是一个全局变量，内核就是利用这个哈希表查找和插入 <code>cdev</code> 的，值得注意的是，其中哈希表的键是 <code>cdev</code> 主设备号或者直接说是设备号 dev_t。</p>
+<p>现在看 <code>cdev_add</code>，<code>cdev_del</code> 这两个函数就好理解了，无非就是根据设备号 dev_t 将 <code>cdev</code> 插入哈希表而已。</p>
+<h4 id="mdev-与-udev"><a href="#mdev-与-udev" class="headerlink" title="mdev 与 udev"></a>mdev 与 udev</h4><p>如果了解过 Linux 设备模型的话，读者应该知道，<code>class</code> 和 <code>device</code> 从设备功能的角度在 sysfs 文系统中将类和设备暴露给用户空间。我们可以在 <code>/sys/class</code> 目录下查看内核导出的所有类，在 <code>/sys/class/xxx/</code> 下看到指定类下的设备。</p>
+<p>在字符设备的驱动程序中，使用 <code>class_create</code> 和 <code>device_create</code> 两个函数可以实现上述功能。将信息导出到用户空间之后，谁会来使用呢？这就要提到我们要讨论的主角 mdev （mdev 是 udev 在嵌入式系统中的替代品）了——一个运行在用户空间的应用程序，仅此而已。</p>
+<p>mdev 的实现原理我们就不赘述了，目前我们只要知道他的一个功能就可以：</p>
+<ul>
+<li>执行 <code>mdev -s</code> 命令时，<code>mdev</code> 扫描 <code>/sys/block</code> 和 <code>/sys/class</code> 两个目录下 <code>dev</code> 属性的文件，从该 <code>dev</code> 属性的文件中获取到设备编号</li>
+<li>以包含该 <code>dev</code> 属性文件的<strong>目录名称</strong>作为<strong>设备名</strong>在 <code>/dev</code> 目录下创建相应的设备文件</li>
+</ul>
+<p>具体的，在 mdev 的实现中使用了类似的语句：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mknod(device_name, mode | type, makedev(major, minor));</span><br></pre></td></tr></table></figure>
+
+<p>其中 <code>mknod</code> 是一个系统调用，我们看看其调用路径</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">--&gt;mknod</span><br><span class="line">    --&gt;sys_mknod</span><br><span class="line">    	--&gt;sys_mknodat</span><br><span class="line">    		--&gt;vfs_mknod</span><br><span class="line">    			--&gt;dir-&gt;i_op-&gt;mknod(回调具体文件系统的 mknod)</span><br><span class="line">    				--&gt;最终创建一个 inode 实例</span><br></pre></td></tr></table></figure>
+
+<h4 id="inode-结构体"><a href="#inode-结构体" class="headerlink" title="inode 结构体"></a>inode 结构体</h4><p>inode 结构体是系统中一个真实存在文件的抽象，当作为一个字符设备文件的抽象时，它的如下字段比较重要：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">inode</span> &#123;</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="type">dev_t</span>							i_rdev;</span><br><span class="line">   	<span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span>	*<span class="title">i_fop</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">pipe_inode_info</span>		*<span class="title">i_pipe</span>;</span></span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">block_device</span>			*<span class="title">i_bdev</span>;</span></span><br><span class="line">		<span class="class"><span class="keyword">struct</span> <span class="title">cdev</span>					*<span class="title">i_cdev</span>;</span></span><br><span class="line">	&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>i_rdev</strong> ：对应设备的 设备号</li>
+<li><strong>i_fop</strong>：<code>file_operations</code> 前面提到过</li>
+<li><strong>i_cdev</strong> ：对应的字符设备</li>
+</ul>
+<p>那么，当 <code>mknod</code> 系统调用执行完后，创建出来的 <code>inode</code> 各个字段被初始化成什么呢？</p>
+<p>这里以 <code>ext4</code> 文件系统为例，查看内核创建和初始 <code>inode</code> 的代码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">ext4_create</span><span class="params">(<span class="keyword">struct</span> inode *dir, <span class="keyword">struct</span> dentry *dentry, <span class="type">umode_t</span> mode, <span class="type">bool</span> excl)</span></span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">/* 创建 字符设备 inode */</span></span><br><span class="line">    inode = ext4_new_inode_start_handle(dir, mode, &amp;dentry-&gt;d_name, <span class="number">0</span>,</span><br><span class="line">                            <span class="literal">NULL</span>, EXT4_HT_DIR, credits);</span><br><span class="line">    </span><br><span class="line">        <span class="keyword">if</span> (!IS_ERR(inode)) &#123;</span><br><span class="line">            <span class="comment">/* 初始化 inode */</span></span><br><span class="line">            init_special_inode(inode, inode-&gt;i_mode, rdev);</span><br><span class="line">	...       </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们比较关系和字符设备相关的字段是如何被初始的，看如下的代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">init_special_inode</span><span class="params">(<span class="keyword">struct</span> inode *inode, <span class="type">umode_t</span> mode, <span class="type">dev_t</span> rdev)</span></span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">        </span><br><span class="line">	<span class="keyword">if</span> (S_ISCHR(mode)) &#123;</span><br><span class="line">		inode-&gt;i_fop = &amp;def_chr_fops;</span><br><span class="line">		inode-&gt;i_rdev = rdev;</span><br><span class="line">	&#125;</span><br><span class="line">    </span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，<code>i_fop</code> 被初始化成了 <code>def_chr_fops</code> ，<code>i_rdev</code> 被初始化成了 <code>rdev</code> ，而 <code>i_cdev</code> 没有被初始化。其中，最好理解的是 <code>rdev</code> ，因为这就是 <code>mknod()</code> 系统调用从用户空间传递的参数。那么 <code>def_chr_f_ops</code> 是什么呢？继续看代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> <span class="title">def_chr_fops</span> =</span> &#123;</span><br><span class="line">	.open = chrdev_open,</span><br><span class="line">	.llseek = noop_llseek,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>简单的不可思议，只有两个成员的 <code>file_operations</code> 结构体，这里我们先不深究它们的实现，因为后面还会遇到。OK，到这里，第一部分的工作就到此结束了，我们做好了打开设备文件前的所有准备工作，小小总结下：</p>
+<ul>
+<li>在驱动程序中，创建了字符设备 <code>cdev</code> 其中包含了我们自己定义的 <code>file_operations</code> 操作</li>
+<li>将字符设备添加到了内核的一个全局哈希表中，通过设备号 <code>dev_t</code> 进行索引</li>
+<li>在驱动程序中，通过创建 <code>class</code> 和 <code>device</code> 将设备信息，特别是<strong>设备号</strong>，暴露给用户空间</li>
+<li>在用户空间中有一个应用程序，它根据我们暴露的设备号，利用 <code>mknod</code> 系统调用，创建了一个设备文件</li>
+<li>该设备文件在内核中有一个与之对应的 <code>inode</code> ，这个 <code>inode</code> 被<strong>设备号</strong>和 <code>def_chr_fops</code> 初始化</li>
+</ul>
+<h3 id="打开设备文件"><a href="#打开设备文件" class="headerlink" title="打开设备文件"></a>打开设备文件</h3><h4 id="open-打开一个文件"><a href="#open-打开一个文件" class="headerlink" title="open 打开一个文件"></a>open 打开一个文件</h4><p>用户空间 <code>open</code> 函数的原型为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int open(const char *filename, int flags, mode_t mode); </span><br></pre></td></tr></table></figure>
+
+<p>这个函数如果成功，将返回一个文件描述符 <code>fd</code> ，否则返回 -1。</p>
+<ul>
+<li>函数的第一个参数 <code>filename </code>表示要打开的文件名</li>
+<li>第二个参数 <code>flags</code> 用于指定文件的打开或者创建模式</li>
+<li>最后一个参数 <code>mode</code> 只在创建时才使用，用于指定新建文件的访问权限，比如可读、可写及可执行等权限</li>
+</ul>
+<p>而在驱动程序中， <code>open</code> 函数的原型为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">drv_open</span><span class="params">(<span class="keyword">struct</span> inode *inode, <span class="keyword">struct</span> file *filp)</span></span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> <span class="title">fops</span> =</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    .open = drv_open</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>两者相比差异很大，从设备驱动程序员的角度，我们将重点放在两者如何建立联系的关键点上。</p>
+<p>用户程序调用 <code>open</code> 函数返回的文件描述符 <code>fd</code>，这是个 <code>int</code> 型的变量，会被用户程序后续的 read、write 和ioctl 等函数所使用。同时可以看到，在<strong>驱动程序</strong>中的 read、write 和 ioctl 等函数其第一个参数都是 <code>struct file *filp</code> ，显然，内核需要在打开设备文件 <code>open</code> 时：</p>
+<ul>
+<li>为 <code>fd</code> 与 <code>filp</code> 建立联系</li>
+<li>为 <code>filp</code> 与驱动程序中的 <code>fops</code> 建立联系</li>
+</ul>
+<p>接下来我们将描述从用户态的 <code>open</code> 是如何一步一步调用到驱动程序提供的 <code>open</code> 函数并且建立上述联系的。</p>
+<p>从用户空间到内核空间会逐步调用下面的函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">——&gt;open</span><br><span class="line">    ——&gt;sys_open</span><br><span class="line">    	——&gt;do_sys_open</span><br><span class="line">    		——&gt;get_unused_fd_flags (创建文件描述符 fd)</span><br><span class="line">    		——&gt;do_filp_open</span><br><span class="line">    			——&gt;path_openat (查找 inode)</span><br><span class="line">    				——&gt;get_empty_filp (创建 struct file)</span><br><span class="line">    		——&gt;__entry_open (根据 inode 初始化 file 并调用 f-&gt;f_ops-&gt;open)</span><br></pre></td></tr></table></figure>
+
+<h4 id="file-结构体"><a href="#file-结构体" class="headerlink" title="file 结构体"></a>file 结构体</h4><p><code>file</code> 结构体在内核中代表一个<strong>打开的文件</strong> ，一个文件被多次 <code>open</code> ，就会创建多个 <code>file</code> 结构体。和设备驱动程序有关联的字段如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">file</span> &#123;</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span>	*<span class="title">f_op</span>;</span></span><br><span class="line">    <span class="type">atomic_long_t</span>		f_count;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">int</span> 		f_flags;</span><br><span class="line">   	<span class="type">void</span>			*private_data;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>f_op</strong>：<code>file_operations</code>  结构体，同上</li>
+<li><strong>f_count</strong> ：引用计数，当 <code>close</code> 一个文件时，只有 <code>file</code> 对象中 <code>f_count == 0</code> 时才真正执行关闭操作。</li>
+<li><strong>f_flags</strong> ：记录文件被 <code>open</code> 时所指定的打开模式，这个成员将会影响后续的 <code>read/write</code> 等函数的行为模式</li>
+<li><strong>private_data</strong> ：常被用来记录<strong>设备驱动程序自身定义的数据</strong>，因为 <code>filp</code> 指针会在驱动程序实现的<code>file_operations</code> 对象其他成员函数之间传递，所以可以通过 <code>private_data</code> 成员在某一个特定文件视图的基础上共享数据</li>
+</ul>
+<p>进程打开的文件是通过 <code>fd</code> 表示的，那么它们是如何建立关联的呢？可以看下图：</p>
+<p><img src="/./imgs/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/image-20240711185728622.png" alt="image-20240711185728622"></p>
+<p>点到为止，我们继续回到 <code>open</code> 系统调用的主线，现在内核已经创建了一个<code>file</code> 结构体，那么接下来是如何初始化的呢？初始化代码在 <code>__entry_open</code> 函数中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">file</span> *__<span class="title">dentry_open</span>(<span class="keyword">struct</span> <span class="title">dentry</span> *<span class="title">dentry</span>, <span class="keyword">struct</span> <span class="title">vfsmount</span> *<span class="title">mnt</span>,  </span></span><br><span class="line"><span class="class">                    <span class="keyword">struct</span> <span class="title">file</span> *<span class="title">f</span>,  </span></span><br><span class="line"><span class="class">                    <span class="title">int</span> (*<span class="title">open</span>)(<span class="keyword">struct</span> <span class="title">inode</span> *, <span class="keyword">struct</span> <span class="title">file</span> *),  </span></span><br><span class="line"><span class="class">                    <span class="title">const</span> <span class="keyword">struct</span> <span class="title">cred</span> *<span class="title">cred</span>)  </span></span><br><span class="line"><span class="class">&#123;</span>  </span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">/* 将 inode 中的 i_fop 赋值给 filp-&gt;f_op */</span></span><br><span class="line">    f-&gt;f_op = fops_get(inode-&gt;i_fop);  </span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (!open &amp;&amp; f-&gt;f_op)  </span><br><span class="line">        open = f-&gt;f_op-&gt;open;  </span><br><span class="line">    <span class="keyword">if</span> (open) &#123;  </span><br><span class="line">        <span class="comment">/* 调用 */</span></span><br><span class="line">        error = open(inode, f);  </span><br><span class="line">    &#125;  </span><br><span class="line">   	...</span><br><span class="line">&#125;  </span><br></pre></td></tr></table></figure>
+
+<p>我们看到，这里将查找到的 <code>inode</code> 中的 <code>file_operations</code> 结构体指针赋值给了 <code>file</code> ，然后调用了其中的 <code>open</code> 函数。回忆前面的内容，<code>inode</code> 中的 <code>i_fop</code> 是使用 <code>def_chr_fops</code> 进行初始的，我们来看看其中的 <code>open</code> 函数究竟做什么：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">chrdev_open</span><span class="params">(<span class="keyword">struct</span> inode *inode, <span class="keyword">struct</span> file *filp)</span>  </span><br><span class="line">&#123;  </span><br><span class="line">    <span class="type">int</span> ret = <span class="number">0</span>, idx;  </span><br><span class="line">    <span class="comment">/* 根据 inode 中的设备号在全局哈希表 cdev_map 中查找 cdev */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">kobject</span> *<span class="title">kobj</span> =</span> kobj_lookup(cdev_map, inode-&gt;i_rdev, &amp;idx);  </span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">cdev</span> *<span class="title">new</span> =</span> container_of(kobj, <span class="keyword">struct</span> cdev, kobj);  </span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* 在 inode 中保存 cdev */</span></span><br><span class="line">    inode-&gt;i_cdev = new;  </span><br><span class="line">	</span><br><span class="line">    <span class="comment">/* 将 cdev 中的 ops 赋值给 file-&gt;f_op */</span></span><br><span class="line">    filp-&gt;f_op = new-&gt;ops;  </span><br><span class="line">    <span class="keyword">if</span> (filp-&gt;f_op-&gt;open) &#123;  </span><br><span class="line">        <span class="comment">/* 调用我们在驱动中实现的 open */</span></span><br><span class="line">        ret = filp-&gt;f_op-&gt;open(inode,filp);  </span><br><span class="line">    &#125;  </span><br><span class="line">    <span class="keyword">return</span> ret;  </span><br><span class="line">&#125;  </span><br></pre></td></tr></table></figure>
+
+<p>可见，该函数打通了 <code>inode</code> ，<code>cdev</code>，<code>file</code> 三者之间的关系，不可谓不重要！！最后，我们总结一下打开文件的过程：</p>
+<ul>
+<li><p>创建&#x2F;申请一个文件描述符 <code>fd</code> ，其代表了一个打开的文件在<strong>打开文件表</strong> 中的索引</p>
+</li>
+<li><p>申请一个空的 <code>struct file</code>，用来代表一个打开的文件，会被加入到<strong>打开文件表</strong>中</p>
+</li>
+<li><p>根据传入的<strong>文件路径</strong> ，找到 <code>inode</code>，并用其来初始化 <code>file</code></p>
+</li>
+<li><p>调用 <code>filp-&gt;f_op-&gt;open</code> ，该函数就是 <code>inode</code> 中的 <code>i_fop-&gt;open</code>，再进一步，其实就是 <code>chardev_open</code></p>
+</li>
+<li><p>最后，在 <code>chrdev_open</code> 中</p>
+<ul>
+<li>根据 <code>inode</code> 中保存到设备号找到 <code>cdev</code></li>
+<li>在 <code>inode</code> 中保存 <code>cdev</code></li>
+<li>将 <code>cdev</code> 中的 <code>ops</code> 赋值给 <code>file-&gt;f_op</code></li>
+<li>调用 <code>file-&gt;f_op-&gt;open</code> ，这就是我们在驱动程序中实现的 <code>open</code> 函数</li>
+</ul>
+</li>
+</ul>
+<p>最后的最后，我们来看一下 <code>open</code> 之后，内核中各个结构的状态吧：</p>
+<p><img src="/./imgs/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/image-20240711214043086.png" alt="image-20240711214043086"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux-driver/" rel="tag"># linux-driver</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" rel="prev" title="【数据结构与算法】环形缓冲区：原理，实现，与应用">
+      <i class="fa fa-chevron-left"></i> 【数据结构与算法】环形缓冲区：原理，实现，与应用
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8E%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F%E5%BC%80%E5%A7%8B"><span class="nav-number">1.</span> <span class="nav-text">从驱动程序开始</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#cdev-add-%E6%B7%BB%E5%8A%A0%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87"><span class="nav-number">1.1.</span> <span class="nav-text">cdev_add 添加字符设备</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mdev-%E4%B8%8E-udev"><span class="nav-number">1.2.</span> <span class="nav-text">mdev 与 udev</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#inode-%E7%BB%93%E6%9E%84%E4%BD%93"><span class="nav-number">1.3.</span> <span class="nav-text">inode 结构体</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%93%E5%BC%80%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6"><span class="nav-number">2.</span> <span class="nav-text">打开设备文件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#open-%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E6%96%87%E4%BB%B6"><span class="nav-number">2.1.</span> <span class="nav-text">open 打开一个文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#file-%E7%BB%93%E6%9E%84%E4%BD%93"><span class="nav-number">2.2.</span> <span class="nav-text">file 结构体</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
