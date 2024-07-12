@@ -426,100 +426,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="驱动概念"><a href="#驱动概念" class="headerlink" title="驱动概念"></a>驱动概念</h2><p><strong>驱动与底层硬件直接打交道，充当了硬件与应用软件中间的桥梁。</strong></p>
-<ul>
-<li>具体任务<ol>
-<li>读写设备寄存器（实现控制的方式）</li>
-<li>完成设备的轮询、中断处理、DMA通信（CPU与外设通信的方式）</li>
-<li>进行物理内存向虚拟内存的映射（在开启硬件MMU的情况下）</li>
-</ol>
-</li>
-<li>说明：设备驱动的两个任务方向<ol>
-<li>操作硬件（向下）</li>
-<li>将驱动程序通入内核，实现面向操作系统内核的接口内容，接口由操作系统实现（向上） （<strong>驱动程序</strong>按照操作系统给出的<strong>独立于设备的接口设计</strong>，<strong>应用程序</strong>使用操作系统<strong>统一的系统调用接口</strong>来访问设备）</li>
-</ol>
-</li>
-</ul>
-<p>Linux系统主要部分：<strong>内核、shell、文件系统、应用程序</strong></p>
-<ul>
-<li><strong>内核、shell和文件系统</strong>一起形成了基本的操作系统结构，它们使得用户可以运行程序、管理文件并使用系统</li>
-<li>分层设计的思想让程序间松耦合，有助于适配各种平台</li>
-<li>驱动的<strong>上面是系统调用</strong>，<strong>下面是硬件</strong></li>
-</ul>
-<h2 id="驱动分类"><a href="#驱动分类" class="headerlink" title="驱动分类"></a>驱动分类</h2><p>Linux驱动分为三个基础大类：<strong>字符设备驱动，块设备驱动，网络设备驱动</strong>。</p>
-<h4 id="字符设备-Char-Device"><a href="#字符设备-Char-Device" class="headerlink" title="字符设备(Char Device)"></a>字符设备(Char Device)</h4><ul>
-<li>字符(char)设备是个能够像字节流（类似文件）一样被访问的设备。</li>
-<li>对字符设备发出读&#x2F;写请求时，实际的硬件I&#x2F;O操作一般紧接着发生。</li>
-<li>字符设备驱动程序通常至少要实现open、close、read和write系统调用。</li>
-<li>比如我们常见的 lcd、触摸屏、键盘、led、串口等等，他们一般对应具体的硬件都是进行出具的采集、处理、传输。</li>
-</ul>
-<h4 id="块设备-Block-Device"><a href="#块设备-Block-Device" class="headerlink" title="块设备(Block Device)"></a>块设备(Block Device)</h4><ul>
-<li>一个块设备驱动程序主要通过传输固定大小的数据（一般为512或1k）来访问设备。</li>
-<li>块设备通过buffer cache(内存缓冲区)访问，可以随机存取，即：任何块都可以读写，不必考虑它在设备的什么地方。</li>
-<li>块设备可以通过它们的设备特殊文件访问，但是更常见的是通过文件系统进行访问。</li>
-<li>只有一个块设备可以支持一个安装的文件系统。</li>
-<li>比如我们常见的电脑硬盘、SD卡、U盘、光盘等。</li>
-</ul>
-<h4 id="网络设备-Net-Device"><a href="#网络设备-Net-Device" class="headerlink" title="网络设备(Net Device)"></a>网络设备(Net Device)</h4><ul>
-<li>任何网络事务都经过一个网络接口形成，即一个能够和其他主机交换数据的设备。</li>
-<li>访问网络接口的方法仍然是给它们分配一个唯一的名字（比如eth0），但这个名字在文件系统中不存在对应的节点。</li>
-<li>内核和网络设备驱动程序间的通信，完全不同于内核和字符以及块驱动程序之间的通信，内核调用一套和数据包传输相关的函（socket函数）而不是read、write等。</li>
-<li>比如我们常见的网卡设备、蓝牙设备。</li>
-</ul>
-<h2 id="驱动程序的功能"><a href="#驱动程序的功能" class="headerlink" title="驱动程序的功能"></a>驱动程序的功能</h2><ol>
-<li>对设备初始化和释放</li>
-<li>把数据从内核传送到硬件和从硬件读取数据</li>
-<li>读取应用程序传送给设备文件的数据和回送应用程序请求的数据</li>
-<li>检测和处理设备出现的错误</li>
-</ol>
-<h2 id="驱动开发前提知识"><a href="#驱动开发前提知识" class="headerlink" title="驱动开发前提知识"></a>驱动开发前提知识</h2><h4 id="内核态和用户态"><a href="#内核态和用户态" class="headerlink" title="内核态和用户态"></a>内核态和用户态</h4><ul>
-<li>Kernel Mode（内核态）<ul>
-<li>内核模式下（执行内核空间的代码），代码具有对硬件的所有控制权限。可以执行所有CPU指令，可以访问任意地址的内存</li>
-</ul>
-</li>
-<li>User Mode（用户态）<ul>
-<li>在用户模式下（执行用户空间的代码），代码没有对硬件的直接控制权限，也不能直接访问地址的内存。</li>
-<li>只能访问映射其地址空间的页表项中规定的在用户态下可访问页面的虚拟地址。</li>
-<li>程序是通过调用系统接口(System Call APIs)来达到访问硬件和内存</li>
-</ul>
-</li>
-</ul>
-<p><strong>Linux利用CPU实现内核态和用户态</strong></p>
-<ul>
-<li>arm：内核态（svc模式），用户态（usr模式）</li>
-<li>x86： 内核态（ring 0 ），用户态（ring 3）（ x86有ring 0 - ring3四种特权等级）</li>
-</ul>
-<p><strong>Linux实现内核态和用户态切换</strong></p>
-<ul>
-<li>ARM Linux的系统调用实现原理是采用 <code>swi</code> 软中断从用户态切换至内核态</li>
-<li>X86是通过 <code>int 0x80</code> 中断进入内核态</li>
-</ul>
-<p>Linux只能通过<strong>系统调用</strong>和<strong>硬件中断</strong>从用户空间进入内核空间</p>
-<ul>
-<li>执行<strong>系统调用</strong>的内核代码运行在<strong>进程上下文中</strong>，他代表调用进程执行操作，因此能够<strong>访问进程地址空间的所有数据</strong></li>
-<li>处理<strong>硬件中断</strong>的内核代码运行在<strong>中断上下文中</strong>，他和<strong>进程是异步</strong>的，与任何一个特定进程无关通常，一个驱动程序模块中的某些函数作为系统调用的一部分，而其他函数负责中断处理</li>
-</ul>
-<h4 id="Linux下应用程序调用驱动程序流程"><a href="#Linux下应用程序调用驱动程序流程" class="headerlink" title="Linux下应用程序调用驱动程序流程"></a>Linux下应用程序调用驱动程序流程</h4><p><img src="/./imgs/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A6%82%E8%BF%B0/image-20240712172238469.png" alt="image-20240712172238469"></p>
-<ul>
-<li><p>Linux下进行驱动开发，完全将驱动程序与应用程序隔开，中间通过<strong>C标准库函数</strong>以及<strong>系统调用</strong>完成驱动层和应用层的数据交换。</p>
-</li>
-<li><p>驱动加载成功以后会在“&#x2F;dev”目录下生成一个相应的文件，应用程序通过<strong>对“&#x2F;dev&#x2F;xxx” (xxx 是具体的驱动文件名字) 的文件进行相应的操作</strong>即可实现对硬件的操作。</p>
-</li>
-<li><p>用户空间不能直接对内核进行操作，因此必须使用一个叫做 <strong>“系统调用”的方法</strong> 来实现从用户空间“陷入” 到内核空间，这样才能实现对底层驱动的操作</p>
-</li>
-<li><p>每一个<strong>系统调用</strong>，在驱动中都有<strong>与之对应的一个驱动函数</strong>，在 Linux 内核文件 <code>include/linux/fs.h</code> 中有个叫做 <strong>file_operations 的结构体</strong>，此<strong>结构体就是 Linux 内核驱动操作函数集合</strong>。</p>
-</li>
-</ul>
-<h4 id="打开设备文件流程"><a href="#打开设备文件流程" class="headerlink" title="打开设备文件流程"></a><strong>打开设备文件流程</strong></h4><ol>
-<li>加载一个驱动模块，产生一个<strong>设备文件</strong>，有<strong>唯一对应的inode结构体</strong></li>
-<li>应用层调用<strong>open函数</strong>打开设备文件，对于上层open调用到内核时会发生一次<strong>软中断</strong>，从用户空间<strong>进入到内核空间</strong>。</li>
-<li>open会调用到<strong>sys_open(内核函数)<strong>，sys_open根据</strong>文件的地址</strong>，找到设备文件对应的<strong>struct inode结构体</strong>描述的信息，可以知道接下来要操作的设备类型（字符设备还是块设备），还会<strong>分配一个struct file结构体</strong>。</li>
-<li>根据<strong>struct inode结构体里面记录的主设备号和次设备号</strong>，在<strong>驱动链表</strong>(管理所有设备的驱动)里面，根据找到<strong>字符设备驱动</strong></li>
-<li>每个字符设备都有一个<strong>struct cdev结构体</strong>。此结构体描述了字符设备所有信息，其中最重要的一项就是字符设备的<strong>操作函数接口</strong></li>
-<li><strong>找到struct cdev结构体</strong>后，linux内核就会将struct cdev结构体所在的<strong>内存空间首地址</strong>记录在<strong>struct inode结构体i_cdev成员</strong>中，将struct cdev结构体中的记录的函<strong>数操作接口地址记录</strong>在<strong>struct file结构体的f_ops成员中</strong>。</li>
-<li>执行<strong>xxx_open驱动函数</strong>。</li>
-</ol>
-
+          <p>目前打算写一下 Linux 驱动开发入门系列的博客，一方面是为了方便日后复习，另一方面也是希望能够捋顺一下自己的思路。这是此系列的第一篇文章，目的是简单概述一下驱动程序在 Linux 内核中扮演的角色。后续文章计划从字符设备驱动框架、设备树、pinctrl 和 GPIO 子系统、IO模型、内核锁机制、中断等几个主题梳理字符驱动程序的编写方法。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/03/12/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A6%82%E8%BF%B0/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1270,7 +1185,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
