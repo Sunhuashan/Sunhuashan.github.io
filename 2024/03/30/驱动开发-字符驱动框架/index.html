@@ -20,20 +20,20 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="时间日期指令 date  显示当前时间  date +%Y  年 date +%m  月 date +%d  日 date “+%Y-%m-%d %H:%M:%S”  格式化字符串   date -s 字符串时间 设置系统时间  date -s “2022-09-22 12:23:30”   cal 查看当月日历  cal 2022 查看全年日历     搜索查找类指令 find [搜索范围] [">
+  <meta name="description" content="唯天下之至拙能胜天下之至巧">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Linux-07-常用指令（续）">
-<meta property="og:url" content="http://example.com/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/index.html">
+<meta property="og:title" content="驱动开发-字符驱动框架">
+<meta property="og:url" content="http://example.com/2024/03/30/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E5%AD%97%E7%AC%A6%E9%A9%B1%E5%8A%A8%E6%A1%86%E6%9E%B6/index.html">
 <meta property="og:site_name" content="sunhuashan">
-<meta property="og:description" content="时间日期指令 date  显示当前时间  date +%Y  年 date +%m  月 date +%d  日 date “+%Y-%m-%d %H:%M:%S”  格式化字符串   date -s 字符串时间 设置系统时间  date -s “2022-09-22 12:23:30”   cal 查看当月日历  cal 2022 查看全年日历     搜索查找类指令 find [搜索范围] [">
+<meta property="og:description" content="唯天下之至拙能胜天下之至巧">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-09-20T15:01:07.000Z">
-<meta property="article:modified_time" content="2022-10-02T08:59:30.953Z">
+<meta property="article:published_time" content="2024-03-30T10:33:54.000Z">
+<meta property="article:modified_time" content="2024-07-12T10:39:45.836Z">
 <meta property="article:author" content="sunhuashan">
-<meta property="article:tag" content="linux">
+<meta property="article:tag" content="linux_driver">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://example.com/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/">
+<link rel="canonical" href="http://example.com/2024/03/30/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E5%AD%97%E7%AC%A6%E9%A9%B1%E5%8A%A8%E6%A1%86%E6%9E%B6/">
 
 
 <script id="page-configurations">
@@ -46,7 +46,7 @@
   };
 </script>
 
-  <title>Linux-07-常用指令（续） | sunhuashan</title>
+  <title>驱动开发-字符驱动框架 | sunhuashan</title>
   
 
 
@@ -161,7 +161,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/03/30/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E5%AD%97%E7%AC%A6%E9%A9%B1%E5%8A%A8%E6%A1%86%E6%9E%B6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jfif">
@@ -174,7 +174,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Linux-07-常用指令（续）
+          驱动开发-字符驱动框架
         </h1>
 
         <div class="post-meta">
@@ -184,7 +184,16 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2022-09-20 23:01:07" itemprop="dateCreated datePublished" datetime="2022-09-20T23:01:07+08:00">2022-09-20</time>
+              <time title="创建时间：2024-03-30 18:33:54" itemprop="dateCreated datePublished" datetime="2024-03-30T18:33:54+08:00">2024-03-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" itemprop="url" rel="index"><span itemprop="name">字符设备驱动</span></a>
+                </span>
             </span>
 
           
@@ -198,114 +207,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h3 id="时间日期指令"><a href="#时间日期指令" class="headerlink" title="时间日期指令"></a>时间日期指令</h3><ul>
-<li><p>date </p>
-<p>显示当前时间</p>
-<ul>
-<li>date +%Y  年</li>
-<li>date +%m  月</li>
-<li>date +%d  日</li>
-<li>date “+%Y-%m-%d %H:%M:%S”  格式化字符串</li>
-</ul>
-</li>
-<li><p>date -s 字符串时间</p>
-<p>设置系统时间</p>
-<ul>
-<li>date -s “2022-09-22 12:23:30”</li>
-</ul>
-</li>
-<li><p>cal</p>
-<p>查看当月日历</p>
-<ul>
-<li><p>cal 2022</p>
-<p>查看全年日历</p>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="搜索查找类指令"><a href="#搜索查找类指令" class="headerlink" title="搜索查找类指令"></a>搜索查找类指令</h3><ul>
-<li><p>find [搜索范围] [选项]</p>
-<p>查找指定文件或目录</p>
-<ul>
-<li><p>-name </p>
-<p>根据文件名查找目录或文件</p>
-<p>案例1：find /home -name hello.txt</p>
-</li>
-<li><p>-user</p>
-<p>根据用户名查找文件或目录</p>
-<p>案例2：find /opt -user root</p>
-</li>
-<li><p>-size</p>
-<p>根据大小查找文件或目录</p>
-<p>案例3：find / -size +200M/-200K/200G(大于200M/小于200K/等于200G) </p>
-</li>
-</ul>
-</li>
-<li><p>locate </p>
-<p>快速定位文件路径</p>
-<p>【定位前先使用 updatedb 指令更新数据库】</p>
-<ul>
-<li><p>locate hello.txt</p>
-<p>定位hello.txt的路径</p>
-</li>
-</ul>
-</li>
-<li><p>which</p>
-<p>定位指令路径</p>
-<p>which ls</p>
-<p>定位ls指令所在路径</p>
-</li>
-<li><p>grep配合“|”管道符号</p>
-<p>使用grep过滤查找后使用管道符将查找内容传递给后面的命令处理</p>
-<ul>
-<li><p>grep [选项] 查找内容 源文件</p>
-<ul>
-<li>-n 显示匹配行和行号</li>
-<li>-i 忽略字母大小写</li>
-</ul>
-<p>案例1：在“/home/hello.txt”文件中，查找“yes”所在行，显示行号</p>
-<p>cat /home/hello.txt | grep -n “yes” 或</p>
-<p>grep -n “yes” /home/hello.txt </p>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="压缩与解压"><a href="#压缩与解压" class="headerlink" title="压缩与解压"></a>压缩与解压</h3><ul>
-<li><p>gzip/gunzip 文件名/文件名.gz</p>
-<p>gzip用于压缩文件，gunzip用于解压文件</p>
-<p>案例1：gzip /home/hello.txt</p>
-</li>
-<li><p>zip [选项] XXX.zip 要压缩的内容</p>
-<p>压缩文件以及文件夹</p>
-<ul>
-<li>-r 递归压缩</li>
-</ul>
-<p>案例1：zip -r myhome.zip /home/  将home目录及其子文件夹压缩</p>
-</li>
-<li><p>unzip [选项] XXX.zip </p>
-<p>解压文件</p>
-<ul>
-<li>-d 目录名  指定解压后的目录</li>
-</ul>
-<p>案例1：unzip /home/myhome.zip  -d /opt/tmp</p>
-</li>
-<li><p>tar [选项] XXX.tar.gz 打包内容</p>
-<p>打包、解压或压缩文件及文件夹</p>
-<ul>
-<li>-c  产生.tar打包文件</li>
-<li>-v  显示详细信息</li>
-<li>-f  指定压缩后的文件名</li>
-<li>-z 打包同时压缩</li>
-<li>-x 解包.tar文件</li>
-<li>-C 指定解压位置</li>
-</ul>
-<p>案例1：tar -zcvf pc.tar.gz cat.txt pig.txt</p>
-<p>案例2：tar -zcvf myhome.tar.gz /home/</p>
-<p>案例3：tar -zxvf pc.tar.gz</p>
-<p>案例4：tar -zxvf myhome.tar.gz -C /opt/tmp</p>
-</li>
-</ul>
-
+        
     </div>
 
     
@@ -314,7 +216,7 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/linux/" rel="tag"># linux</a>
+              <a href="/tags/linux-driver/" rel="tag"># linux_driver</a>
           </div>
 
         
@@ -323,12 +225,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/" rel="prev" title="Linux-06-常用指令">
-      <i class="fa fa-chevron-left"></i> Linux-06-常用指令
+    <a href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" rel="prev" title="【数据结构与算法】环形缓冲区：原理，实现，与应用">
+      <i class="fa fa-chevron-left"></i> 【数据结构与算法】环形缓冲区：原理，实现，与应用
     </a></div>
       <div class="post-nav-item">
-    <a href="/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/" rel="next" title="Linux-08-权限管理">
-      Linux-08-权限管理 <i class="fa fa-chevron-right"></i>
+    <a href="/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/" rel="next" title="【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？">
+      【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？ <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -388,7 +290,6 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%B6%E9%97%B4%E6%97%A5%E6%9C%9F%E6%8C%87%E4%BB%A4"><span class="nav-number">1.</span> <span class="nav-text">时间日期指令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%90%9C%E7%B4%A2%E6%9F%A5%E6%89%BE%E7%B1%BB%E6%8C%87%E4%BB%A4"><span class="nav-number">2.</span> <span class="nav-text">搜索查找类指令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%8B%E7%BC%A9%E4%B8%8E%E8%A7%A3%E5%8E%8B"><span class="nav-number">3.</span> <span class="nav-text">压缩与解压</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
