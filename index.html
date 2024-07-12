@@ -309,6 +309,287 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/12/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A6%82%E8%BF%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/12/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A6%82%E8%BF%B0/" class="post-title-link" itemprop="url">【驱动开发】Linux 驱动开发入门（一） 概述</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-12 18:56:05" itemprop="dateCreated datePublished" datetime="2023-03-12T18:56:05+08:00">2023-03-12</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="驱动概念"><a href="#驱动概念" class="headerlink" title="驱动概念"></a>驱动概念</h2><p><strong>驱动与底层硬件直接打交道，充当了硬件与应用软件中间的桥梁。</strong></p>
+<ul>
+<li>具体任务<ol>
+<li>读写设备寄存器（实现控制的方式）</li>
+<li>完成设备的轮询、中断处理、DMA通信（CPU与外设通信的方式）</li>
+<li>进行物理内存向虚拟内存的映射（在开启硬件MMU的情况下）</li>
+</ol>
+</li>
+<li>说明：设备驱动的两个任务方向<ol>
+<li>操作硬件（向下）</li>
+<li>将驱动程序通入内核，实现面向操作系统内核的接口内容，接口由操作系统实现（向上） （<strong>驱动程序</strong>按照操作系统给出的<strong>独立于设备的接口设计</strong>，<strong>应用程序</strong>使用操作系统<strong>统一的系统调用接口</strong>来访问设备）</li>
+</ol>
+</li>
+</ul>
+<p>Linux系统主要部分：<strong>内核、shell、文件系统、应用程序</strong></p>
+<ul>
+<li><strong>内核、shell和文件系统</strong>一起形成了基本的操作系统结构，它们使得用户可以运行程序、管理文件并使用系统</li>
+<li>分层设计的思想让程序间松耦合，有助于适配各种平台</li>
+<li>驱动的<strong>上面是系统调用</strong>，<strong>下面是硬件</strong></li>
+</ul>
+<h2 id="驱动分类"><a href="#驱动分类" class="headerlink" title="驱动分类"></a>驱动分类</h2><p>Linux驱动分为三个基础大类：<strong>字符设备驱动，块设备驱动，网络设备驱动</strong>。</p>
+<h4 id="字符设备-Char-Device"><a href="#字符设备-Char-Device" class="headerlink" title="字符设备(Char Device)"></a>字符设备(Char Device)</h4><ul>
+<li>字符(char)设备是个能够像字节流（类似文件）一样被访问的设备。</li>
+<li>对字符设备发出读&#x2F;写请求时，实际的硬件I&#x2F;O操作一般紧接着发生。</li>
+<li>字符设备驱动程序通常至少要实现open、close、read和write系统调用。</li>
+<li>比如我们常见的 lcd、触摸屏、键盘、led、串口等等，他们一般对应具体的硬件都是进行出具的采集、处理、传输。</li>
+</ul>
+<h4 id="块设备-Block-Device"><a href="#块设备-Block-Device" class="headerlink" title="块设备(Block Device)"></a>块设备(Block Device)</h4><ul>
+<li>一个块设备驱动程序主要通过传输固定大小的数据（一般为512或1k）来访问设备。</li>
+<li>块设备通过buffer cache(内存缓冲区)访问，可以随机存取，即：任何块都可以读写，不必考虑它在设备的什么地方。</li>
+<li>块设备可以通过它们的设备特殊文件访问，但是更常见的是通过文件系统进行访问。</li>
+<li>只有一个块设备可以支持一个安装的文件系统。</li>
+<li>比如我们常见的电脑硬盘、SD卡、U盘、光盘等。</li>
+</ul>
+<h4 id="网络设备-Net-Device"><a href="#网络设备-Net-Device" class="headerlink" title="网络设备(Net Device)"></a>网络设备(Net Device)</h4><ul>
+<li>任何网络事务都经过一个网络接口形成，即一个能够和其他主机交换数据的设备。</li>
+<li>访问网络接口的方法仍然是给它们分配一个唯一的名字（比如eth0），但这个名字在文件系统中不存在对应的节点。</li>
+<li>内核和网络设备驱动程序间的通信，完全不同于内核和字符以及块驱动程序之间的通信，内核调用一套和数据包传输相关的函（socket函数）而不是read、write等。</li>
+<li>比如我们常见的网卡设备、蓝牙设备。</li>
+</ul>
+<h2 id="驱动程序的功能"><a href="#驱动程序的功能" class="headerlink" title="驱动程序的功能"></a>驱动程序的功能</h2><ol>
+<li>对设备初始化和释放</li>
+<li>把数据从内核传送到硬件和从硬件读取数据</li>
+<li>读取应用程序传送给设备文件的数据和回送应用程序请求的数据</li>
+<li>检测和处理设备出现的错误</li>
+</ol>
+<h2 id="驱动开发前提知识"><a href="#驱动开发前提知识" class="headerlink" title="驱动开发前提知识"></a>驱动开发前提知识</h2><h4 id="内核态和用户态"><a href="#内核态和用户态" class="headerlink" title="内核态和用户态"></a>内核态和用户态</h4><ul>
+<li>Kernel Mode（内核态）<ul>
+<li>内核模式下（执行内核空间的代码），代码具有对硬件的所有控制权限。可以执行所有CPU指令，可以访问任意地址的内存</li>
+</ul>
+</li>
+<li>User Mode（用户态）<ul>
+<li>在用户模式下（执行用户空间的代码），代码没有对硬件的直接控制权限，也不能直接访问地址的内存。</li>
+<li>只能访问映射其地址空间的页表项中规定的在用户态下可访问页面的虚拟地址。</li>
+<li>程序是通过调用系统接口(System Call APIs)来达到访问硬件和内存</li>
+</ul>
+</li>
+</ul>
+<p><strong>Linux利用CPU实现内核态和用户态</strong></p>
+<ul>
+<li>arm：内核态（svc模式），用户态（usr模式）</li>
+<li>x86： 内核态（ring 0 ），用户态（ring 3）（ x86有ring 0 - ring3四种特权等级）</li>
+</ul>
+<p><strong>Linux实现内核态和用户态切换</strong></p>
+<ul>
+<li>ARM Linux的系统调用实现原理是采用 <code>swi</code> 软中断从用户态切换至内核态</li>
+<li>X86是通过 <code>int 0x80</code> 中断进入内核态</li>
+</ul>
+<p>Linux只能通过<strong>系统调用</strong>和<strong>硬件中断</strong>从用户空间进入内核空间</p>
+<ul>
+<li>执行<strong>系统调用</strong>的内核代码运行在<strong>进程上下文中</strong>，他代表调用进程执行操作，因此能够<strong>访问进程地址空间的所有数据</strong></li>
+<li>处理<strong>硬件中断</strong>的内核代码运行在<strong>中断上下文中</strong>，他和<strong>进程是异步</strong>的，与任何一个特定进程无关通常，一个驱动程序模块中的某些函数作为系统调用的一部分，而其他函数负责中断处理</li>
+</ul>
+<h4 id="Linux下应用程序调用驱动程序流程"><a href="#Linux下应用程序调用驱动程序流程" class="headerlink" title="Linux下应用程序调用驱动程序流程"></a>Linux下应用程序调用驱动程序流程</h4><p><img src="/./imgs/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A6%82%E8%BF%B0/image-20240712172238469.png" alt="image-20240712172238469"></p>
+<ul>
+<li><p>Linux下进行驱动开发，完全将驱动程序与应用程序隔开，中间通过<strong>C标准库函数</strong>以及<strong>系统调用</strong>完成驱动层和应用层的数据交换。</p>
+</li>
+<li><p>驱动加载成功以后会在“&#x2F;dev”目录下生成一个相应的文件，应用程序通过<strong>对“&#x2F;dev&#x2F;xxx” (xxx 是具体的驱动文件名字) 的文件进行相应的操作</strong>即可实现对硬件的操作。</p>
+</li>
+<li><p>用户空间不能直接对内核进行操作，因此必须使用一个叫做 <strong>“系统调用”的方法</strong> 来实现从用户空间“陷入” 到内核空间，这样才能实现对底层驱动的操作</p>
+</li>
+<li><p>每一个<strong>系统调用</strong>，在驱动中都有<strong>与之对应的一个驱动函数</strong>，在 Linux 内核文件 <code>include/linux/fs.h</code> 中有个叫做 <strong>file_operations 的结构体</strong>，此<strong>结构体就是 Linux 内核驱动操作函数集合</strong>。</p>
+</li>
+</ul>
+<h4 id="打开设备文件流程"><a href="#打开设备文件流程" class="headerlink" title="打开设备文件流程"></a><strong>打开设备文件流程</strong></h4><ol>
+<li>加载一个驱动模块，产生一个<strong>设备文件</strong>，有<strong>唯一对应的inode结构体</strong></li>
+<li>应用层调用<strong>open函数</strong>打开设备文件，对于上层open调用到内核时会发生一次<strong>软中断</strong>，从用户空间<strong>进入到内核空间</strong>。</li>
+<li>open会调用到<strong>sys_open(内核函数)<strong>，sys_open根据</strong>文件的地址</strong>，找到设备文件对应的<strong>struct inode结构体</strong>描述的信息，可以知道接下来要操作的设备类型（字符设备还是块设备），还会<strong>分配一个struct file结构体</strong>。</li>
+<li>根据<strong>struct inode结构体里面记录的主设备号和次设备号</strong>，在<strong>驱动链表</strong>(管理所有设备的驱动)里面，根据找到<strong>字符设备驱动</strong></li>
+<li>每个字符设备都有一个<strong>struct cdev结构体</strong>。此结构体描述了字符设备所有信息，其中最重要的一项就是字符设备的<strong>操作函数接口</strong></li>
+<li><strong>找到struct cdev结构体</strong>后，linux内核就会将struct cdev结构体所在的<strong>内存空间首地址</strong>记录在<strong>struct inode结构体i_cdev成员</strong>中，将struct cdev结构体中的记录的函<strong>数操作接口地址记录</strong>在<strong>struct file结构体的f_ops成员中</strong>。</li>
+<li>执行<strong>xxx_open驱动函数</strong>。</li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/12/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/12/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/" class="post-title-link" itemprop="url">驱动开发--模块</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-12 17:34:09" itemprop="dateCreated datePublished" datetime="2023-03-12T17:34:09+08:00">2023-03-12</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/01/05/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E9%98%BB%E5%A1%9E%E3%80%81%E9%9D%9E%E9%98%BB%E5%A1%9E%E3%80%81%E5%90%8C%E6%AD%A5%E3%80%81%E5%BC%82%E6%AD%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/01/05/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E9%98%BB%E5%A1%9E%E3%80%81%E9%9D%9E%E9%98%BB%E5%A1%9E%E3%80%81%E5%90%8C%E6%AD%A5%E3%80%81%E5%BC%82%E6%AD%A5/" class="post-title-link" itemprop="url">【操作系统】操作系统概念--阻塞/非阻塞，同步/异步</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-01-05 17:05:03" itemprop="dateCreated datePublished" datetime="2023-01-05T17:05:03+08:00">2023-01-05</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">计算机基础</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>操作系统中的概念非常多，而且彼此之间很容易混淆。其中，阻塞&#x2F;非阻塞，同步&#x2F;异步 这两对概念即不容易理解，又经常同时出现。本篇文章试图彻底的理清这两对概念，为后面深入学习操作系统知识打好基础。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/01/05/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E9%98%BB%E5%A1%9E%E3%80%81%E9%9D%9E%E9%98%BB%E5%A1%9E%E3%80%81%E5%90%8C%E6%AD%A5%E3%80%81%E5%BC%82%E6%AD%A5/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/12/11/vim%E5%B7%A5%E5%85%B7/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -885,460 +1166,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/" class="post-title-link" itemprop="url">Linux-06-常用指令</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-09-17 09:27:04" itemprop="dateCreated datePublished" datetime="2022-09-17T09:27:04+08:00">2022-09-17</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="指定运行级别"><a href="#指定运行级别" class="headerlink" title="指定运行级别"></a>指定运行级别</h3><ul>
-<li><p>运行级别介绍</p>
-<ul>
-<li>0：关机</li>
-<li>1：单用户【找回密码】</li>
-<li>2：多用户状态无网络服务</li>
-<li><strong>3：多用户状态有网络服务</strong></li>
-<li>4：系统未使用保留给用户</li>
-<li><strong>5：图形界面</strong></li>
-<li>6：系统重启</li>
-</ul>
-</li>
-<li><p>init 0&#x2F;1&#x2F;2&#x2F;3&#x2F;4&#x2F;5&#x2F;6</p>
-<p>切换运行级别</p>
-</li>
-<li><p>systemctl get-default</p>
-<p>查看系统默认运行级别</p>
-</li>
-<li><p>systemctl set-default multi-user.target（3）&#x2F;graphical.target（5）</p>
-<p>设置系统的默认运行级别（CentOS7将运行级别简化为3和5）</p>
-</li>
-</ul>
-<h3 id="找回root密码（CentOS7）"><a href="#找回root密码（CentOS7）" class="headerlink" title="找回root密码（CentOS7）"></a>找回root密码（CentOS7）</h3><p>在系统启动时按“e”，编辑所选项</p>
-<p><img src="/%E6%8C%89e.png"></p>
-<p>将光标移动至红色方框处，并追加“init&#x3D;&#x2F;bin&#x2F;sh”，追加后按 Ctrl + x 进入单用户模式</p>
-<p><img src="/%E8%BF%BD%E5%8A%A0%E5%86%85%E5%AE%B9.png"></p>
-<p><img src="/%E8%BF%BD%E5%8A%A0%E5%90%8E.png"></p>
-<p>接着在光标闪烁出输入”mount -o remount,rw &#x2F;“，按回车，输入”passwd”,按回车，连续输入新密码两次后光标继续闪烁</p>
-<p><img src="/%E6%96%B0%E5%AF%86%E7%A0%81.png"></p>
-<p>接着输入“touch &#x2F;.autorelabel”后按回车，再输入“exec &#x2F;sbin&#x2F;init“后回车，等待系统重启即成功重置密码</p>
-<p><img src="/%E9%87%8D%E7%BD%AE%E6%88%90%E5%8A%9F.png"></p>
-<h3 id="帮助指令"><a href="#帮助指令" class="headerlink" title="帮助指令"></a>帮助指令</h3><ul>
-<li><p>man 命令或者配置文件</p>
-<p>获取相关命令的帮助信息</p>
-</li>
-<li><p>help 命令</p>
-<p>获得shell内置命令的帮助信息</p>
-</li>
-</ul>
-<h3 id="文件目录相关指令"><a href="#文件目录相关指令" class="headerlink" title="文件目录相关指令"></a>文件目录相关指令</h3><ul>
-<li><p>pwd </p>
-<p>显示当前工作目录的绝对路径</p>
-</li>
-<li><p>ls [选项] [文件或目录]</p>
-<ul>
-<li>-a 显示所有，包括隐藏的（.开头）</li>
-<li>-l 以列表方式显示信息</li>
-<li>-al &#x2F; -la 组合使用</li>
-</ul>
-</li>
-<li><p>cd [目录]</p>
-</li>
-</ul>
-<p>​		切换至指定目录</p>
-<p>​		cd ~ 切换至当前用户的家目录</p>
-<p>​		cd ..&#x2F; 切换至上一级目录pwd</p>
-<ul>
-<li><p>mkdir [选项] 要创建的目录</p>
-<ul>
-<li><p>-p 创建多级目录</p>
-<p>案例1：mkdir &#x2F;home&#x2F;dog 创建一个目录</p>
-<p>案例2：mkdir -p &#x2F;home&#x2F;animal&#x2F;dog 创建多级目录</p>
-</li>
-</ul>
-</li>
-<li><p>rmdir [选项] 要删除的空目录</p>
-<ul>
-<li><p>rm -rf 强制删除目录（无论是否为空）</p>
-<p>案例一：rmdir &#x2F;home&#x2F;dog</p>
-<p>案例二：rm -rf &#x2F;home&#x2F;animal&#x2F;dog</p>
-</li>
-</ul>
-</li>
-<li><p>touch 文件名</p>
-<p>创建新的空文件</p>
-</li>
-<li><p>cp [选项] 源文件&#x2F;目录 目标目录</p>
-<ul>
-<li>-r 递归复制整个目录</li>
-<li>\cp 强制覆盖原有的旧文件</li>
-</ul>
-</li>
-<li><p>rm [选项] 要删除的文件或目录</p>
-<ul>
-<li>-r 递归删除目录</li>
-<li>-f 强制删除，不提示</li>
-</ul>
-</li>
-<li><p>mv 旧名 新名</p>
-<p>重命名文件或目录</p>
-</li>
-<li><p>mv 文件或目录  新目录</p>
-<p>移动文件或目录</p>
-</li>
-<li><p>cat [选项] 要查看的文件</p>
-<p>查看文件</p>
-<ul>
-<li>-n 显示行号</li>
-</ul>
-</li>
-<li><p>more  要查看的文件</p>
-<p>按页显示文件</p>
-<ul>
-<li>空格键 向下翻一页</li>
-<li>Enter 向下翻一行</li>
-<li>q 离开more不在显示文件</li>
-<li>Ctrl + f 向下滚动一屏</li>
-<li>Ctrl + b 向上滚动一屏</li>
-<li>&#x3D; 输出当前行的行号</li>
-<li>:f 输出文件名和当前行的行号</li>
-</ul>
-</li>
-<li><p>less 要查看的文件（适合查看较大的文件）</p>
-<p>分屏查看文件内容，支持各种显示终端，并非一次全部加载整个文件，而是根据显示的需要加载</p>
-<ul>
-<li>空格键 向下翻一页</li>
-<li>pagedown 向下翻一页</li>
-<li>pageup 向上翻一页</li>
-<li>&#x2F;字串 向下搜寻字串；”n“向下查找；”N”向上查找</li>
-<li>?字串 向上搜寻字串；”n”向上查找；”N”向下查找</li>
-<li>q 离开less</li>
-</ul>
-</li>
-<li><p>echo [选项] 输出内容</p>
-<p>输出内容至控制台</p>
-</li>
-</ul>
-<p>​		案例1：echo $PATH ;输出环境变量</p>
-<p>​		案例2：echo $HOSTNAME;输出主机名</p>
-<p>​		案例3：echo “hello,world”;输出指定内容</p>
-<ul>
-<li><p>“&gt;”  目标文件（覆盖写）</p>
-<p>输出重定向指令，将输出内容重新覆盖到目标文件</p>
-<p>案例1：ls -l &gt; 文件</p>
-<p>案例2：cat 文件1 &gt; 文件2</p>
-</li>
-<li><p>“&gt;&gt;” 目标文件（追加写）</p>
-<p>输出重定向指令，将输出内容重新追加到目标文件</p>
-<p>案例1：echo “追加内容” &gt;&gt; 目标文件</p>
-<p>案例2：cal  &gt;&gt; &#x2F;home&#x2F;mycal  (cal命令输出当前日期)</p>
-</li>
-<li><p>head [选项] 文件</p>
-<p>查看文件前10行内容</p>
-<ul>
-<li>-n 指定显示行数</li>
-</ul>
-</li>
-<li><p>tail [选项] 文件</p>
-<p>查看文件后10行内容</p>
-<ul>
-<li>-n 指定显示行数</li>
-<li>-f  实时监控文件的追加内容（Ctrl + c 退出）</li>
-</ul>
-</li>
-<li><p>ln -s [源文件或目录] [软链接名]</p>
-<p>为原文件创建一个软链接</p>
-</li>
-<li><p>history </p>
-<p>查看操作历史</p>
-<p>案例1：history 10 ；显示最新十条</p>
-<p>案例2：!5;重新执行编号为5的指令</p>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/" class="post-title-link" itemprop="url">Linux-05-关机重启命令及用户管理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-09-16 21:47:12" itemprop="dateCreated datePublished" datetime="2022-09-16T21:47:12+08:00">2022-09-16</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="关机-amp-重启命令"><a href="#关机-amp-重启命令" class="headerlink" title="关机&amp;重启命令"></a>关机&amp;重启命令</h3><ul>
-<li><p>关闭系统</p>
-<ul>
-<li><p>shutdown -h now </p>
-<p>立刻进行关机</p>
-</li>
-<li><p>shutdown -h 1 “hello everyone ,一分钟后关机”</p>
-<p>1分钟后关机并通知所有登陆到该系统的用户</p>
-</li>
-<li><p>shutdown -r now</p>
-<p>立刻重启计算机</p>
-</li>
-<li><p>halt</p>
-<p>关机，作用与”shutdown”相同</p>
-</li>
-<li><p>reboot</p>
-<p>立刻重启计算机</p>
-</li>
-<li><p>sync</p>
-<p>把内存数据写入到磁盘，一般在关机或重启前要执行</p>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="用户注销与登录"><a href="#用户注销与登录" class="headerlink" title="用户注销与登录"></a>用户注销与登录</h3><ul>
-<li><p>su - 用户名</p>
-<p>用户切换</p>
-<p><img src="%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png"></p>
-</li>
-<li><p>logout（在图形化界面无效，在运行级别3有效）</p>
-<p>注销当前用户</p>
-</li>
-</ul>
-<h3 id="用户管理"><a href="#用户管理" class="headerlink" title="用户管理"></a>用户管理</h3><ul>
-<li><p>uesradd 用户名</p>
-<p>添加用户</p>
-</li>
-<li><p>useradd -d 指定目录 用户名</p>
-<p>添加用户并指定用户目录</p>
-</li>
-<li><p>passwd 用户名 </p>
-<p>为指定用户修改密码</p>
-</li>
-<li><p>pwd</p>
-<p>显示当前所在目录</p>
-</li>
-<li><p>userdel 用户名</p>
-<p>删除用户账号，但是保留用户的目录</p>
-</li>
-<li><p>userdel -r 用户名（谨慎使用）</p>
-<p>删除用户账号以及用户的目录</p>
-</li>
-<li><p>id 用户名</p>
-<p>查询用户信息（用户id，组id，用户组id）</p>
-</li>
-<li><p>whoami/who am i</p>
-<p>查询当前用户</p>
-</li>
-</ul>
-<h5 id="用户组"><a href="#用户组" class="headerlink" title="用户组"></a>用户组</h5><p>类似于角色，系统对有共性（权限）的多个用户进行统一管理</p>
-<ul>
-<li><p>groupadd 组名</p>
-<p>添加用户组</p>
-</li>
-<li><p>groupdel 组名</p>
-<p>删除用户组</p>
-</li>
-<li><p>useradd -g 用户组名 用户名</p>
-<p>添加用户至指定组</p>
-</li>
-<li><p>usermod -g 用户组名 用户名</p>
-<p>修改用户所在的用户组</p>
-</li>
-</ul>
-<h5 id="用户和组的相关文件"><a href="#用户和组的相关文件" class="headerlink" title="用户和组的相关文件"></a>用户和组的相关文件</h5><ul>
-<li><p>/etc/passwd 文件（用户信息配置文件）</p>
-<p>格式  用户名：口令：uid：gid：注释性描述：主目录：登陆shell</p>
-</li>
-<li><p>/etc/shadow文件（口令配置文件）</p>
-<p>格式  登录名：加密口令：最后一次修改时间：最小时间间隔：最大时间间隔：警告时间：不活动时间：失效时间：标志</p>
-</li>
-<li><p>/etc/group文件 （组配置文件）</p>
-<p>格式 组名：口令：组标识号：组内用户列表</p>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/16/Linux-04-vim/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/09/16/Linux-04-vim/" class="post-title-link" itemprop="url">Linux-04-vim</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-09-16 20:59:14" itemprop="dateCreated datePublished" datetime="2022-09-16T20:59:14+08:00">2022-09-16</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ul>
-<li><p>vim的模式及切换</p>
-<p><img src="/%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2.png"></p>
-</li>
-<li><p>快捷键的使用</p>
-<ul>
-<li><p>拷贝&#x2F;粘贴（一般模式）</p>
-<p>拷贝当前行：yy</p>
-<p>拷贝当前行至下5行：5yy</p>
-<p>粘贴：p</p>
-</li>
-<li><p>删除（一般模式）</p>
-<p>删除当前行：dd</p>
-<p>删除当前行至下5行：5dd</p>
-</li>
-<li><p>查找（&#x2F;命令行模式）</p>
-<p>输入 ”&#x2F;“ 进入命令行模式，输入要查找的内容，按”n”切换匹配结果</p>
-</li>
-<li><p>设置&#x2F;取消文件行号（:命令行模式）</p>
-<p>设置行号：set nu</p>
-<p>取消行号：set nonu</p>
-</li>
-<li><p>到达文件末行和首行(一般模式)</p>
-<p>到达文件末行：G</p>
-<p>到达文件首行：gg</p>
-</li>
-<li><p>撤销（一般模式）</p>
-<p>撤销最新的动作：u</p>
-</li>
-<li><p>移动光标至指定行（一般模式）</p>
-<p>光标移动到第23行：23G</p>
-</li>
-</ul>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1410,7 +1237,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1421,7 +1248,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

@@ -157,6 +157,460 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/" class="post-title-link" itemprop="url">Linux-06-常用指令</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-09-17 09:27:04" itemprop="dateCreated datePublished" datetime="2022-09-17T09:27:04+08:00">2022-09-17</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="指定运行级别"><a href="#指定运行级别" class="headerlink" title="指定运行级别"></a>指定运行级别</h3><ul>
+<li><p>运行级别介绍</p>
+<ul>
+<li>0：关机</li>
+<li>1：单用户【找回密码】</li>
+<li>2：多用户状态无网络服务</li>
+<li><strong>3：多用户状态有网络服务</strong></li>
+<li>4：系统未使用保留给用户</li>
+<li><strong>5：图形界面</strong></li>
+<li>6：系统重启</li>
+</ul>
+</li>
+<li><p>init 0&#x2F;1&#x2F;2&#x2F;3&#x2F;4&#x2F;5&#x2F;6</p>
+<p>切换运行级别</p>
+</li>
+<li><p>systemctl get-default</p>
+<p>查看系统默认运行级别</p>
+</li>
+<li><p>systemctl set-default multi-user.target（3）&#x2F;graphical.target（5）</p>
+<p>设置系统的默认运行级别（CentOS7将运行级别简化为3和5）</p>
+</li>
+</ul>
+<h3 id="找回root密码（CentOS7）"><a href="#找回root密码（CentOS7）" class="headerlink" title="找回root密码（CentOS7）"></a>找回root密码（CentOS7）</h3><p>在系统启动时按“e”，编辑所选项</p>
+<p><img src="/%E6%8C%89e.png"></p>
+<p>将光标移动至红色方框处，并追加“init&#x3D;&#x2F;bin&#x2F;sh”，追加后按 Ctrl + x 进入单用户模式</p>
+<p><img src="/%E8%BF%BD%E5%8A%A0%E5%86%85%E5%AE%B9.png"></p>
+<p><img src="/%E8%BF%BD%E5%8A%A0%E5%90%8E.png"></p>
+<p>接着在光标闪烁出输入”mount -o remount,rw &#x2F;“，按回车，输入”passwd”,按回车，连续输入新密码两次后光标继续闪烁</p>
+<p><img src="/%E6%96%B0%E5%AF%86%E7%A0%81.png"></p>
+<p>接着输入“touch &#x2F;.autorelabel”后按回车，再输入“exec &#x2F;sbin&#x2F;init“后回车，等待系统重启即成功重置密码</p>
+<p><img src="/%E9%87%8D%E7%BD%AE%E6%88%90%E5%8A%9F.png"></p>
+<h3 id="帮助指令"><a href="#帮助指令" class="headerlink" title="帮助指令"></a>帮助指令</h3><ul>
+<li><p>man 命令或者配置文件</p>
+<p>获取相关命令的帮助信息</p>
+</li>
+<li><p>help 命令</p>
+<p>获得shell内置命令的帮助信息</p>
+</li>
+</ul>
+<h3 id="文件目录相关指令"><a href="#文件目录相关指令" class="headerlink" title="文件目录相关指令"></a>文件目录相关指令</h3><ul>
+<li><p>pwd </p>
+<p>显示当前工作目录的绝对路径</p>
+</li>
+<li><p>ls [选项] [文件或目录]</p>
+<ul>
+<li>-a 显示所有，包括隐藏的（.开头）</li>
+<li>-l 以列表方式显示信息</li>
+<li>-al &#x2F; -la 组合使用</li>
+</ul>
+</li>
+<li><p>cd [目录]</p>
+</li>
+</ul>
+<p>​		切换至指定目录</p>
+<p>​		cd ~ 切换至当前用户的家目录</p>
+<p>​		cd ..&#x2F; 切换至上一级目录pwd</p>
+<ul>
+<li><p>mkdir [选项] 要创建的目录</p>
+<ul>
+<li><p>-p 创建多级目录</p>
+<p>案例1：mkdir &#x2F;home&#x2F;dog 创建一个目录</p>
+<p>案例2：mkdir -p &#x2F;home&#x2F;animal&#x2F;dog 创建多级目录</p>
+</li>
+</ul>
+</li>
+<li><p>rmdir [选项] 要删除的空目录</p>
+<ul>
+<li><p>rm -rf 强制删除目录（无论是否为空）</p>
+<p>案例一：rmdir &#x2F;home&#x2F;dog</p>
+<p>案例二：rm -rf &#x2F;home&#x2F;animal&#x2F;dog</p>
+</li>
+</ul>
+</li>
+<li><p>touch 文件名</p>
+<p>创建新的空文件</p>
+</li>
+<li><p>cp [选项] 源文件&#x2F;目录 目标目录</p>
+<ul>
+<li>-r 递归复制整个目录</li>
+<li>\cp 强制覆盖原有的旧文件</li>
+</ul>
+</li>
+<li><p>rm [选项] 要删除的文件或目录</p>
+<ul>
+<li>-r 递归删除目录</li>
+<li>-f 强制删除，不提示</li>
+</ul>
+</li>
+<li><p>mv 旧名 新名</p>
+<p>重命名文件或目录</p>
+</li>
+<li><p>mv 文件或目录  新目录</p>
+<p>移动文件或目录</p>
+</li>
+<li><p>cat [选项] 要查看的文件</p>
+<p>查看文件</p>
+<ul>
+<li>-n 显示行号</li>
+</ul>
+</li>
+<li><p>more  要查看的文件</p>
+<p>按页显示文件</p>
+<ul>
+<li>空格键 向下翻一页</li>
+<li>Enter 向下翻一行</li>
+<li>q 离开more不在显示文件</li>
+<li>Ctrl + f 向下滚动一屏</li>
+<li>Ctrl + b 向上滚动一屏</li>
+<li>&#x3D; 输出当前行的行号</li>
+<li>:f 输出文件名和当前行的行号</li>
+</ul>
+</li>
+<li><p>less 要查看的文件（适合查看较大的文件）</p>
+<p>分屏查看文件内容，支持各种显示终端，并非一次全部加载整个文件，而是根据显示的需要加载</p>
+<ul>
+<li>空格键 向下翻一页</li>
+<li>pagedown 向下翻一页</li>
+<li>pageup 向上翻一页</li>
+<li>&#x2F;字串 向下搜寻字串；”n“向下查找；”N”向上查找</li>
+<li>?字串 向上搜寻字串；”n”向上查找；”N”向下查找</li>
+<li>q 离开less</li>
+</ul>
+</li>
+<li><p>echo [选项] 输出内容</p>
+<p>输出内容至控制台</p>
+</li>
+</ul>
+<p>​		案例1：echo $PATH ;输出环境变量</p>
+<p>​		案例2：echo $HOSTNAME;输出主机名</p>
+<p>​		案例3：echo “hello,world”;输出指定内容</p>
+<ul>
+<li><p>“&gt;”  目标文件（覆盖写）</p>
+<p>输出重定向指令，将输出内容重新覆盖到目标文件</p>
+<p>案例1：ls -l &gt; 文件</p>
+<p>案例2：cat 文件1 &gt; 文件2</p>
+</li>
+<li><p>“&gt;&gt;” 目标文件（追加写）</p>
+<p>输出重定向指令，将输出内容重新追加到目标文件</p>
+<p>案例1：echo “追加内容” &gt;&gt; 目标文件</p>
+<p>案例2：cal  &gt;&gt; &#x2F;home&#x2F;mycal  (cal命令输出当前日期)</p>
+</li>
+<li><p>head [选项] 文件</p>
+<p>查看文件前10行内容</p>
+<ul>
+<li>-n 指定显示行数</li>
+</ul>
+</li>
+<li><p>tail [选项] 文件</p>
+<p>查看文件后10行内容</p>
+<ul>
+<li>-n 指定显示行数</li>
+<li>-f  实时监控文件的追加内容（Ctrl + c 退出）</li>
+</ul>
+</li>
+<li><p>ln -s [源文件或目录] [软链接名]</p>
+<p>为原文件创建一个软链接</p>
+</li>
+<li><p>history </p>
+<p>查看操作历史</p>
+<p>案例1：history 10 ；显示最新十条</p>
+<p>案例2：!5;重新执行编号为5的指令</p>
+</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/" class="post-title-link" itemprop="url">Linux-05-关机重启命令及用户管理</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-09-16 21:47:12" itemprop="dateCreated datePublished" datetime="2022-09-16T21:47:12+08:00">2022-09-16</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="关机-amp-重启命令"><a href="#关机-amp-重启命令" class="headerlink" title="关机&amp;重启命令"></a>关机&amp;重启命令</h3><ul>
+<li><p>关闭系统</p>
+<ul>
+<li><p>shutdown -h now </p>
+<p>立刻进行关机</p>
+</li>
+<li><p>shutdown -h 1 “hello everyone ,一分钟后关机”</p>
+<p>1分钟后关机并通知所有登陆到该系统的用户</p>
+</li>
+<li><p>shutdown -r now</p>
+<p>立刻重启计算机</p>
+</li>
+<li><p>halt</p>
+<p>关机，作用与”shutdown”相同</p>
+</li>
+<li><p>reboot</p>
+<p>立刻重启计算机</p>
+</li>
+<li><p>sync</p>
+<p>把内存数据写入到磁盘，一般在关机或重启前要执行</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="用户注销与登录"><a href="#用户注销与登录" class="headerlink" title="用户注销与登录"></a>用户注销与登录</h3><ul>
+<li><p>su - 用户名</p>
+<p>用户切换</p>
+<p><img src="%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png"></p>
+</li>
+<li><p>logout（在图形化界面无效，在运行级别3有效）</p>
+<p>注销当前用户</p>
+</li>
+</ul>
+<h3 id="用户管理"><a href="#用户管理" class="headerlink" title="用户管理"></a>用户管理</h3><ul>
+<li><p>uesradd 用户名</p>
+<p>添加用户</p>
+</li>
+<li><p>useradd -d 指定目录 用户名</p>
+<p>添加用户并指定用户目录</p>
+</li>
+<li><p>passwd 用户名 </p>
+<p>为指定用户修改密码</p>
+</li>
+<li><p>pwd</p>
+<p>显示当前所在目录</p>
+</li>
+<li><p>userdel 用户名</p>
+<p>删除用户账号，但是保留用户的目录</p>
+</li>
+<li><p>userdel -r 用户名（谨慎使用）</p>
+<p>删除用户账号以及用户的目录</p>
+</li>
+<li><p>id 用户名</p>
+<p>查询用户信息（用户id，组id，用户组id）</p>
+</li>
+<li><p>whoami/who am i</p>
+<p>查询当前用户</p>
+</li>
+</ul>
+<h5 id="用户组"><a href="#用户组" class="headerlink" title="用户组"></a>用户组</h5><p>类似于角色，系统对有共性（权限）的多个用户进行统一管理</p>
+<ul>
+<li><p>groupadd 组名</p>
+<p>添加用户组</p>
+</li>
+<li><p>groupdel 组名</p>
+<p>删除用户组</p>
+</li>
+<li><p>useradd -g 用户组名 用户名</p>
+<p>添加用户至指定组</p>
+</li>
+<li><p>usermod -g 用户组名 用户名</p>
+<p>修改用户所在的用户组</p>
+</li>
+</ul>
+<h5 id="用户和组的相关文件"><a href="#用户和组的相关文件" class="headerlink" title="用户和组的相关文件"></a>用户和组的相关文件</h5><ul>
+<li><p>/etc/passwd 文件（用户信息配置文件）</p>
+<p>格式  用户名：口令：uid：gid：注释性描述：主目录：登陆shell</p>
+</li>
+<li><p>/etc/shadow文件（口令配置文件）</p>
+<p>格式  登录名：加密口令：最后一次修改时间：最小时间间隔：最大时间间隔：警告时间：不活动时间：失效时间：标志</p>
+</li>
+<li><p>/etc/group文件 （组配置文件）</p>
+<p>格式 组名：口令：组标识号：组内用户列表</p>
+</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/16/Linux-04-vim/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/09/16/Linux-04-vim/" class="post-title-link" itemprop="url">Linux-04-vim</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-09-16 20:59:14" itemprop="dateCreated datePublished" datetime="2022-09-16T20:59:14+08:00">2022-09-16</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <ul>
+<li><p>vim的模式及切换</p>
+<p><img src="/%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2.png"></p>
+</li>
+<li><p>快捷键的使用</p>
+<ul>
+<li><p>拷贝&#x2F;粘贴（一般模式）</p>
+<p>拷贝当前行：yy</p>
+<p>拷贝当前行至下5行：5yy</p>
+<p>粘贴：p</p>
+</li>
+<li><p>删除（一般模式）</p>
+<p>删除当前行：dd</p>
+<p>删除当前行至下5行：5dd</p>
+</li>
+<li><p>查找（&#x2F;命令行模式）</p>
+<p>输入 ”&#x2F;“ 进入命令行模式，输入要查找的内容，按”n”切换匹配结果</p>
+</li>
+<li><p>设置&#x2F;取消文件行号（:命令行模式）</p>
+<p>设置行号：set nu</p>
+<p>取消行号：set nonu</p>
+</li>
+<li><p>到达文件末行和首行(一般模式)</p>
+<p>到达文件末行：G</p>
+<p>到达文件首行：gg</p>
+</li>
+<li><p>撤销（一般模式）</p>
+<p>撤销最新的动作：u</p>
+</li>
+<li><p>移动光标至指定行（一般模式）</p>
+<p>光标移动到第23行：23G</p>
+</li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/16/Linux-03-%E8%BF%9C%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -517,80 +971,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/03/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E9%98%BB%E5%A1%9E%E3%80%81%E9%9D%9E%E9%98%BB%E5%A1%9E%E3%80%81%E5%90%8C%E6%AD%A5%E3%80%81%E5%BC%82%E6%AD%A5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/09/03/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E9%98%BB%E5%A1%9E%E3%80%81%E9%9D%9E%E9%98%BB%E5%A1%9E%E3%80%81%E5%90%8C%E6%AD%A5%E3%80%81%E5%BC%82%E6%AD%A5/" class="post-title-link" itemprop="url">【操作系统】操作系统概念--阻塞/非阻塞，同步/异步</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-09-03 15:05:03" itemprop="dateCreated datePublished" datetime="2022-09-03T15:05:03+08:00">2022-09-03</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">计算机基础</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>操作系统中的概念非常多，而且彼此之间很容易混淆。其中，阻塞&#x2F;非阻塞，同步&#x2F;异步 这两对概念即不容易理解，又经常同时出现。本篇文章试图彻底的理清这两对概念，为后面深入学习操作系统知识打好基础。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/09/03/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E9%98%BB%E5%A1%9E%E3%80%81%E9%9D%9E%E9%98%BB%E5%A1%9E%E3%80%81%E5%90%8C%E6%AD%A5%E3%80%81%E5%BC%82%E6%AD%A5/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -847,162 +1227,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/" class="post-title-link" itemprop="url">FFmpeg的组成</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-07-06 10:20:00" itemprop="dateCreated datePublished" datetime="2022-07-06T10:20:00+08:00">2022-07-06</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="FFmpeg的组成"><a href="#FFmpeg的组成" class="headerlink" title="FFmpeg的组成"></a><code>FFmpeg</code>的组成</h3><ol>
-<li><p>封装模块<code>AVFormat</code></p>
-<p>封装格式可以理解为一种将音频流和视频流组装起来的协议，实现音频与视频的同步。如，MP4，FLV等。</p>
-<p><code>AVFormat</code>模块实现了绝大多数的封装格式，可以进行封装和解封装。同时，可以自定义自己的封装格式。</p>
-</li>
-<li><p>编解码模块<code>AVCodec</code></p>
-<p>编码格式可以理解为一种将音频或者视频进行压缩的协议，减少文件大小，提高传输效率。如，MP3，H.265等。</p>
-<p><code>AVCodec</code>模块实现了绝大多数的编码格式，可以进行编码和解码。</p>
-</li>
-<li><p>滤镜模块<code>AVFilter</code></p>
-<p><code>AVFilter</code>模块提供了一个通用的音频、视频、字幕等滤镜处理框架。下面是一个滤镜处理的例子.</p>
-<p><img src="AVFilter%E4%BE%8B%E5%AD%90.png"></p>
-<p>对应的命令行如下所示：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./ffmpeg -i INPUT -vf &quot;split [mian][tmp]; [tmp] crop=iw:ih/2:0:0, vflip [flip]; [main][flip] overlay=0:H/2&quot; OUTPUT</span><br></pre></td></tr></table></figure>
-
-<p><code>split</code>滤镜 将视频流分割，并将第二部分打上<code>[tmp]</code>标签;</p>
-<p><code>crop</code>滤镜 根据给定参数，对视频进行裁剪 ；</p>
-<p><code>vflip</code>滤镜 根据给定参数，对视频进行纵坐标调换操作，打上<code>flip</code>标签；</p>
-<p><code>overlay</code>滤镜 将一路输入覆盖到另一路之上，合并输出为一路视频 。    </p>
-</li>
-<li><p>视频图像转换计算模块<code>swscale</code></p>
-<p><code>swscale</code>模块提供高级的图像转换API ,例如，可以实现1080P转720P的图片缩放， YUV转RGB的图片格式转换。</p>
-</li>
-<li><p>音频转换计算模块<code>swresample</code></p>
-<p><code>swresample</code>模块提供高级的音频重采样API，可以实现音频采样，音频通道布局转换等。</p>
-</li>
-</ol>
-<h3 id="编解码工具ffmpeg的使用"><a href="#编解码工具ffmpeg的使用" class="headerlink" title="编解码工具ffmpeg的使用"></a>编解码工具<code>ffmpeg</code>的使用</h3><p><code>ffmpeg</code>是<code>FFmpeg</code>编译后生成的一个可执行文件，下面一个例子介绍该工具的使用。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i input.mp4 -f avi output.avi</span><br></pre></td></tr></table></figure>
-
-<p>该命令将<code>MP4</code>格式的文件转换为<code>AVI</code>格式的文件，通过<code>-i</code>参数获取<code>输入源</code>，通过<code>-f</code>参数规定<code>输出格式</code>。</p>
-<p><code>ffmpeg</code>的主要工作流程包括:</p>
-<ul>
-<li>Demuxing(解封装)</li>
-<li>Decoding(解码)</li>
-<li>Encoding(编码)</li>
-<li>Muxing(封装)</li>
-</ul>
-<p>转换步骤如下图</p>
-<p><img src="ffmpeg%E5%B7%A5%E4%BD%9C%E6%AD%A5%E9%AA%A4.png"></p>
-<h3 id="播放器工具ffplay的使用"><a href="#播放器工具ffplay的使用" class="headerlink" title="播放器工具ffplay的使用"></a>播放器工具<code>ffplay</code>的使用</h3><p><code>ffplay</code>也是<code>FFmpeg</code>编译后生成的一个可执行文件，提供了音视频显示和播放相关的图像信息、音频的波形信息等。</p>
-<h3 id="多媒体分析器ffprobe的使用"><a href="#多媒体分析器ffprobe的使用" class="headerlink" title="多媒体分析器ffprobe的使用"></a>多媒体分析器<code>ffprobe</code>的使用</h3><p><code>ffplay</code>也是<code>FFmpeg</code>编译后生成的一个可执行文件，可以从媒体文件或者媒体流中获取媒体信息，比如音频的参数、视频的参数等等。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/06/19/d2l-ch1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/06/19/d2l-ch1/" class="post-title-link" itemprop="url">d2l-ch1</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-06-19 11:10:22" itemprop="dateCreated datePublished" datetime="2022-06-19T11:10:22+08:00">2022-06-19</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1074,7 +1298,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1085,7 +1309,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
