@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="想要深入理解某一种网络协议，那么对其报文结构肯定要了如指掌，因为这是其设计的基础，一切功能都是和报文息息相关的。这篇文章就来剖析一下 mqtt 协议的报文结构，这样在日后开发相关通信库的时候，才能够得心应手。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【计算机网络】mqtt 通信协议入门之报文结构">
+<meta property="og:url" content="http://example.com/2023/10/15/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="想要深入理解某一种网络协议，那么对其报文结构肯定要了如指掌，因为这是其设计的基础，一切功能都是和报文息息相关的。这篇文章就来剖析一下 mqtt 协议的报文结构，这样在日后开发相关通信库的时候，才能够得心应手。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713175057319.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713183724359.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713185158034.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713185906710.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713190450113.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713223918296.png">
+<meta property="article:published_time" content="2023-10-15T12:53:27.000Z">
+<meta property="article:modified_time" content="2024-07-13T14:39:48.942Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713175057319.png">
+
+<link rel="canonical" href="http://example.com/2023/10/15/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【计算机网络】mqtt 通信协议入门之报文结构 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/10/15/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【计算机网络】mqtt 通信协议入门之报文结构
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-10-15 20:53:27" itemprop="dateCreated datePublished" datetime="2023-10-15T20:53:27+08:00">2023-10-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>想要深入理解某一种网络协议，那么对其报文结构肯定要了如指掌，因为这是其设计的基础，一切功能都是和报文息息相关的。这篇文章就来剖析一下 mqtt 协议的报文结构，这样在日后开发相关通信库的时候，才能够得心应手。</p>
+<span id="more"></span>
+<h2 id="mqtt-控制报文结构"><a href="#mqtt-控制报文结构" class="headerlink" title="mqtt 控制报文结构"></a>mqtt 控制报文结构</h2><p>mqtt 协议通过交换预定义的 mqtt 控制报文来进行通信，该控制报文由三部分组成：</p>
+<ul>
+<li><strong>固定报头</strong> ：mqtt 所有报文均包含该部分</li>
+<li><strong>可变报头</strong> ：仍然属于报文控制头部，只是并不是所有报文都需要这部分控制信息</li>
+<li><strong>有效载荷</strong> ：可以理解为数据部分，有些类型的报文不需要</li>
+</ul>
+<h3 id="报文类型"><a href="#报文类型" class="headerlink" title="报文类型"></a>报文类型</h3><h4 id="固定报头"><a href="#固定报头" class="headerlink" title="固定报头"></a>固定报头</h4><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713175057319.png" alt="image-20240713175057319"></p>
+<p>如上图所示，固定报头至少占两个字节，其中第一个字节高四位用于指定控制报文的类型。mqtt 协议共有 14 种控制报文，所以，固定报头高四位值为 <code>0</code> 和 <code>15</code> 的报文为保留报文</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>方向</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reserved</td>
+<td>0</td>
+<td></td>
+<td>保留</td>
+</tr>
+<tr>
+<td>Reserved</td>
+<td>15</td>
+<td></td>
+<td>保留</td>
+</tr>
+</tbody></table>
+<h4 id="建立、确认与释放连接"><a href="#建立、确认与释放连接" class="headerlink" title="建立、确认与释放连接"></a>建立、确认与释放连接</h4><p>连接，连接确认与释放连接的控制报文类型如下：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>方向</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CONNECT</td>
+<td>1</td>
+<td>客户端——&gt;服务端</td>
+<td>客户端请求连接服务端</td>
+</tr>
+<tr>
+<td>CONNACK</td>
+<td>2</td>
+<td>服务端——&gt;客户端</td>
+<td>连接报文确认</td>
+</tr>
+<tr>
+<td>DISCONNECT</td>
+<td>14</td>
+<td>客户端——&gt;服务端</td>
+<td>客户端断开与服务端的连接</td>
+</tr>
+</tbody></table>
+<h4 id="数据传输相关"><a href="#数据传输相关" class="headerlink" title="数据传输相关"></a>数据传输相关</h4><p>mqtt 协议种使用<strong>发布</strong> 来描述数据传输的过程，包括 ：</p>
+<ul>
+<li>客户端主动向服务器端发布一个主题</li>
+<li>服务器端向客户端发布其订阅的主题消息</li>
+</ul>
+<p>这两种通信过程都是使用 <code>PUBLISH</code> 相关报文来进行消息传递的，基于不同的 QoS ，<code>PUBLISH</code> 包含多种行为方式</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>方向</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PUBLISH</td>
+<td>3</td>
+<td>两个方向都允许</td>
+<td>消息发布</td>
+</tr>
+<tr>
+<td>PUBACK</td>
+<td>4</td>
+<td>两个方向都允许</td>
+<td>QoS1 消息发布收到确认</td>
+</tr>
+<tr>
+<td>PUBREC</td>
+<td>5</td>
+<td>两个方向都允许</td>
+<td>QoS2 消息发布收到（保证交付第一步）</td>
+</tr>
+<tr>
+<td>PUBREL</td>
+<td>6</td>
+<td>两个方向都允许</td>
+<td>QoS2 消息发布释放（保证交付第二步）</td>
+</tr>
+<tr>
+<td>PUBCOM</td>
+<td>7</td>
+<td>两个方向都允许</td>
+<td>QoS2 消息发布完成（保证交付第三步）</td>
+</tr>
+</tbody></table>
+<h4 id="订阅与取消订阅"><a href="#订阅与取消订阅" class="headerlink" title="订阅与取消订阅"></a>订阅与取消订阅</h4><p>客户端可以使用订阅和取消订阅报文向服务器表明自己感兴趣的主题，该报文类型如下：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>方向</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SUBSCRIBE</td>
+<td>8</td>
+<td>客户端——&gt;服务端</td>
+<td>客户端订阅请求</td>
+</tr>
+<tr>
+<td>SUBACK</td>
+<td>9</td>
+<td>服务端——&gt;客户端</td>
+<td>服务器端订阅报文确认</td>
+</tr>
+<tr>
+<td>UNSUBSCRIBE</td>
+<td>10</td>
+<td>客户端——&gt;服务端</td>
+<td>客户端取消订阅请求</td>
+</tr>
+<tr>
+<td>UNSUBACK</td>
+<td>11</td>
+<td>服务端——&gt;客户端</td>
+<td>服务器端取消订阅报文确认</td>
+</tr>
+</tbody></table>
+<h4 id="心跳包"><a href="#心跳包" class="headerlink" title="心跳包"></a>心跳包</h4><p>客户端发送 心跳 （Keep Alive）<code>PINGREQ</code> 报文给服务端的。用于： </p>
+<ul>
+<li>在没有任何其它控制报文从客户端发给服务的时，告知服务端客户端还活着。 </li>
+<li>请求服务端发送响应确认服务端还活着。 </li>
+<li>使用网络以确认网络连接没有断开。</li>
+</ul>
+<p>服务端发送 心跳响应 <code>PINGRESP</code> 报文响应客户端的 <code>PINGREQ</code> 报文，表示服务端还活着。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>方向</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PINGREQ</td>
+<td>12</td>
+<td>客户端——&gt;服务端</td>
+<td>客户端心跳请求</td>
+</tr>
+<tr>
+<td>PINGRESP</td>
+<td>13</td>
+<td>服务端——&gt;客户端</td>
+<td>服务器端心跳响应</td>
+</tr>
+</tbody></table>
+<h3 id="标志位"><a href="#标志位" class="headerlink" title="标志位"></a>标志位</h3><p>第一个字节低四位 [3:0]，用来包含每个 MQTT 控制报文类型特定的标志</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713183724359.png" alt="image-20240713183724359"></p>
+<p>可以看到，大部分类型的报文都不使用标志位，对于 <code>PUBLISH</code> 报文，这些标志位的作用在下文会详细介绍</p>
+<h3 id="剩余长度"><a href="#剩余长度" class="headerlink" title="剩余长度"></a>剩余长度</h3><p>剩余长度字段描述了 <strong>可变报头+有效载荷</strong> 的长度，使用变长编码方案，最大支持四个字节，具体规则如下：</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713185158034.png" alt="image-20240713185158034"></p>
+<p>每个字节的<strong>低 7 位用于编码数据</strong>，<strong>最高位是标志位</strong>，标志位标志着剩余长度字段是否已经结束。</p>
+<h2 id="可变报头（报文标识符）"><a href="#可变报头（报文标识符）" class="headerlink" title="可变报头（报文标识符）"></a>可变报头（报文标识符）</h2><p>某些MOTT控制报文包含一个可变报头部分。它在固定报头和负载之间。可变报头的内容根据报文类型的不同而不同可变报头的报文标识符(数据包标识符)字段存在于在多个类型的报文里。</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713185906710.png" alt="image-20240713185906710"></p>
+<p>对于是否使用以及如何使用报文标识符，要遵循以下规则：</p>
+<ul>
+<li><p><code>PUBLISH</code> 发布相关的报文：</p>
+<ul>
+<li>QoS0 时，<code>PUBLISH</code> <strong>不能</strong>使用报文标识符</li>
+<li>QoS &gt; 0 时，<code>PUBLISH</code> <strong>必须包含</strong>一个<strong>非零</strong>的 16 位报文标识符</li>
+<li>QoS1 时，<code>PUBACK</code> 报文必须包含与最初发送的 <code>PUBLISH</code> 报文相同的报文标识符</li>
+<li>QoS2 时，<code>PUBACK</code>、<code>PUBREC</code>、<code>PUBREL</code> 、<code>PUBCOMP</code> 报文必须包含与最初发送的 <code>PUBLISH</code> 报文相同的报文标识符</li>
+</ul>
+</li>
+<li><p><code>SUBACK</code> 和 <code>UNSUBACK</code> 必须包含在对应的 <code>SUBSCRIBE</code> 和 <code>UNSUBSCRIBE</code> 报文中使用的报文标识符</p>
+</li>
+<li><p>对客户端和服务器端来说（订阅与取消订阅只与客户的相关）：</p>
+<ul>
+<li><p>每次发送一个新的这些类型的报文时都必须分配一个当前未使用的报文标识符。</p>
+</li>
+<li><p>重发报文时，必须使用与上一次相同的标识符。</p>
+</li>
+<li><p>当处理完这个报文<strong>对应的确认</strong>（QoS1的 <code>PUBLISH</code> 对应确认的是 <code>PUBACK</code>，Q0S2的 <code>PUBLISH</code> 对应确认的是 <code>PUBCOMP</code>，与 <code>SUBSCRIBE</code> 或<code>UNSUBSCRIBE</code>  对应确认的分别是 <code>SUBACK</code> 或 <code>UNSUBACK</code>）后，这个报文标识符就释放可重用</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713190450113.png" alt="image-20240713190450113"></p>
+<h2 id="有效载荷"><a href="#有效载荷" class="headerlink" title="有效载荷"></a>有效载荷</h2><p>某些 mqtt 控制报文会在报文最后部分包含一个有效载荷，对于 <code>PUBLISH</code> 报文，其有效载荷就是应用消息。下面列出了需要有效载荷的控制报文类型。</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/image-20240713223918296.png" alt="image-20240713223918296"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/network/" rel="tag"># network</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/10/13/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE/" rel="prev" title="【计算机网络】mqtt 通信协议入门概述">
+      <i class="fa fa-chevron-left"></i> 【计算机网络】mqtt 通信协议入门概述
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" rel="next" title="【数据结构与算法】环形缓冲区：原理，实现，与应用">
+      【数据结构与算法】环形缓冲区：原理，实现，与应用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#mqtt-%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84"><span class="nav-number">1.</span> <span class="nav-text">mqtt 控制报文结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%A5%E6%96%87%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.1.</span> <span class="nav-text">报文类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E6%8A%A5%E5%A4%B4"><span class="nav-number">1.1.1.</span> <span class="nav-text">固定报头</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BB%BA%E7%AB%8B%E3%80%81%E7%A1%AE%E8%AE%A4%E4%B8%8E%E9%87%8A%E6%94%BE%E8%BF%9E%E6%8E%A5"><span class="nav-number">1.1.2.</span> <span class="nav-text">建立、确认与释放连接</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93%E7%9B%B8%E5%85%B3"><span class="nav-number">1.1.3.</span> <span class="nav-text">数据传输相关</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AE%A2%E9%98%85%E4%B8%8E%E5%8F%96%E6%B6%88%E8%AE%A2%E9%98%85"><span class="nav-number">1.1.4.</span> <span class="nav-text">订阅与取消订阅</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BF%83%E8%B7%B3%E5%8C%85"><span class="nav-number">1.1.5.</span> <span class="nav-text">心跳包</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%87%E5%BF%97%E4%BD%8D"><span class="nav-number">1.2.</span> <span class="nav-text">标志位</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%A9%E4%BD%99%E9%95%BF%E5%BA%A6"><span class="nav-number">1.3.</span> <span class="nav-text">剩余长度</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E6%8A%A5%E5%A4%B4%EF%BC%88%E6%8A%A5%E6%96%87%E6%A0%87%E8%AF%86%E7%AC%A6%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">可变报头（报文标识符）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%89%E6%95%88%E8%BD%BD%E8%8D%B7"><span class="nav-number">3.</span> <span class="nav-text">有效载荷</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">27</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

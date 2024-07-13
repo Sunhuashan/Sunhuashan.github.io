@@ -157,6 +157,140 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/13/FFmpeg%E4%B8%AD%E4%BD%BF%E7%94%A8x264%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">FFmpeg中使用x264编码</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-13 19:15:41" itemprop="dateCreated datePublished" datetime="2022-07-13T19:15:41+08:00">2022-07-13</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -h encoder=libx264</span><br></pre></td></tr></table></figure>
+
+<p>查看<code>x264</code>编码器的帮助信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i input.mp4 -vcodec libx264 -preset [字符串] output.mp4</span><br></pre></td></tr></table></figure>
+
+<p>使用<code>x264</code>进行转码操作，<code>-vcodec</code>指定编解码器。</p>
+<p><code>-preset</code>为编码预设参数，方便了<code>x264</code>的使用，预设参数的详细设置如下：</p>
+<ul>
+<li><code>ultrafast</code>：最快的编码方式</li>
+<li><code>superfast</code>：超级快的编码方式</li>
+<li><code>veryfast</code>：非常快的编码方式</li>
+<li><code>faster</code>：稍微快的编码方式</li>
+<li><code>fast</code>：快速的编码方式</li>
+<li><code>medium</code>：折中的编码方式，该方式参数均为默认设置</li>
+<li><code>slow</code>：慢的编码方式</li>
+<li><code>slower</code>：更慢的编码方式</li>
+<li><code>veryslow</code>：非常慢的编码方式</li>
+<li><code>placebo</code>：最慢的编码方式</li>
+</ul>
+<p>设置不同的预设参数，很多编码参数会被影响，所编码出的视频清晰度也有所不同。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/08/FFmpeg%E8%BD%AC%E5%B0%81%E8%A3%85/" class="post-title-link" itemprop="url">FFmpeg转封装</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-08 10:39:42" itemprop="dateCreated datePublished" datetime="2022-07-08T10:39:42+08:00">2022-07-08</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -784,18 +918,18 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-count">27</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
