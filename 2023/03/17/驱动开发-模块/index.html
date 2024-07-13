@@ -22,13 +22,13 @@
 
   <meta name="description" content="在操作系统的组成方式上，一直有宏内核与微内核之间的争论，除了这两种方式，还有其他解决办法吗？Linux 给出了答案，那就是”使用模块“。模块允许内核在运行时动态地向其中插入或从中删除代码，无需重新编译整个内核并重新引导系统，可以方便地扩展内核的功能。在驱动开发中，设备驱动程序都是由一个个模块构成的，在我们开始编写驱动前，先看看内核模块是如何使用的吧。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="【驱动开发】Linux 驱动开发入门（一） 内核模块">
+<meta property="og:title" content="【驱动开发】Linux 驱动开发入门（二） 内核模块">
 <meta property="og:url" content="http://example.com/2023/03/17/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/index.html">
 <meta property="og:site_name" content="sunhuashan">
 <meta property="og:description" content="在操作系统的组成方式上，一直有宏内核与微内核之间的争论，除了这两种方式，还有其他解决办法吗？Linux 给出了答案，那就是”使用模块“。模块允许内核在运行时动态地向其中插入或从中删除代码，无需重新编译整个内核并重新引导系统，可以方便地扩展内核的功能。在驱动开发中，设备驱动程序都是由一个个模块构成的，在我们开始编写驱动前，先看看内核模块是如何使用的吧。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2023-03-17T09:34:09.000Z">
-<meta property="article:modified_time" content="2024-07-12T10:30:56.545Z">
+<meta property="article:modified_time" content="2024-07-13T03:27:06.688Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="linux_driver">
 <meta name="twitter:card" content="summary">
@@ -46,7 +46,7 @@
   };
 </script>
 
-  <title>【驱动开发】Linux 驱动开发入门（一） 内核模块 | sunhuashan</title>
+  <title>【驱动开发】Linux 驱动开发入门（二） 内核模块 | sunhuashan</title>
   
 
 
@@ -174,7 +174,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          【驱动开发】Linux 驱动开发入门（一） 内核模块
+          【驱动开发】Linux 驱动开发入门（二） 内核模块
         </h1>
 
         <div class="post-meta">
@@ -295,6 +295,50 @@ xxx.objs := xxx-a.o xxx-b.o xxx-c.o
 </ul>
 </li>
 </ul>
+<h2 id="hello-world-模块实战"><a href="#hello-world-模块实战" class="headerlink" title="hello world 模块实战"></a>hello world 模块实战</h2><p>光说不练假把式，最后，我们以一个 hello world 模块实战结束，正式进入驱动开发的世界。这个系列的实战例程参考了 《Linux Device Driver 3rd》这本书，因为没有涉及到真实硬件，所以选择在 WSL 下进行开发，感兴趣的读者可以参考 <a target="_blank" rel="noopener" href="https://blog.csdn.net/helaisun/article/details/128426641">WSL2的安装、应用、内核模块编译安装</a> 。</p>
+<h3 id="一个最简单的-hello-模块"><a href="#一个最简单的-hello-模块" class="headerlink" title="一个最简单的 hello 模块"></a>一个最简单的 hello 模块</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/init.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/module.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> __init <span class="title function_">hello_init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        printk( KERN_DEBUG <span class="string">&quot;hello world init\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> __exit <span class="title function_">hello_exit</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        printk( KERN_DEBUG <span class="string">&quot;hello world exit\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">module_init(hello_init);</span><br><span class="line">module_exit(hello_exit);</span><br><span class="line">MODULE_LICENSE(<span class="string">&quot;GPL&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>先看头文件，其中 <code>init.h</code> 包括 <code>__init</code> 宏和 <code>__exit</code> 宏，<code>module.h</code> 包含 模块相关的宏，这两个头文件在驱动程序中是必不可少的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/init.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/module.h&gt;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>紧接着是模块的入口和出口函数，这里我们只是进行简单的打印。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> __init <span class="title function_">hello_init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        printk( KERN_DEBUG <span class="string">&quot;hello world init\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> __exit <span class="title function_">hello_exit</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        printk( KERN_DEBUG <span class="string">&quot;hello world exit\n&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后是模块相关的宏，其中最重要的是 <code>module_init</code> 和 <code>module_exit</code> 宏。当使用 <code>insmod</code> 或 <code>modprobe</code> 宏安装模块时，使用 <code>module_init</code> 注册的函数会被调用，这里调用的是 hello_init 函数，类似的，当模块被移除时，调用的是使用 <code>module_exit</code> 注册的函数，这里是 hello_exit。<code>MODULE_LICENSE</code> 指定的是模块使用的开源协议。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">module_init(hello_init);</span><br><span class="line">module_exit(hello_exit);</span><br><span class="line">MODULE_LICENSE(<span class="string">&quot;GPL&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="编译模块"><a href="#编译模块" class="headerlink" title="编译模块"></a>编译模块</h3><p>当以模块的形式编写驱动程序时，需要在 Makefile 文件中指定内核的源码路径： </p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">KERNEL_PATH := /home/sunhuashan/workplace/wsl-linux-5.10.16.3</span><br><span class="line">PWD := <span class="variable">$(<span class="built_in">shell</span> pwd)</span></span><br><span class="line"></span><br><span class="line">obj-m := hello.o</span><br><span class="line"></span><br><span class="line"><span class="section">build_modules:</span></span><br><span class="line">	<span class="variable">$(MAKE)</span> -C <span class="variable">$(KERNEL_PATH)</span> M=<span class="variable">$(PWD)</span> modules</span><br><span class="line"><span class="section">clean:</span></span><br><span class="line">	<span class="variable">$(MAKE)</span> -C <span class="variable">$(KERNEL_PATH)</span> M=<span class="variable">$(PWD)</span> clean</span><br></pre></td></tr></table></figure>
+
+<p>在这个简单的 Makefile 文件中，各个变量的意义如下：</p>
+<ul>
+<li><code>KERNEL_PATH</code> ：内核源码路径</li>
+<li><code>PWD</code>：模块所在路径，这里使用 <code>shell</code> 中的 <code>pwd</code> 命令获取了 Makefile 所在的目录，一般而已，这也是应该是模块源码所在的目录</li>
+<li><code>obj-m</code>：模块所依赖的目标文件，应该还源码中的源文件一一对应</li>
+<li>剩下的就是简单的 Makefile 语法了，值得注意的是，使用 <code>-C</code> 指定源码路径，<code>M=</code> 指定模块路径， <code>modules</code> 表示编译模块， <code>clean</code> 表示清除模块</li>
+</ul>
+<h3 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h3><ul>
+<li>make 编译</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">sunhuashan@DESKTOP-N8JTGG0:~/workplace/ldd3/ours/misc_modules$ make build_modules </span><br><span class="line">make -C /home/sunhuashan/workplace/wsl-linux-5.10.16.3 M=/home/sunhuashan/workplace/ldd3/ours/misc_modules modules</span><br><span class="line">make[1]: Entering directory &#x27;/home/sunhuashan/workplace/wsl-linux-5.10.16.3&#x27;</span><br><span class="line">  CC [M]  /home/sunhuashan/workplace/ldd3/ours/misc_modules/hello.o</span><br><span class="line">  MODPOST /home/sunhuashan/workplace/ldd3/ours/misc_modules/Module.symvers</span><br><span class="line">  CC [M]  /home/sunhuashan/workplace/ldd3/ours/misc_modules/hello.mod.o</span><br><span class="line">  LD [M]  /home/sunhuashan/workplace/ldd3/ours/misc_modules/hello.ko</span><br><span class="line">make[1]: Leaving directory &#x27;/home/sunhuashan/workplace/wsl-linux-5.10.16.3&#x27;</span><br><span class="line">sunhuashan@DESKTOP-N8JTGG0:~/workplace/ldd3/ours/misc_modules$ </span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>insmod 安装</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sunhuashan@DESKTOP-N8JTGG0:~/workplace/ldd3/ours/misc_modules$ sudo insmod hello.ko</span><br><span class="line">sunhuashan@DESKTOP-N8JTGG0:~/workplace/ldd3/ours/misc_modules$ </span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>dmesg 查看输出日志</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sunhuashan@DESKTOP-N8JTGG0:~/workplace/ldd3/ours/misc_modules$ dmesg | grep hello</span><br><span class="line">[52394.010385] hello world init</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，我们的 hello_init 函数被调用，并且打印了一行输出。</p>
+<ul>
+<li>rmmod 卸载</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sunhuashan@DESKTOP-N8JTGG0:~/workplace/ldd3/ours/misc_modules$ sudo rmmod hello</span><br><span class="line">sunhuashan@DESKTOP-N8JTGG0:~/workplace/ldd3/ours/misc_modules$ dmesg | grep hello</span><br><span class="line">[52394.010385] hello world init</span><br><span class="line">[52601.531399] hello world exit</span><br><span class="line">sunhuashan@DESKTOP-N8JTGG0:~/workplace/ldd3/ours/misc_modules$ </span><br></pre></td></tr></table></figure>
+
+<p>可以看到，我们的 hello_exit 函数被调用，并且打印了一行输出。</p>
 
     </div>
 
@@ -317,8 +361,8 @@ xxx.objs := xxx-a.o xxx-b.o xxx-c.o
       <i class="fa fa-chevron-left"></i> 【驱动开发】Linux 驱动开发入门（一） 概述
     </a></div>
       <div class="post-nav-item">
-    <a href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" rel="next" title="【数据结构与算法】环形缓冲区：原理，实现，与应用">
-      【数据结构与算法】环形缓冲区：原理，实现，与应用 <i class="fa fa-chevron-right"></i>
+    <a href="/2023/03/30/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E5%AD%97%E7%AC%A6%E9%A9%B1%E5%8A%A8%E6%A1%86%E6%9E%B6/" rel="next" title="【驱动开发】Linux 驱动开发入门（三） 字符驱动框架">
+      【驱动开发】Linux 驱动开发入门（三） 字符驱动框架 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -378,7 +422,7 @@ xxx.objs := xxx-a.o xxx-b.o xxx-c.o
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A9%B1%E5%8A%A8%E5%8A%A0%E5%85%A5%E5%88%B0%E5%86%85%E6%A0%B8%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="nav-number">1.</span> <span class="nav-text">驱动加入到内核的方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BB%84%E6%88%90"><span class="nav-number">2.</span> <span class="nav-text">内核模块组成</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0"><span class="nav-number">2.1.</span> <span class="nav-text">模块入口函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E9%80%80%E5%87%BA%E5%87%BD%E6%95%B0"><span class="nav-number">2.2.</span> <span class="nav-text">模块退出函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E8%AE%B8%E5%8F%AF%E8%AF%81%E6%98%8E"><span class="nav-number">2.3.</span> <span class="nav-text">模块许可证明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E5%8F%82%E6%95%B0%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89"><span class="nav-number">2.4.</span> <span class="nav-text">模块参数（可选）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E4%BF%A1%E6%81%AF%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89"><span class="nav-number">2.5.</span> <span class="nav-text">模块信息（可选）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E6%89%93%E5%8D%B0-printk"><span class="nav-number">2.6.</span> <span class="nav-text">模块打印 printk</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E7%9B%B8%E5%85%B3%E7%9A%84%E5%91%BD%E4%BB%A4"><span class="nav-number">3.</span> <span class="nav-text">模块相关的命令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A0%E8%BD%BD%E6%A8%A1%E5%9D%97"><span class="nav-number">3.1.</span> <span class="nav-text">加载模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%B8%E8%BD%BD%E6%A8%A1%E5%9D%97"><span class="nav-number">3.2.</span> <span class="nav-text">卸载模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E6%A8%A1%E5%9D%97%E4%BF%A1%E6%81%AF"><span class="nav-number">3.3.</span> <span class="nav-text">查看模块信息</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A9%B1%E5%8A%A8%E5%8A%A0%E5%85%A5%E5%88%B0%E5%86%85%E6%A0%B8%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="nav-number">1.</span> <span class="nav-text">驱动加入到内核的方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BB%84%E6%88%90"><span class="nav-number">2.</span> <span class="nav-text">内核模块组成</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0"><span class="nav-number">2.1.</span> <span class="nav-text">模块入口函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E9%80%80%E5%87%BA%E5%87%BD%E6%95%B0"><span class="nav-number">2.2.</span> <span class="nav-text">模块退出函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E8%AE%B8%E5%8F%AF%E8%AF%81%E6%98%8E"><span class="nav-number">2.3.</span> <span class="nav-text">模块许可证明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E5%8F%82%E6%95%B0%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89"><span class="nav-number">2.4.</span> <span class="nav-text">模块参数（可选）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E4%BF%A1%E6%81%AF%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89"><span class="nav-number">2.5.</span> <span class="nav-text">模块信息（可选）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E6%89%93%E5%8D%B0-printk"><span class="nav-number">2.6.</span> <span class="nav-text">模块打印 printk</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E7%9B%B8%E5%85%B3%E7%9A%84%E5%91%BD%E4%BB%A4"><span class="nav-number">3.</span> <span class="nav-text">模块相关的命令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A0%E8%BD%BD%E6%A8%A1%E5%9D%97"><span class="nav-number">3.1.</span> <span class="nav-text">加载模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%B8%E8%BD%BD%E6%A8%A1%E5%9D%97"><span class="nav-number">3.2.</span> <span class="nav-text">卸载模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E6%A8%A1%E5%9D%97%E4%BF%A1%E6%81%AF"><span class="nav-number">3.3.</span> <span class="nav-text">查看模块信息</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hello-world-%E6%A8%A1%E5%9D%97%E5%AE%9E%E6%88%98"><span class="nav-number">4.</span> <span class="nav-text">hello world 模块实战</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%9C%80%E7%AE%80%E5%8D%95%E7%9A%84-hello-%E6%A8%A1%E5%9D%97"><span class="nav-number">4.1.</span> <span class="nav-text">一个最简单的 hello 模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%A8%A1%E5%9D%97"><span class="nav-number">4.2.</span> <span class="nav-text">编译模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E6%88%98"><span class="nav-number">4.3.</span> <span class="nav-text">实战</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
