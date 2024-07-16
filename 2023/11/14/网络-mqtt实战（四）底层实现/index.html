@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="上一篇 mqtt 协议的文章介绍了项目的整体架构，这篇文章计划将所有的接口都实现，并且能够成功连接服务器端。我会仍然按照自底向上的顺序介绍，下面先回顾一下我们的整体架构：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【计算机网络】mqtt 通信协议入门（四）连接服务器实战-底层实现">
+<meta property="og:url" content="http://example.com/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="上一篇 mqtt 协议的文章介绍了项目的整体架构，这篇文章计划将所有的接口都实现，并且能够成功连接服务器端。我会仍然按照自底向上的顺序介绍，下面先回顾一下我们的整体架构：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/image-20240716175511507.png">
+<meta property="article:published_time" content="2023-11-14T08:31:55.000Z">
+<meta property="article:modified_time" content="2024-07-16T09:55:16.097Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/image-20240716175511507.png">
+
+<link rel="canonical" href="http://example.com/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【计算机网络】mqtt 通信协议入门（四）连接服务器实战-底层实现 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【计算机网络】mqtt 通信协议入门（四）连接服务器实战-底层实现
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-11-14 16:31:55" itemprop="dateCreated datePublished" datetime="2023-11-14T16:31:55+08:00">2023-11-14</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>上一篇 mqtt 协议的文章介绍了项目的整体架构，这篇文章计划将所有的接口都实现，并且能够成功连接服务器端。我会仍然按照自底向上的顺序介绍，下面先回顾一下我们的整体架构：</p>
+<span id="more"></span>
+
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/image-20240716175511507.png" alt="image-20240716175511507"></p>
+<h2 id="Linux-下系统层实现"><a href="#Linux-下系统层实现" class="headerlink" title="Linux 下系统层实现"></a>Linux 下系统层实现</h2><h3 id="memory-内存管理模块"><a href="#memory-内存管理模块" class="headerlink" title="memory 内存管理模块"></a>memory 内存管理模块</h3><p>在 Linux 下，我们可以直接使用 C 库函数，非常简单：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;memory.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">memory_alloc</span><span class="params">(<span class="type">int</span> size)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">malloc</span>(size);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">memory_free</span><span class="params">(<span class="type">void</span> *ptr)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="built_in">free</span>(ptr);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="timer-定时器"><a href="#timer-定时器" class="headerlink" title="timer 定时器"></a>timer 定时器</h3><p>在 Linux下，我们使用 <code>struct timeval</code> 结构来表示和计算时间，先来看一下这个结构，由秒和微妙表示：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">timeval</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"> 	<span class="type">__time_t</span> tv_sec;		<span class="comment">/* Seconds.  */</span></span><br><span class="line">  	<span class="type">__suseconds_t</span> tv_usec;	<span class="comment">/* Microseconds.  */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>使用 timeval 初始化我们的定时器：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">timer_init</span><span class="params">(<span class="keyword">struct</span> <span class="type">timer_t</span> *t)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> *<span class="title">timeval</span> =</span> memory_alloc(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> timeval));</span><br><span class="line">        t-&gt;timer = (<span class="type">void</span>*)timeval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>设置我们的定时器的截止时间，这里我们的超时时间由毫秒表示，需要进行简单的时间转换，然后在系统时间的基础上计算出来我们的截止时间，并保存到定时器中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">timer_cutoff</span><span class="params">(<span class="keyword">struct</span> <span class="type">timer_t</span> *t, <span class="type">unsigned</span> <span class="type">int</span> timeout)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> *<span class="title">base</span> =</span> (<span class="keyword">struct</span> timeval*)t-&gt;timer;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">interval</span> =</span> &#123;</span><br><span class="line">                .tv_sec = timeout / <span class="number">1000</span>,</span><br><span class="line">                .tv_usec = (timeout % <span class="number">1000</span>) * <span class="number">1000</span>,</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        gettimeofday(base, <span class="literal">NULL</span>);</span><br><span class="line">        timeradd(base, &amp;interval, base);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在判断是否超时时，也是直接和系统时间进行比较，系统时间一定是单调线性增长的。这里我们比较系统时间和之前设定的截止时间比较，如果系统时间超过了定时器，代表超时，返回 <code>1</code>，否则返回 <code>0</code>，表示没超时。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">timer_is_expired</span><span class="params">(<span class="keyword">struct</span> <span class="type">timer_t</span> *t)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> *<span class="title">base</span> =</span> (<span class="keyword">struct</span> timeval*)t-&gt;timer;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">now</span>, <span class="title">minus</span>;</span></span><br><span class="line"></span><br><span class="line">        gettimeofday(&amp;now, <span class="literal">NULL</span>);</span><br><span class="line">        timersub(base, &amp;now, &amp;minus);</span><br><span class="line">        <span class="keyword">if</span> (minus.tv_sec &gt; <span class="number">0</span> || (minus.tv_sec == <span class="number">0</span> &amp;&amp; minus.tv_usec &gt; <span class="number">0</span>))</span><br><span class="line">                <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="network-底层网络连接"><a href="#network-底层网络连接" class="headerlink" title="network 底层网络连接"></a>network 底层网络连接</h3><p>基于 Linux 下的 socket api，实现底层网络连接的建立和数据读写，首先看看简单的初始化网络抽象：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">network_init</span><span class="params">(<span class="keyword">struct</span> <span class="type">network_t</span> *network, <span class="type">char</span> *addr, <span class="type">char</span> *port)</span></span><br><span class="line">&#123;</span><br><span class="line">        network-&gt;sockfd = <span class="number">-1</span>;</span><br><span class="line">        network-&gt;addr = addr;</span><br><span class="line">        network-&gt;port = port;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后是比较重要的连接建立，这里会根据我们初始化的地址和端口号来创建一个 <code>socket</code> 然后建立连接，细节可以看代码中的注释：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">network_connect</span><span class="params">(<span class="keyword">struct</span> <span class="type">network_t</span> *network)</span> </span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> sockfd;</span><br><span class="line">        <span class="type">char</span> *addr, *port;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">addrinfo</span> <span class="title">hint</span>, *<span class="title">result</span>, *<span class="title">cur</span>;</span></span><br><span class="line">        </span><br><span class="line">    	addr = network-&gt;addr;</span><br><span class="line">        port = network-&gt;port;</span><br><span class="line"></span><br><span class="line">    	<span class="comment">/* 下面可以简单理解为 DNS 协议解析域名过程，最后会根据 hint </span></span><br><span class="line"><span class="comment">    	   的限制返回所有满足要求的 addrinfo */</span></span><br><span class="line">        <span class="built_in">memset</span>(&amp;hint, <span class="number">0</span>, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> addrinfo));</span><br><span class="line">        hint.ai_family = AF_UNSPEC;</span><br><span class="line">        hint.ai_socktype = SOCK_STREAM;</span><br><span class="line">        hint.ai_protocol = IPPROTO_TCP;</span><br><span class="line">        retval = getaddrinfo(addr, port, &amp;hint, &amp;result); <span class="comment">/* DNS */</span></span><br><span class="line">        <span class="keyword">if</span> (retval != <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span> retval;</span><br><span class="line">        </span><br><span class="line">    	<span class="comment">/* 根据 addrinfo 列表创建 socket 并尝试建立连接 */</span></span><br><span class="line">        cur = result;</span><br><span class="line">        <span class="keyword">while</span> (cur) &#123;</span><br><span class="line">            	<span class="comment">/* 根据 addrinfo 创建 socket */</span></span><br><span class="line">                sockfd = socket(cur-&gt;ai_family, cur-&gt;ai_socktype, cur-&gt;ai_protocol);</span><br><span class="line">                <span class="keyword">if</span> (sockfd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                        retval = sockfd;</span><br><span class="line">                        <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                retval = connect(sockfd, cur-&gt;ai_addr, cur-&gt;ai_addrlen);</span><br><span class="line">            	<span class="comment">/* 连接成功 break */</span></span><br><span class="line">                <span class="keyword">if</span> (retval == <span class="number">0</span>) &#123;</span><br><span class="line">                        network-&gt;sockfd = sockfd;</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            	<span class="comment">/* 连接失败 尝试下一个 */</span></span><br><span class="line">                close(sockfd);</span><br><span class="line">                cur = cur-&gt;ai_next;       </span><br><span class="line">        &#125;</span><br><span class="line">		</span><br><span class="line">    	<span class="comment">/* 释放 addrinfo 列表*/</span></span><br><span class="line">        freeaddrinfo(result);</span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>网络数据的读写，也比较简单，这里设置了一下网络超时时间：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">network_read</span><span class="params">(<span class="keyword">struct</span> <span class="type">network_t</span> *network, <span class="type">char</span> *buf, <span class="type">int</span> count, <span class="type">int</span> timeout)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> sockfd = network-&gt;sockfd;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">tv</span> =</span> &#123;</span><br><span class="line">                .tv_sec = timeout / <span class="number">1000</span>,</span><br><span class="line">                .tv_usec = (timeout % <span class="number">1000</span>) * <span class="number">1000</span>,</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (<span class="type">char</span> *)&amp;tv, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> timeval));</span><br><span class="line">        <span class="keyword">return</span> read(sockfd, buf, count);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">network_write</span><span class="params">(<span class="keyword">struct</span> <span class="type">network_t</span> *network, <span class="type">const</span> <span class="type">char</span> *buf, <span class="type">int</span> count, <span class="type">int</span> timeout)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> sockfd = network-&gt;sockfd;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">tv</span> =</span> &#123;</span><br><span class="line">                .tv_sec = timeout / <span class="number">1000</span>,</span><br><span class="line">                .tv_usec = (timeout % <span class="number">1000</span>) * <span class="number">1000</span>,</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (<span class="type">char</span> *)&amp;tv, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> timeval));</span><br><span class="line">        <span class="keyword">return</span> write(sockfd, buf, count);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后，释放网络连接：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">network_release</span><span class="params">(<span class="keyword">struct</span> <span class="type">network_t</span> *network)</span> &#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (network-&gt;sockfd)</span><br><span class="line">                retval = close(network-&gt;sockfd);</span><br><span class="line">        <span class="built_in">memset</span>(network, <span class="number">0</span>, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">network_t</span>));</span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="序列化和反序列化层"><a href="#序列化和反序列化层" class="headerlink" title="序列化和反序列化层"></a>序列化和反序列化层</h2><h3 id="基本接口"><a href="#基本接口" class="headerlink" title="基本接口"></a>基本接口</h3><p>为了实现连接报文、心跳报文的序列化和反序列化，我们需要先提供一些基本元素的序列化&#x2F;反序列化方法，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* return serialize/deserialize byte count or -1 on error */</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">serialize_fix_header</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">int</span> count, <span class="keyword">enum</span> type t)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* return length(&gt;0) */</span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">int</span> <span class="title function_">packet_len</span><span class="params">(<span class="type">unsigned</span> <span class="type">int</span> vlen)</span>;</span><br><span class="line"><span class="type">unsigned</span> <span class="type">int</span> <span class="title function_">mqtt_string_len</span><span class="params">(<span class="keyword">struct</span> mqtt_string mstr)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">writec</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> **ptr, <span class="type">unsigned</span> <span class="type">char</span> ch)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">writei</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> **ptr, <span class="type">unsigned</span> <span class="type">int</span> i)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">write_cstring</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> **ptr, <span class="type">const</span> <span class="type">char</span> *str)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">write_lenstring</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> **ptr, <span class="keyword">struct</span> len_string len_str)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">write_mqttstring</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> **ptr, <span class="keyword">struct</span> mqtt_string mqtt_str)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">readc</span><span class="params">(<span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> **ptr, <span class="type">unsigned</span> <span class="type">char</span> *ch)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">readi</span><span class="params">(<span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> **ptr, <span class="type">unsigned</span> <span class="type">int</span> *i)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">read_mqttstring</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> **ptr, <span class="type">const</span> <span class="keyword">struct</span> mqtt_string *mqtt_str)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* return read/write byte count or -1 on error */</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">write_optslen</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">unsigned</span> <span class="type">int</span> len)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">read_optslen</span><span class="params">(<span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">unsigned</span> <span class="type">int</span> *len)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>其中大部分函数都比较简单且容易理解，这里简要介绍下 <code>write_optslen</code> 与 <code>read_optslen</code> 两个函数，它们负责计算 可变报头+有效负载 长度并进行序列化与反序列化：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">write_optslen</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">unsigned</span> <span class="type">int</span> len)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">int</span> idx = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">do</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="type">char</span> ch = len &amp; (<span class="number">128</span> - <span class="number">1</span>);</span><br><span class="line">		len &gt;&gt;= <span class="number">7</span>;</span><br><span class="line">		<span class="comment">/* if there are more digits to encode, set the top bit of this digit */</span></span><br><span class="line">		<span class="keyword">if</span> (len &gt; <span class="number">0</span>)</span><br><span class="line">			ch |= <span class="number">0x80</span>;</span><br><span class="line">		buf[idx++] = ch;</span><br><span class="line">	&#125; <span class="keyword">while</span> (len &gt; <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> idx;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">read_optslen</span><span class="params">(<span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">unsigned</span> <span class="type">int</span> *len)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">int</span> idx = <span class="number">0</span>;</span><br><span class="line">	<span class="type">int</span> muiltiplier = <span class="number">1</span>;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">char</span> remain, val;</span><br><span class="line"></span><br><span class="line">	*len = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">do</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> (idx &gt;= <span class="number">4</span>)</span><br><span class="line">			<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line">		<span class="type">char</span> ch = buf[idx++];</span><br><span class="line">		remain = ch &amp; <span class="number">0x80</span>;</span><br><span class="line">		val = ch &amp; <span class="number">0x7f</span>;</span><br><span class="line"></span><br><span class="line">		*len += val * muiltiplier;</span><br><span class="line">		muiltiplier &lt;&lt;= <span class="number">7</span>;</span><br><span class="line">	&#125; <span class="keyword">while</span> (remain);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> idx;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的函数严格遵守 mqtt 报文规定的长度编码方式，即</p>
+<blockquote>
+<p>对小于 128 的值它使用单字节编码。更大的值按下面的方式处理。 低 7 位有效位用于编码数据，最高有效位用于指示是否有更多的字节。因此每个字节可以编码 128 个数值 和一个延续位（continuation bit）。剩余长度字段最大 4 个字节。</p>
+</blockquote>
+<p>对于只有固定头部的报文，这里提供了通用的序列化方式，根据报文类型序列化固定头部：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">serialize_fix_header</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">int</span> count, <span class="keyword">enum</span> type t)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">char</span> *ptr = buf;</span><br><span class="line">	<span class="type">header_t</span> header = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (count &lt; <span class="number">2</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">	</span><br><span class="line">    header.bits.type = t;</span><br><span class="line">	writec(&amp;ptr, header.byte);</span><br><span class="line">	ptr += write_optslen(ptr, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> ptr - buf;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="连接报文"><a href="#连接报文" class="headerlink" title="连接报文"></a>连接报文</h3><p>严格按照 mqtt 协议规定的字段，我们可以实现 CONNECT 报文的序列化操作，细节可以看代码注释：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">serialize_connect</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">int</span> count, <span class="keyword">struct</span> connect_options *conn_opts)</span></span><br><span class="line">&#123;       </span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> len;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">char</span> *ptr = buf;</span><br><span class="line">    <span class="type">header_t</span> header = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">	<span class="type">connect_flags_t</span> flags = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 计算 可变报头 + 有效载荷长度 */</span></span><br><span class="line">    len = conn_opts_size(conn_opts);</span><br><span class="line">    <span class="keyword">if</span> (packet_len(len) &gt; count)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">	<span class="comment">/* 序列化 固定头部 */</span></span><br><span class="line">    header.bits.type = CONNECT;</span><br><span class="line">	writec(&amp;ptr, header.byte);</span><br><span class="line">	<span class="comment">/* 序列化 可变长度 */</span></span><br><span class="line">	ptr += write_optslen(ptr, len);</span><br><span class="line">	</span><br><span class="line">    <span class="comment">/* 可变报头部分的序列化 */</span></span><br><span class="line">	<span class="keyword">if</span> (conn_opts-&gt;proto_version == <span class="number">3</span>) &#123;</span><br><span class="line">		write_cstring(&amp;ptr, <span class="string">&quot;MQIsdp&quot;</span>);</span><br><span class="line">		writec(&amp;ptr, <span class="number">3</span>);</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (conn_opts-&gt;proto_version == <span class="number">4</span>) &#123;</span><br><span class="line">		write_cstring(&amp;ptr, <span class="string">&quot;MQTT&quot;</span>);</span><br><span class="line">		writec(&amp;ptr, <span class="number">4</span>);</span><br><span class="line">	&#125;</span><br><span class="line">    </span><br><span class="line">	flags.bits.clean_session = conn_opts-&gt;clean_session;</span><br><span class="line">	flags.bits.will_flag = conn_opts-&gt;will_flag ? <span class="number">1</span> : <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">if</span> (conn_opts-&gt;will_flag) &#123;</span><br><span class="line">		flags.bits.will_qos = conn_opts-&gt;will_qos;</span><br><span class="line">		flags.bits.will_retain = conn_opts-&gt;will_retain;</span><br><span class="line">	&#125;</span><br><span class="line">	flags.bits.password_flag = conn_opts-&gt;password_flag;</span><br><span class="line">	flags.bits.username_flag = conn_opts-&gt;username_flag;</span><br><span class="line"></span><br><span class="line">	writec(&amp;ptr, flags.byte);</span><br><span class="line">	writei(&amp;ptr, conn_opts-&gt;keep_alive_interval);</span><br><span class="line">	</span><br><span class="line">    <span class="comment">/* 有效负载部分的序列化，根据 flags 标识确定 */</span></span><br><span class="line">	write_mqttstring(&amp;ptr, conn_opts-&gt;client_id);</span><br><span class="line">	<span class="keyword">if</span> (conn_opts-&gt;will_flag) &#123;</span><br><span class="line">		write_mqttstring(&amp;ptr, conn_opts-&gt;will_topic);</span><br><span class="line">		write_mqttstring(&amp;ptr, conn_opts-&gt;will_message);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> (conn_opts-&gt;username_flag)</span><br><span class="line">		write_mqttstring(&amp;ptr, conn_opts-&gt;username);</span><br><span class="line">	<span class="keyword">if</span> (conn_opts-&gt;password_flag)</span><br><span class="line">		write_mqttstring(&amp;ptr, conn_opts-&gt;password);</span><br><span class="line">	<span class="comment">/* 返回序列化后的长度 */</span></span><br><span class="line">    <span class="keyword">return</span> ptr - buf;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>连接响应报文的反序列化比较简单，这里一并讲，细节可以看代码中的注释：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">deserialize_connack</span><span class="params">(<span class="keyword">struct</span> connack_options *connack_opts, <span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">int</span> count)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">int</span> len;</span><br><span class="line">	<span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span>* ptr = buf;</span><br><span class="line">    <span class="type">header_t</span> header = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">	<span class="type">connack_flags_t</span> flags = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">	<span class="comment">/* 反序列化固定头部 */</span></span><br><span class="line">	readc(&amp;ptr, &amp;header.byte);</span><br><span class="line">	<span class="keyword">if</span> (header.bits.type != CONNACK)</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	<span class="comment">/* 反序列化 可变长度 */</span></span><br><span class="line">	ptr += read_optslen(ptr, &amp;len); </span><br><span class="line">	<span class="keyword">if</span> (len &lt; <span class="number">2</span>)</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	<span class="comment">/* 反序列化 可变报头 包括 sp 和 ack */</span></span><br><span class="line">	readc(&amp;ptr, &amp;flags.byte);</span><br><span class="line">	connack_opts-&gt;session_present = flags.bits.session_present;</span><br><span class="line">	readc(&amp;ptr, &amp;connack_opts-&gt;return_code);</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>断开连接报文只有固定头部部分，它的序列化直接调用上面的通用接口：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">serialize_disconnect</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">int</span> count)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">return</span> serialize_fix_header(buf, count, DISCONNECT);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="PING-报文"><a href="#PING-报文" class="headerlink" title="PING 报文"></a>PING 报文</h3><p>PINGREQ 和 PINGRESP 报文均只有固定头部部分，实现比较简单：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">serialize_pingreq</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">unsigned</span> <span class="type">int</span> count)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">return</span> serialize_fix_header(buf, count, PINGREQ);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">deserialize_pingresp</span><span class="params">(<span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> *buf, <span class="type">unsigned</span> <span class="type">int</span> count)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">const</span> <span class="type">unsigned</span> <span class="type">char</span> *ptr = buf;</span><br><span class="line">        <span class="type">header_t</span> header = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">		<span class="comment">/* 反序列化头部 */</span></span><br><span class="line">        readc(&amp;ptr, &amp;header.byte);</span><br><span class="line">        <span class="keyword">if</span> (header.bits.type != PINGRESP)</span><br><span class="line">                <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">2</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="MQTT-协议层"><a href="#MQTT-协议层" class="headerlink" title="MQTT 协议层"></a>MQTT 协议层</h2>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/network/" rel="tag"># network</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/11/01/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%B8%89%EF%BC%89/" rel="prev" title="【计算机网络】mqtt 通信协议入门（三）连接服务器实战-设计">
+      <i class="fa fa-chevron-left"></i> 【计算机网络】mqtt 通信协议入门（三）连接服务器实战-设计
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" rel="next" title="【数据结构与算法】环形缓冲区：原理，实现，与应用">
+      【数据结构与算法】环形缓冲区：原理，实现，与应用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux-%E4%B8%8B%E7%B3%BB%E7%BB%9F%E5%B1%82%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.</span> <span class="nav-text">Linux 下系统层实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#memory-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%A8%A1%E5%9D%97"><span class="nav-number">1.1.</span> <span class="nav-text">memory 内存管理模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#timer-%E5%AE%9A%E6%97%B6%E5%99%A8"><span class="nav-number">1.2.</span> <span class="nav-text">timer 定时器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#network-%E5%BA%95%E5%B1%82%E7%BD%91%E7%BB%9C%E8%BF%9E%E6%8E%A5"><span class="nav-number">1.3.</span> <span class="nav-text">network 底层网络连接</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%8F%E5%88%97%E5%8C%96%E5%92%8C%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E5%B1%82"><span class="nav-number">2.</span> <span class="nav-text">序列化和反序列化层</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%8E%A5%E5%8F%A3"><span class="nav-number">2.1.</span> <span class="nav-text">基本接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E6%8A%A5%E6%96%87"><span class="nav-number">2.2.</span> <span class="nav-text">连接报文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PING-%E6%8A%A5%E6%96%87"><span class="nav-number">2.3.</span> <span class="nav-text">PING 报文</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MQTT-%E5%8D%8F%E8%AE%AE%E5%B1%82"><span class="nav-number">3.</span> <span class="nav-text">MQTT 协议层</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">30</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
