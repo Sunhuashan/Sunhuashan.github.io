@@ -20,30 +20,35 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="唯天下之至拙能胜天下之至巧">
-<meta property="og:type" content="website">
-<meta property="og:title" content="sunhuashan">
-<meta property="og:url" content="http://example.com/index.html">
+  <meta name="description" content="Makefile解决 bug 与完善代码segment fault编译运行后，我们测试程序输出的错误信息如下： 1Segmentation fault  这表示段错误，在 Linux 中这是一种常见的错误，通常由以下原因导致：  内存访问越界：这是最常见的原因之一。例如，试图访问数组边界之外的内存，或者对已经释放的内存进行访问。   比如，定义了一个数组 int arr[5]，但却尝试访问 arr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【计算机网络】mqtt 通信协议入门（四）连接服务器实战-调试运行">
+<meta property="og:url" content="http://example.com/2023/11/23/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/index.html">
 <meta property="og:site_name" content="sunhuashan">
-<meta property="og:description" content="唯天下之至拙能胜天下之至巧">
+<meta property="og:description" content="Makefile解决 bug 与完善代码segment fault编译运行后，我们测试程序输出的错误信息如下： 1Segmentation fault  这表示段错误，在 Linux 中这是一种常见的错误，通常由以下原因导致：  内存访问越界：这是最常见的原因之一。例如，试图访问数组边界之外的内存，或者对已经释放的内存进行访问。   比如，定义了一个数组 int arr[5]，但却尝试访问 arr">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/image-20240717151540338.png">
+<meta property="article:published_time" content="2023-11-23T13:01:43.000Z">
+<meta property="article:modified_time" content="2024-07-17T07:47:54.727Z">
 <meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="network">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/image-20240717151540338.png">
 
-<link rel="canonical" href="http://example.com/">
+<link rel="canonical" href="http://example.com/2023/11/23/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>sunhuashan</title>
+  <title>【计算机网络】mqtt 通信协议入门（四）连接服务器实战-调试运行 | sunhuashan</title>
   
 
 
@@ -151,161 +156,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/" class="post-title-link" itemprop="url">【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-07-11 19:09:03" itemprop="dateCreated datePublished" datetime="2024-07-11T19:09:03+08:00">2024-07-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%9D%A2%E8%AF%95%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">面试题</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" itemprop="url" rel="index"><span itemprop="name">字符设备驱动</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
 
     
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在 Linux 上打开一个字符设备文件会经历哪些过程？这是一道非常经典的面试题，面试官之所以爱问，是因为这个问题如果想要回答好，至少需要掌握 Linux 系统调用、文件系统、字符设备驱动程序等模块的实现原理。下面我们就沿着内核注册字符设备驱动程序，到用户层打开设备文件，再到调用到内核的驱动程序，最后返回到用户空间这一过程，试着回答下这个问题。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" class="post-title-link" itemprop="url">【数据结构与算法】环形缓冲区：原理，实现，与应用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-12-29 20:20:27" itemprop="dateCreated datePublished" datetime="2023-12-29T20:20:27+08:00">2023-12-29</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">计算机基础</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>最开始接触到环形缓冲区（ring buffer）还是在上《数据结构》这门课时，当时对这种数据结构没有多深的认识，这是因为对其在项目中实际应用缺少足够的认识。最近，由于在项目中遇到了类似任务间通信的需求，所以再来研究研究这位“老朋友”。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -321,10 +175,9 @@
       <meta itemprop="name" content="sunhuashan">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/11/23/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（四）连接服务器实战-调试运行</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          【计算机网络】mqtt 通信协议入门（四）连接服务器实战-调试运行
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -356,7 +209,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="Makefile"><a href="#Makefile" class="headerlink" title="Makefile"></a>Makefile</h2><h2 id="解决-bug-与完善代码"><a href="#解决-bug-与完善代码" class="headerlink" title="解决 bug 与完善代码"></a>解决 bug 与完善代码</h2><h3 id="segment-fault"><a href="#segment-fault" class="headerlink" title="segment fault"></a>segment fault</h3><p>编译运行后，我们测试程序输出的错误信息如下：</p>
+        <h2 id="Makefile"><a href="#Makefile" class="headerlink" title="Makefile"></a>Makefile</h2><h2 id="解决-bug-与完善代码"><a href="#解决-bug-与完善代码" class="headerlink" title="解决 bug 与完善代码"></a>解决 bug 与完善代码</h2><h3 id="segment-fault"><a href="#segment-fault" class="headerlink" title="segment fault"></a>segment fault</h3><p>编译运行后，我们测试程序输出的错误信息如下：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Segmentation fault</span><br></pre></td></tr></table></figure>
 
 <p>这表示段错误，在 Linux 中这是一种常见的错误，通常由以下原因导致：</p>
@@ -453,535 +306,37 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">0x0030:						 4d51 5454 04c0 000a   	      MQTT....</span><br><span class="line">0x0040:  0008 636c 6965 6e74 6964 0004 7573 6572  ..clientid..user</span><br><span class="line">0x0050:  0004 7061 7373                           ..pass</span><br></pre></td></tr></table></figure>
 
 
-      
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
+          <div class="post-tags">
+              <a href="/tags/network/" rel="tag"># network</a>
+          </div>
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（四）连接服务器实战-底层实现</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-11-14 16:31:55" itemprop="dateCreated datePublished" datetime="2023-11-14T16:31:55+08:00">2023-11-14</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>上一篇 mqtt 协议的文章介绍了项目的整体架构，这篇文章计划将所有的接口都实现，并且能够成功连接服务器端。我会仍然按照自底向上的顺序介绍，下面先回顾一下我们的整体架构：</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
 
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/01/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%B8%89%EF%BC%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/11/01/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%B8%89%EF%BC%89/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（三）连接服务器实战-设计</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-11-01 17:34:53" itemprop="dateCreated datePublished" datetime="2023-11-01T17:34:53+08:00">2023-11-01</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在接触一些新概念、新技术时，不仅仅要学习其理论，也要结合实践来加深印象。之前的文章详细介绍了连接的建立与保持相关报文，这篇文章就在上一篇文章的基础上，实现一个能够进行连接建立和保持的简易 mqtt 客户端，随着学习的深入，我们也会一点一点完善它。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/11/01/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%B8%89%EF%BC%89/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/" rel="prev" title="【计算机网络】mqtt 通信协议入门（四）连接服务器实战-底层实现">
+      <i class="fa fa-chevron-left"></i> 【计算机网络】mqtt 通信协议入门（四）连接服务器实战-底层实现
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" rel="next" title="【数据结构与算法】环形缓冲区：原理，实现，与应用">
+      【数据结构与算法】环形缓冲区：原理，实现，与应用 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
+    
   </article>
   
   
   
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/10/21/%E7%BD%91%E7%BB%9C-mqtt%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84%EF%BC%88%E4%BA%8C%EF%BC%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/10/21/%E7%BD%91%E7%BB%9C-mqtt%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84%EF%BC%88%E4%BA%8C%EF%BC%89/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（二）连接控制报文</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-10-21 19:27:28" itemprop="dateCreated datePublished" datetime="2023-10-21T19:27:28+08:00">2023-10-21</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>之前的文章介绍了 mqtt 控制报文的基本结构，后面的文章会接着之前的主题，继续详细介绍各类控制报文的具体内容。本篇文章介绍了连接建立与保持相关的控制报文结构，包括 CONNECT、CONNACK、DISCONNECT、PINGREQ 和 PINGRESP 控制报文。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/10/21/%E7%BD%91%E7%BB%9C-mqtt%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84%EF%BC%88%E4%BA%8C%EF%BC%89/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/10/15/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/10/15/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（一）报文结构</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-10-15 20:53:27" itemprop="dateCreated datePublished" datetime="2023-10-15T20:53:27+08:00">2023-10-15</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>想要深入理解某一种网络协议，那么对其报文结构肯定要了如指掌，因为这是其设计的基础，一切功能都是和报文息息相关的。这篇文章就来剖析一下 mqtt 协议的报文结构，这样在日后开发相关通信库的时候，才能够得心应手。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/10/15/%E7%BD%91%E7%BB%9C-mqtt%E6%8E%A7%E5%88%B6%E6%8A%A5%E6%96%87/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/10/13/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/10/13/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（〇）概述</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-10-13 15:31:22" itemprop="dateCreated datePublished" datetime="2023-10-13T15:31:22+08:00">2023-10-13</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>和 http、smtp 等协议一样，mqtt 也是一种应用层协议，也是基于 TCP 和 IP 协议进行网络通信的，主要应用在物联网领域。最近开发的项目使用到了 mqtt 协议，而且笔者打算在 Linux 下开发一个简陋的 mqtt 通信库，后续甚至可以写一个 mqtt 服务器，借此来复习下 Linux 中的应用层开发。这篇文章先来简单的介绍一下 mqtt 中的关键术语以及客户端-服务器的通信过程。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/10/13/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/30/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E5%AD%97%E7%AC%A6%E9%A9%B1%E5%8A%A8%E6%A1%86%E6%9E%B6/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/03/30/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E5%AD%97%E7%AC%A6%E9%A9%B1%E5%8A%A8%E6%A1%86%E6%9E%B6/" class="post-title-link" itemprop="url">【驱动开发】Linux 驱动开发入门（三） 字符驱动框架</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-03-30 18:33:54" itemprop="dateCreated datePublished" datetime="2023-03-30T18:33:54+08:00">2023-03-30</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" itemprop="url" rel="index"><span itemprop="name">字符设备驱动</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/17/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/03/17/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/" class="post-title-link" itemprop="url">【驱动开发】Linux 驱动开发入门（二） 内核模块</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-03-17 17:34:09" itemprop="dateCreated datePublished" datetime="2023-03-17T17:34:09+08:00">2023-03-17</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" itemprop="url" rel="index"><span itemprop="name">字符设备驱动</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在操作系统的组成方式上，一直有宏内核与微内核之间的争论，除了这两种方式，还有其他解决办法吗？Linux 给出了答案，那就是”使用模块“。模块允许内核在运行时动态地向其中插入或从中删除代码，无需重新编译整个内核并重新引导系统，可以方便地扩展内核的功能。在驱动开发中，设备驱动程序都是由一个个模块构成的，在我们开始编写驱动前，先看看内核模块是如何使用的吧。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/03/17/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
-  
-  <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
-  </nav>
 
 
 
@@ -1033,6 +388,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile"><span class="nav-number">1.</span> <span class="nav-text">Makefile</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3-bug-%E4%B8%8E%E5%AE%8C%E5%96%84%E4%BB%A3%E7%A0%81"><span class="nav-number">2.</span> <span class="nav-text">解决 bug 与完善代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#segment-fault"><span class="nav-number">2.1.</span> <span class="nav-text">segment fault</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%93%E5%8C%85%E5%88%86%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">抓包分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#tcpdump"><span class="nav-number">3.1.</span> <span class="nav-text">tcpdump</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP-IP-%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F"><span class="nav-number">3.2.</span> <span class="nav-text">TCP&#x2F;IP 数据格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tcp-%E6%8F%A1%E6%89%8B"><span class="nav-number">3.3.</span> <span class="nav-text">tcp 握手</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%9D%A1-mqtt-%E6%8A%A5%E6%96%87"><span class="nav-number">3.4.</span> <span class="nav-text">第一条 mqtt 报文</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 

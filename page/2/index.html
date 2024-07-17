@@ -380,6 +380,80 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/11/20/gdb%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/11/20/gdb%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">【工具】gdb入门笔记</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-11-20 19:11:23" itemprop="dateCreated datePublished" datetime="2022-11-20T19:11:23+08:00">2022-11-20</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>GDB 全称 GNU Project debugger，是一个通用的 C &#x2F; C++ 程序调试器，可以用来深入分析程序的运行过程，或者排查程序崩溃的原因。本文面向的读者是 C &#x2F; C++ 程序员，主要内容包括 GDB 的基本命令、进阶用法和实践案例。目标是使读者掌握 GDB 的常见使用方法，满足日常开发所需。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/11/20/gdb%E5%85%A5%E9%97%A8/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/06/Linux-09-crond/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1243,98 +1317,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/16/Linux-04-vim/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/09/16/Linux-04-vim/" class="post-title-link" itemprop="url">Linux-04-vim</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-09-16 20:59:14" itemprop="dateCreated datePublished" datetime="2022-09-16T20:59:14+08:00">2022-09-16</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ul>
-<li><p>vim的模式及切换</p>
-<p><img src="/%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2.png"></p>
-</li>
-<li><p>快捷键的使用</p>
-<ul>
-<li><p>拷贝&#x2F;粘贴（一般模式）</p>
-<p>拷贝当前行：yy</p>
-<p>拷贝当前行至下5行：5yy</p>
-<p>粘贴：p</p>
-</li>
-<li><p>删除（一般模式）</p>
-<p>删除当前行：dd</p>
-<p>删除当前行至下5行：5dd</p>
-</li>
-<li><p>查找（&#x2F;命令行模式）</p>
-<p>输入 ”&#x2F;“ 进入命令行模式，输入要查找的内容，按”n”切换匹配结果</p>
-</li>
-<li><p>设置&#x2F;取消文件行号（:命令行模式）</p>
-<p>设置行号：set nu</p>
-<p>取消行号：set nonu</p>
-</li>
-<li><p>到达文件末行和首行(一般模式)</p>
-<p>到达文件末行：G</p>
-<p>到达文件首行：gg</p>
-</li>
-<li><p>撤销（一般模式）</p>
-<p>撤销最新的动作：u</p>
-</li>
-<li><p>移动光标至指定行（一般模式）</p>
-<p>光标移动到第23行：23G</p>
-</li>
-</ul>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1406,7 +1388,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-count">32</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
