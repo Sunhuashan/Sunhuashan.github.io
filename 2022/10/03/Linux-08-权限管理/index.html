@@ -22,21 +22,21 @@
 
   <meta name="description" content="组文件的所有者，所在组，其他组概念   所有者 ls -ahl 可查看文件或目录的所有者 chown 指令改变文件或目录的所有者（change owner） 案例：chown tom apple.txt  所在组 文件默认属于用户所在的组 chgrp 指令改变文件或目录的所在组（change group） 案例：chgrp fruit orange.txt  其他组 除了文件所有者和文件所在组外，">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Linux-08-权限管理">
+<meta property="og:title" content="【Linux命令】Linux-08-权限管理">
 <meta property="og:url" content="http://example.com/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/index.html">
 <meta property="og:site_name" content="sunhuashan">
 <meta property="og:description" content="组文件的所有者，所在组，其他组概念   所有者 ls -ahl 可查看文件或目录的所有者 chown 指令改变文件或目录的所有者（change owner） 案例：chown tom apple.txt  所在组 文件默认属于用户所在的组 chgrp 指令改变文件或目录的所在组（change group） 案例：chgrp fruit orange.txt  其他组 除了文件所有者和文件所在组外，">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png">
-<meta property="og:image" content="http://example.com/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/%E5%AE%9E%E8%B7%B51-01.png">
-<meta property="og:image" content="http://example.com/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/%E5%AE%9E%E8%B7%B52.png">
-<meta property="og:image" content="http://example.com/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/%E5%AE%9E%E8%B7%B53.png">
+<meta property="og:image" content="http://example.com/%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png">
+<meta property="og:image" content="http://example.com/%E5%AE%9E%E8%B7%B51-01.png">
+<meta property="og:image" content="http://example.com/%E5%AE%9E%E8%B7%B52.png">
+<meta property="og:image" content="http://example.com/%E5%AE%9E%E8%B7%B53.png">
 <meta property="article:published_time" content="2022-10-03T07:48:03.000Z">
-<meta property="article:modified_time" content="2022-10-04T14:42:13.437Z">
+<meta property="article:modified_time" content="2024-07-17T09:39:47.400Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="linux">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png">
+<meta name="twitter:image" content="http://example.com/%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png">
 
 <link rel="canonical" href="http://example.com/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/">
 
@@ -51,7 +51,7 @@
   };
 </script>
 
-  <title>Linux-08-权限管理 | sunhuashan</title>
+  <title>【Linux命令】Linux-08-权限管理 | sunhuashan</title>
   
 
 
@@ -179,7 +179,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Linux-08-权限管理
+          【Linux命令】Linux-08-权限管理
         </h1>
 
         <div class="post-meta">
@@ -204,7 +204,7 @@
 
       
         <h3 id="组"><a href="#组" class="headerlink" title="组"></a>组</h3><p>文件的<strong>所有者</strong>，<strong>所在组</strong>，<strong>其他组</strong>概念</p>
-<p><img src="%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png"></p>
+<p><img src="/%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png"></p>
 <ul>
 <li><p>所有者</p>
 <p>ls -ahl 可查看文件或目录的所有者</p>
@@ -227,7 +227,7 @@
 </li>
 <li><p>usermod -g 组名 用户名</p>
 <p>修改用户所在组</p>
-<p>案例：cat /etc/group | grep “wudang”  查看组是否存在</p>
+<p>案例：cat &#x2F;etc&#x2F;group | grep “wudang”  查看组是否存在</p>
 <p>​            id zwj  查看用户是否存在</p>
 <p>​            usermod -g wudang zwj  修改用户所在组</p>
 </li>
@@ -263,33 +263,33 @@
 <p>x：可以执行文件（execute）（要求是<strong>可执行文件</strong>）</p>
 </li>
 </ul>
-<p>​        <strong>作用于目录</strong></p>
-<p>​        r：可以读取目录下的内容（ls指令）</p>
-<p>​        w：可以修改目录里的内容（在目录内创建、删除文件，重命名目录）</p>
-<p>​        x：可以进入改目录（cd指令）</p>
+<p>​    	<strong>作用于目录</strong></p>
+<p>​		r：可以读取目录下的内容（ls指令）</p>
+<p>​		w：可以修改目录里的内容（在目录内创建、删除文件，重命名目录）</p>
+<p>​		x：可以进入改目录（cd指令）</p>
 <ul>
 <li><p>chmod 指令</p>
 <p>修改文件或者目录的权限</p>
 <ul>
 <li><p>方式1</p>
 <p>u：所有者；  g：所在组； o：其他组；a：所有人</p>
-<p>1.chmod u=rwx，g=rx，o=x  文件/目录名</p>
-<p>2.chmod o+w  文件/目录名</p>
-<p>3.chmod a-x 文件/目录名</p>
+<p>1.chmod u&#x3D;rwx，g&#x3D;rx，o&#x3D;x  文件&#x2F;目录名</p>
+<p>2.chmod o+w  文件&#x2F;目录名</p>
+<p>3.chmod a-x 文件&#x2F;目录名</p>
 </li>
 <li><p>方式2</p>
-<p>r=4，w=2，x=1</p>
-<p>1=–x</p>
-<p>2=-w-</p>
-<p>3=-wx</p>
+<p>r&#x3D;4，w&#x3D;2，x&#x3D;1</p>
+<p>1&#x3D;–x</p>
+<p>2&#x3D;-w-</p>
+<p>3&#x3D;-wx</p>
 <p>…</p>
-<p>7=rwx</p>
+<p>7&#x3D;rwx</p>
 <p>案例：chmod 751 hello.txt  将文件权限修改为 rwxr-x–x</p>
 </li>
 </ul>
 </li>
 <li><p>chown</p>
-<p>chown newowner 文件/目录 —- 改变所有者</p>
+<p>chown newowner 文件&#x2F;目录 —- 改变所有者</p>
 <p>chown newowner:newgroup 文件目录 —- 改变所有者和所在组</p>
 <ul>
 <li>-R 当作用于目录上时，递归生效</li>
@@ -297,7 +297,7 @@
 <p>案例1：chown tom abc.txt</p>
 </li>
 <li><p>chgrp</p>
-<p>chgrp newgroup 文件/目录名 —- 改变所在组</p>
+<p>chgrp newgroup 文件&#x2F;目录名 —- 改变所在组</p>
 <ul>
 <li>-R 当作用于目录上时，递归生效</li>
 </ul>
@@ -305,13 +305,14 @@
 </ul>
 <h3 id="权限管理实践"><a href="#权限管理实践" class="headerlink" title="权限管理实践"></a>权限管理实践</h3><ul>
 <li><p>警察与土匪游戏</p>
-<p><img src="%E5%AE%9E%E8%B7%B51-01.png"></p>
+<p><img src="/%E5%AE%9E%E8%B7%B51-01.png"></p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">root@</span><br><span class="line">groupadd police</span><br><span class="line">groupadd bandit</span><br><span class="line">useradd jack -g police</span><br><span class="line">useradd jerry -g police</span><br><span class="line">useradd xh -g bandit</span><br><span class="line">useradd xq -g bandit</span><br><span class="line">passwd jack</span><br><span class="line">passwd jerry</span><br><span class="line">passwd xh</span><br><span class="line">passwd xq</span><br><span class="line"></span><br><span class="line">jack@</span><br><span class="line">touch jackfile</span><br><span class="line">chomd 640 jackfile</span><br><span class="line">chmod g=rw,o=r jackfile</span><br><span class="line"></span><br><span class="line">root@</span><br><span class="line">usermod -g police xh</span><br><span class="line"></span><br><span class="line">xh@</span><br><span class="line">cd /home/jack/</span><br></pre></td></tr></table></figure>
 
 <p>小结论：要对相应目录内的文件进行操作，首先要获取目录的权限</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">需要以下指令可以达到读写目的</span></span><br><span class="line">jack@</span><br><span class="line">chmod 770 /home/jack/ </span><br></pre></td></tr></table></figure></li>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">需要以下指令可以达到读写目的</span></span><br><span class="line">jack@</span><br><span class="line">chmod 770 /home/jack/ </span><br></pre></td></tr></table></figure>
+</li>
 <li><p>实践2</p>
-<p><img src="%E5%AE%9E%E8%B7%B52.png"></p>
+<p><img src="/%E5%AE%9E%E8%B7%B52.png"></p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">root@</span><br><span class="line">groupadd sx</span><br><span class="line">groupadd yg</span><br><span class="line">useradd tangs -g sx</span><br><span class="line">useradd shas -g sx</span><br><span class="line">useradd monkey -g yg</span><br><span class="line">useradd pig -g yg</span><br><span class="line">passwd tangs</span><br><span class="line">passwd shas</span><br><span class="line">passwd monkey</span><br><span class="line">passwd pig</span><br><span class="line"></span><br><span class="line">monkey@</span><br><span class="line">vim Monkey.java</span><br><span class="line">chmod g=rw Monkey.java</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">注意</span></span><br><span class="line">chmod g+r+w+x /home/monkey/</span><br><span class="line"></span><br><span class="line">pig@</span><br><span class="line">cd /home/monkey/</span><br><span class="line">vim Monkey.java</span><br><span class="line"></span><br><span class="line">root@</span><br><span class="line">usermod -g yg shas</span><br><span class="line"></span><br><span class="line">shas@</span><br><span class="line">cd /home/monkey/</span><br><span class="line">vim Monkey.java</span><br></pre></td></tr></table></figure>
 
 <p>小结论：对于目录的 rwx 权限的理解</p>
@@ -322,7 +323,7 @@
 </ul>
 </li>
 <li><p>实践3</p>
-<p><img src="%E5%AE%9E%E8%B7%B53.png"></p>
+<p><img src="/%E5%AE%9E%E8%B7%B53.png"></p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">root@</span><br><span class="line">useradd mycentos</span><br><span class="line">passwd mycentos</span><br><span class="line"></span><br><span class="line">mycentos@</span><br><span class="line">mkdir -p test/t11/t1/</span><br><span class="line">cd test/t11/t1/</span><br><span class="line">touch aa</span><br><span class="line">vim aa</span><br><span class="line">chmod u+x aa</span><br><span class="line">./aa</span><br><span class="line">rm -rf test/t11/t1/</span><br><span class="line"></span><br><span class="line">root@</span><br><span class="line">userdel -r mycentos</span><br><span class="line">systemctl set-default graphical.target</span><br><span class="line">reboot</span><br><span class="line">shutdowm</span><br></pre></td></tr></table></figure></li>
 </ul>
 
@@ -343,12 +344,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/" rel="prev" title="Linux-07-常用指令（续）">
-      <i class="fa fa-chevron-left"></i> Linux-07-常用指令（续）
+    <a href="/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/" rel="prev" title="【Linux命令】Linux-07-常用指令（续）">
+      <i class="fa fa-chevron-left"></i> 【Linux命令】Linux-07-常用指令（续）
     </a></div>
       <div class="post-nav-item">
-    <a href="/2022/10/05/ML-01-%E7%AE%80%E4%BB%8B/" rel="next" title="ML-01-简介">
-      ML-01-简介 <i class="fa fa-chevron-right"></i>
+    <a href="/2022/10/05/ML-01-%E7%AE%80%E4%BB%8B/" rel="next" title="【d2l】ML-01-简介">
+      【d2l】ML-01-简介 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -429,13 +430,13 @@
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

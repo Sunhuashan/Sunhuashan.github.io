@@ -22,18 +22,18 @@
 
   <meta name="description" content="关机&amp;重启命令 关闭系统  shutdown -h now  立刻进行关机  shutdown -h 1 “hello everyone ,一分钟后关机” 1分钟后关机并通知所有登陆到该系统的用户  shutdown -r now 立刻重启计算机  halt 关机，作用与”shutdown”相同  reboot 立刻重启计算机  sync 把内存数据写入到磁盘，一般在关机或重启前要执行">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Linux-05-关机重启命令及用户管理">
+<meta property="og:title" content="【Linux命令】Linux-05-关机重启命令及用户管理">
 <meta property="og:url" content="http://example.com/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/index.html">
 <meta property="og:site_name" content="sunhuashan">
 <meta property="og:description" content="关机&amp;重启命令 关闭系统  shutdown -h now  立刻进行关机  shutdown -h 1 “hello everyone ,一分钟后关机” 1分钟后关机并通知所有登陆到该系统的用户  shutdown -r now 立刻重启计算机  halt 关机，作用与”shutdown”相同  reboot 立刻重启计算机  sync 把内存数据写入到磁盘，一般在关机或重启前要执行">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png">
+<meta property="og:image" content="http://example.com/%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png">
 <meta property="article:published_time" content="2022-09-16T13:47:12.000Z">
-<meta property="article:modified_time" content="2022-09-18T01:25:55.888Z">
+<meta property="article:modified_time" content="2024-07-17T09:39:37.670Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="linux">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png">
+<meta name="twitter:image" content="http://example.com/%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png">
 
 <link rel="canonical" href="http://example.com/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/">
 
@@ -48,7 +48,7 @@
   };
 </script>
 
-  <title>Linux-05-关机重启命令及用户管理 | sunhuashan</title>
+  <title>【Linux命令】Linux-05-关机重启命令及用户管理 | sunhuashan</title>
   
 
 
@@ -176,7 +176,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Linux-05-关机重启命令及用户管理
+          【Linux命令】Linux-05-关机重启命令及用户管理
         </h1>
 
         <div class="post-meta">
@@ -200,7 +200,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h3 id="关机-amp-重启命令"><a href="#关机-amp-重启命令" class="headerlink" title="关机&amp;重启命令"></a>关机&amp;重启命令</h3><ul>
+        <h3 id="关机-重启命令"><a href="#关机-重启命令" class="headerlink" title="关机&amp;重启命令"></a>关机&amp;重启命令</h3><ul>
 <li><p>关闭系统</p>
 <ul>
 <li><p>shutdown -h now </p>
@@ -227,7 +227,7 @@
 <h3 id="用户注销与登录"><a href="#用户注销与登录" class="headerlink" title="用户注销与登录"></a>用户注销与登录</h3><ul>
 <li><p>su - 用户名</p>
 <p>用户切换</p>
-<p><img src="%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png"></p>
+<p><img src="/%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png"></p>
 </li>
 <li><p>logout（在图形化界面无效，在运行级别3有效）</p>
 <p>注销当前用户</p>
@@ -255,7 +255,7 @@
 <li><p>id 用户名</p>
 <p>查询用户信息（用户id，组id，用户组id）</p>
 </li>
-<li><p>whoami/who am i</p>
+<li><p>whoami&#x2F;who am i</p>
 <p>查询当前用户</p>
 </li>
 </ul>
@@ -275,13 +275,13 @@
 </li>
 </ul>
 <h5 id="用户和组的相关文件"><a href="#用户和组的相关文件" class="headerlink" title="用户和组的相关文件"></a>用户和组的相关文件</h5><ul>
-<li><p>/etc/passwd 文件（用户信息配置文件）</p>
+<li><p>&#x2F;etc&#x2F;passwd 文件（用户信息配置文件）</p>
 <p>格式  用户名：口令：uid：gid：注释性描述：主目录：登陆shell</p>
 </li>
-<li><p>/etc/shadow文件（口令配置文件）</p>
+<li><p>&#x2F;etc&#x2F;shadow文件（口令配置文件）</p>
 <p>格式  登录名：加密口令：最后一次修改时间：最小时间间隔：最大时间间隔：警告时间：不活动时间：失效时间：标志</p>
 </li>
-<li><p>/etc/group文件 （组配置文件）</p>
+<li><p>&#x2F;etc&#x2F;group文件 （组配置文件）</p>
 <p>格式 组名：口令：组标识号：组内用户列表</p>
 </li>
 </ul>
@@ -303,12 +303,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/09/16/Linux-04-vim/" rel="prev" title="Linux-04-vim">
-      <i class="fa fa-chevron-left"></i> Linux-04-vim
+    <a href="/2022/09/16/Linux-04-vim/" rel="prev" title="【Linux命令】Linux-04-vim">
+      <i class="fa fa-chevron-left"></i> 【Linux命令】Linux-04-vim
     </a></div>
       <div class="post-nav-item">
-    <a href="/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/" rel="next" title="Linux-06-常用指令">
-      Linux-06-常用指令 <i class="fa fa-chevron-right"></i>
+    <a href="/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/" rel="next" title="【Linux命令】Linux-06-常用指令">
+      【Linux命令】Linux-06-常用指令 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -368,7 +368,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E6%9C%BA-amp-%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4"><span class="nav-number">1.</span> <span class="nav-text">关机&amp;重启命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%B3%A8%E9%94%80%E4%B8%8E%E7%99%BB%E5%BD%95"><span class="nav-number">2.</span> <span class="nav-text">用户注销与登录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86"><span class="nav-number">3.</span> <span class="nav-text">用户管理</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E7%BB%84"><span class="nav-number">3.0.1.</span> <span class="nav-text">用户组</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E5%92%8C%E7%BB%84%E7%9A%84%E7%9B%B8%E5%85%B3%E6%96%87%E4%BB%B6"><span class="nav-number">3.0.2.</span> <span class="nav-text">用户和组的相关文件</span></a></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E6%9C%BA-%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4"><span class="nav-number">1.</span> <span class="nav-text">关机&amp;重启命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%B3%A8%E9%94%80%E4%B8%8E%E7%99%BB%E5%BD%95"><span class="nav-number">2.</span> <span class="nav-text">用户注销与登录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86"><span class="nav-number">3.</span> <span class="nav-text">用户管理</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E7%BB%84"><span class="nav-number">3.0.1.</span> <span class="nav-text">用户组</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E5%92%8C%E7%BB%84%E7%9A%84%E7%9B%B8%E5%85%B3%E6%96%87%E4%BB%B6"><span class="nav-number">3.0.2.</span> <span class="nav-text">用户和组的相关文件</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -389,13 +389,13 @@
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

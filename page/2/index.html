@@ -542,7 +542,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/10/06/Linux-09-crond/" class="post-title-link" itemprop="url">Linux-09-crond</a>
+            <a href="/2022/10/06/Linux-09-crond/" class="post-title-link" itemprop="url">【Linux命令】Linux-09-crond</a>
         </h2>
 
         <div class="post-meta">
@@ -615,7 +615,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/10/05/ML-01-%E7%AE%80%E4%BB%8B/" class="post-title-link" itemprop="url">ML-01-简介</a>
+            <a href="/2022/10/05/ML-01-%E7%AE%80%E4%BB%8B/" class="post-title-link" itemprop="url">【d2l】ML-01-简介</a>
         </h2>
 
         <div class="post-meta">
@@ -639,39 +639,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <blockquote>
-<p>Machine Learning  ≈  Looking for Function</p>
-</blockquote>
-<ul>
-<li><p><strong>regression</strong></p>
-<p>寻找具有一个输出值的函数</p>
-</li>
-<li><p><strong>classification</strong></p>
-</li>
-</ul>
-<p>​        寻找一个可以选择给定选项的函数</p>
-<ul>
-<li><p><strong>structured</strong> <strong>learning</strong></p>
-<p> 让机器学会创造</p>
-</li>
-</ul>
-<h3 id="How-to-find-a-function"><a href="#How-to-find-a-function" class="headerlink" title="How to find a function?"></a>How to find a function?</h3><p>案例：根据YouTube后台数据预测未来数据</p>
-<ol>
-<li><p><strong>function with unknown parameter</strong></p>
-<p>根据经验提出含有未知参数的模型（model）<br>$$<br>y = b + wx_1<br>$$<br>y：预测值；b：bias；w：weight ；x：feature</p>
-</li>
-<li><p><strong>define loss from training data</strong></p>
-<p>L(b,w)：损失函数</p>
-<p><img src="loss.png"></p>
-</li>
-<li><p><strong>optimization</strong></p>
-<ul>
-<li>Gradient Descent</li>
-</ul>
-</li>
-</ol>
-<p>​        <img src="gradient.png"></p>
-
+          <p>《dive to leaning》学习笔记</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/05/ML-01-%E7%AE%80%E4%BB%8B/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -704,7 +680,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/" class="post-title-link" itemprop="url">Linux-08-权限管理</a>
+            <a href="/2022/10/03/Linux-08-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/" class="post-title-link" itemprop="url">【Linux命令】Linux-08-权限管理</a>
         </h2>
 
         <div class="post-meta">
@@ -729,7 +705,7 @@
 
       
           <h3 id="组"><a href="#组" class="headerlink" title="组"></a>组</h3><p>文件的<strong>所有者</strong>，<strong>所在组</strong>，<strong>其他组</strong>概念</p>
-<p><img src="%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png"></p>
+<p><img src="/%E7%BB%84%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.png"></p>
 <ul>
 <li><p>所有者</p>
 <p>ls -ahl 可查看文件或目录的所有者</p>
@@ -752,7 +728,7 @@
 </li>
 <li><p>usermod -g 组名 用户名</p>
 <p>修改用户所在组</p>
-<p>案例：cat /etc/group | grep “wudang”  查看组是否存在</p>
+<p>案例：cat &#x2F;etc&#x2F;group | grep “wudang”  查看组是否存在</p>
 <p>​            id zwj  查看用户是否存在</p>
 <p>​            usermod -g wudang zwj  修改用户所在组</p>
 </li>
@@ -788,33 +764,33 @@
 <p>x：可以执行文件（execute）（要求是<strong>可执行文件</strong>）</p>
 </li>
 </ul>
-<p>​        <strong>作用于目录</strong></p>
-<p>​        r：可以读取目录下的内容（ls指令）</p>
-<p>​        w：可以修改目录里的内容（在目录内创建、删除文件，重命名目录）</p>
-<p>​        x：可以进入改目录（cd指令）</p>
+<p>​    	<strong>作用于目录</strong></p>
+<p>​		r：可以读取目录下的内容（ls指令）</p>
+<p>​		w：可以修改目录里的内容（在目录内创建、删除文件，重命名目录）</p>
+<p>​		x：可以进入改目录（cd指令）</p>
 <ul>
 <li><p>chmod 指令</p>
 <p>修改文件或者目录的权限</p>
 <ul>
 <li><p>方式1</p>
 <p>u：所有者；  g：所在组； o：其他组；a：所有人</p>
-<p>1.chmod u=rwx，g=rx，o=x  文件/目录名</p>
-<p>2.chmod o+w  文件/目录名</p>
-<p>3.chmod a-x 文件/目录名</p>
+<p>1.chmod u&#x3D;rwx，g&#x3D;rx，o&#x3D;x  文件&#x2F;目录名</p>
+<p>2.chmod o+w  文件&#x2F;目录名</p>
+<p>3.chmod a-x 文件&#x2F;目录名</p>
 </li>
 <li><p>方式2</p>
-<p>r=4，w=2，x=1</p>
-<p>1=–x</p>
-<p>2=-w-</p>
-<p>3=-wx</p>
+<p>r&#x3D;4，w&#x3D;2，x&#x3D;1</p>
+<p>1&#x3D;–x</p>
+<p>2&#x3D;-w-</p>
+<p>3&#x3D;-wx</p>
 <p>…</p>
-<p>7=rwx</p>
+<p>7&#x3D;rwx</p>
 <p>案例：chmod 751 hello.txt  将文件权限修改为 rwxr-x–x</p>
 </li>
 </ul>
 </li>
 <li><p>chown</p>
-<p>chown newowner 文件/目录 —- 改变所有者</p>
+<p>chown newowner 文件&#x2F;目录 —- 改变所有者</p>
 <p>chown newowner:newgroup 文件目录 —- 改变所有者和所在组</p>
 <ul>
 <li>-R 当作用于目录上时，递归生效</li>
@@ -822,7 +798,7 @@
 <p>案例1：chown tom abc.txt</p>
 </li>
 <li><p>chgrp</p>
-<p>chgrp newgroup 文件/目录名 —- 改变所在组</p>
+<p>chgrp newgroup 文件&#x2F;目录名 —- 改变所在组</p>
 <ul>
 <li>-R 当作用于目录上时，递归生效</li>
 </ul>
@@ -830,13 +806,14 @@
 </ul>
 <h3 id="权限管理实践"><a href="#权限管理实践" class="headerlink" title="权限管理实践"></a>权限管理实践</h3><ul>
 <li><p>警察与土匪游戏</p>
-<p><img src="%E5%AE%9E%E8%B7%B51-01.png"></p>
+<p><img src="/%E5%AE%9E%E8%B7%B51-01.png"></p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">root@</span><br><span class="line">groupadd police</span><br><span class="line">groupadd bandit</span><br><span class="line">useradd jack -g police</span><br><span class="line">useradd jerry -g police</span><br><span class="line">useradd xh -g bandit</span><br><span class="line">useradd xq -g bandit</span><br><span class="line">passwd jack</span><br><span class="line">passwd jerry</span><br><span class="line">passwd xh</span><br><span class="line">passwd xq</span><br><span class="line"></span><br><span class="line">jack@</span><br><span class="line">touch jackfile</span><br><span class="line">chomd 640 jackfile</span><br><span class="line">chmod g=rw,o=r jackfile</span><br><span class="line"></span><br><span class="line">root@</span><br><span class="line">usermod -g police xh</span><br><span class="line"></span><br><span class="line">xh@</span><br><span class="line">cd /home/jack/</span><br></pre></td></tr></table></figure>
 
 <p>小结论：要对相应目录内的文件进行操作，首先要获取目录的权限</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">需要以下指令可以达到读写目的</span></span><br><span class="line">jack@</span><br><span class="line">chmod 770 /home/jack/ </span><br></pre></td></tr></table></figure></li>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">需要以下指令可以达到读写目的</span></span><br><span class="line">jack@</span><br><span class="line">chmod 770 /home/jack/ </span><br></pre></td></tr></table></figure>
+</li>
 <li><p>实践2</p>
-<p><img src="%E5%AE%9E%E8%B7%B52.png"></p>
+<p><img src="/%E5%AE%9E%E8%B7%B52.png"></p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">root@</span><br><span class="line">groupadd sx</span><br><span class="line">groupadd yg</span><br><span class="line">useradd tangs -g sx</span><br><span class="line">useradd shas -g sx</span><br><span class="line">useradd monkey -g yg</span><br><span class="line">useradd pig -g yg</span><br><span class="line">passwd tangs</span><br><span class="line">passwd shas</span><br><span class="line">passwd monkey</span><br><span class="line">passwd pig</span><br><span class="line"></span><br><span class="line">monkey@</span><br><span class="line">vim Monkey.java</span><br><span class="line">chmod g=rw Monkey.java</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">注意</span></span><br><span class="line">chmod g+r+w+x /home/monkey/</span><br><span class="line"></span><br><span class="line">pig@</span><br><span class="line">cd /home/monkey/</span><br><span class="line">vim Monkey.java</span><br><span class="line"></span><br><span class="line">root@</span><br><span class="line">usermod -g yg shas</span><br><span class="line"></span><br><span class="line">shas@</span><br><span class="line">cd /home/monkey/</span><br><span class="line">vim Monkey.java</span><br></pre></td></tr></table></figure>
 
 <p>小结论：对于目录的 rwx 权限的理解</p>
@@ -847,7 +824,7 @@
 </ul>
 </li>
 <li><p>实践3</p>
-<p><img src="%E5%AE%9E%E8%B7%B53.png"></p>
+<p><img src="/%E5%AE%9E%E8%B7%B53.png"></p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">root@</span><br><span class="line">useradd mycentos</span><br><span class="line">passwd mycentos</span><br><span class="line"></span><br><span class="line">mycentos@</span><br><span class="line">mkdir -p test/t11/t1/</span><br><span class="line">cd test/t11/t1/</span><br><span class="line">touch aa</span><br><span class="line">vim aa</span><br><span class="line">chmod u+x aa</span><br><span class="line">./aa</span><br><span class="line">rm -rf test/t11/t1/</span><br><span class="line"></span><br><span class="line">root@</span><br><span class="line">userdel -r mycentos</span><br><span class="line">systemctl set-default graphical.target</span><br><span class="line">reboot</span><br><span class="line">shutdowm</span><br></pre></td></tr></table></figure></li>
 </ul>
 
@@ -883,7 +860,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/" class="post-title-link" itemprop="url">Linux-07-常用指令（续）</a>
+            <a href="/2022/09/20/Linux-07-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4%EF%BC%88%E7%BB%AD%EF%BC%89/" class="post-title-link" itemprop="url">【Linux命令】Linux-07-常用指令（续）</a>
         </h2>
 
         <div class="post-meta">
@@ -938,15 +915,15 @@
 <ul>
 <li><p>-name </p>
 <p>根据文件名查找目录或文件</p>
-<p>案例1：find /home -name hello.txt</p>
+<p>案例1：find &#x2F;home -name hello.txt</p>
 </li>
 <li><p>-user</p>
 <p>根据用户名查找文件或目录</p>
-<p>案例2：find /opt -user root</p>
+<p>案例2：find &#x2F;opt -user root</p>
 </li>
 <li><p>-size</p>
 <p>根据大小查找文件或目录</p>
-<p>案例3：find / -size +200M/-200K/200G(大于200M/小于200K/等于200G) </p>
+<p>案例3：find &#x2F; -size +200M&#x2F;-200K&#x2F;200G(大于200M&#x2F;小于200K&#x2F;等于200G)</p>
 </li>
 </ul>
 </li>
@@ -972,31 +949,31 @@
 <li>-n 显示匹配行和行号</li>
 <li>-i 忽略字母大小写</li>
 </ul>
-<p>案例1：在“/home/hello.txt”文件中，查找“yes”所在行，显示行号</p>
-<p>cat /home/hello.txt | grep -n “yes” 或</p>
-<p>grep -n “yes” /home/hello.txt </p>
+<p>案例1：在“&#x2F;home&#x2F;hello.txt”文件中，查找“yes”所在行，显示行号</p>
+<p>cat &#x2F;home&#x2F;hello.txt | grep -n “yes” 或</p>
+<p>grep -n “yes” &#x2F;home&#x2F;hello.txt</p>
 </li>
 </ul>
 </li>
 </ul>
 <h3 id="压缩与解压"><a href="#压缩与解压" class="headerlink" title="压缩与解压"></a>压缩与解压</h3><ul>
-<li><p>gzip/gunzip 文件名/文件名.gz</p>
+<li><p>gzip&#x2F;gunzip 文件名&#x2F;文件名.gz</p>
 <p>gzip用于压缩文件，gunzip用于解压文件</p>
-<p>案例1：gzip /home/hello.txt</p>
+<p>案例1：gzip &#x2F;home&#x2F;hello.txt</p>
 </li>
 <li><p>zip [选项] XXX.zip 要压缩的内容</p>
 <p>压缩文件以及文件夹</p>
 <ul>
 <li>-r 递归压缩</li>
 </ul>
-<p>案例1：zip -r myhome.zip /home/  将home目录及其子文件夹压缩</p>
+<p>案例1：zip -r myhome.zip &#x2F;home&#x2F;  将home目录及其子文件夹压缩</p>
 </li>
 <li><p>unzip [选项] XXX.zip </p>
 <p>解压文件</p>
 <ul>
 <li>-d 目录名  指定解压后的目录</li>
 </ul>
-<p>案例1：unzip /home/myhome.zip  -d /opt/tmp</p>
+<p>案例1：unzip &#x2F;home&#x2F;myhome.zip  -d &#x2F;opt&#x2F;tmp</p>
 </li>
 <li><p>tar [选项] XXX.tar.gz 打包内容</p>
 <p>打包、解压或压缩文件及文件夹</p>
@@ -1009,9 +986,9 @@
 <li>-C 指定解压位置</li>
 </ul>
 <p>案例1：tar -zcvf pc.tar.gz cat.txt pig.txt</p>
-<p>案例2：tar -zcvf myhome.tar.gz /home/</p>
+<p>案例2：tar -zcvf myhome.tar.gz &#x2F;home&#x2F;</p>
 <p>案例3：tar -zxvf pc.tar.gz</p>
-<p>案例4：tar -zxvf myhome.tar.gz -C /opt/tmp</p>
+<p>案例4：tar -zxvf myhome.tar.gz -C &#x2F;opt&#x2F;tmp</p>
 </li>
 </ul>
 
@@ -1047,7 +1024,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/" class="post-title-link" itemprop="url">Linux-06-常用指令</a>
+            <a href="/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/" class="post-title-link" itemprop="url">【Linux命令】Linux-06-常用指令</a>
         </h2>
 
         <div class="post-meta">
@@ -1325,13 +1302,13 @@
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
