@@ -323,7 +323,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/11/23/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（五）连接服务器实战-调试运行与 tcpdump 抓包分析</a>
+            <a href="/2023/11/23/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（六）连接服务器实战-调试运行与 tcpdump 抓包分析</a>
         </h2>
 
         <div class="post-meta">
@@ -356,143 +356,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="Makefile"><a href="#Makefile" class="headerlink" title="Makefile"></a>Makefile</h2><h2 id="解决-bug-与完善代码"><a href="#解决-bug-与完善代码" class="headerlink" title="解决 bug 与完善代码"></a>解决 bug 与完善代码</h2><h3 id="segment-fault"><a href="#segment-fault" class="headerlink" title="segment fault"></a>segment fault</h3><p>编译运行后，我们测试程序输出的错误信息如下：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Segmentation fault</span><br></pre></td></tr></table></figure>
-
-<p>这表示段错误，在 Linux 中这是一种常见的错误，通常由以下原因导致：</p>
-<ul>
-<li>内存访问越界：这是最常见的原因之一。例如，试图访问数组边界之外的内存，或者对已经释放的内存进行访问。   比如，定义了一个数组 <code>int arr[5]</code>，但却尝试访问 <code>arr[10]</code>。 </li>
-<li>空指针解引用：当程序尝试对一个空指针（未初始化或已被赋值为 <code>NULL</code> 的指针）进行解引用操作时，会导致段错误。   例如：  <code>c  int *ptr = NULL;  *ptr = 10;   </code> </li>
-<li>栈溢出：如果函数调用层次过深，或者在函数内部使用了过大的局部变量，可能导致栈空间不足，引发段错误。 </li>
-<li>非法的内存操作：例如，使用 <code>free()</code> 释放了一块内存后，又再次尝试访问或释放它。 </li>
-<li>指针类型错误：将一种类型的指针强制转换为另一种不兼容的类型，并进行访问操作。</li>
-</ul>
-<p>下面我们使用gdb来调试程序，看看详细的错误输出，使用 gdb 运行程序：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$gdb ./out/bin/mqtt</span><br><span class="line">Reading symbols from ./out/bin/mqtt...</span><br><span class="line">(gdb) </span><br></pre></td></tr></table></figure>
-
-<p>直接使用 <code>run</code> 运行程序：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(gdb) r</span><br><span class="line">Starting program: /home/sunhuashan/workplace/my_mqttclient/ours/out/bin/mqtt </span><br><span class="line"></span><br><span class="line">Program received signal SIGSEGV, Segmentation fault.</span><br><span class="line">__memset_avx2_unaligned_erms () at ../sysdeps/x86_64/multiarch/<span class="built_in">memset</span>-vec-unaligned-erms.S:<span class="number">259</span></span><br><span class="line"><span class="number">259</span>     ../sysdeps/x86_64/multiarch/<span class="built_in">memset</span>-vec-unaligned-erms.S: No such file or directory.</span><br><span class="line">(gdb) </span><br></pre></td></tr></table></figure>
-
-<p>根据上面的信息，可以看出确实是在 <code>memset</code> 的时候出错，可能是操作了非法内存，我们代码里用到了比较多的 <code>memset</code> ，不太容易直接排除，下面通过打断点的方式，进一步定位错误，首先在各个函数入口打断点，确认错误出现在哪个函数：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">(gdb) b main</span><br><span class="line">Breakpoint 1 at 0x30cb: file test/main.c, line 51.</span><br><span class="line">(gdb) b mqtt_init</span><br><span class="line">Breakpoint 2 at 0x182c: file mqtt/mqtt.c, line 135.</span><br><span class="line">(gdb) b mqtt_connect</span><br><span class="line">Breakpoint 3 at 0x1b30: file mqtt/mqtt.c, line 228.</span><br><span class="line">(gdb) b mqtt_disconnect</span><br><span class="line">Breakpoint 4 at 0x1cca: file mqtt/mqtt.c, line 280.</span><br><span class="line">(gdb) b mqtt_pingreq</span><br><span class="line">Breakpoint 5 at 0x1dbe: file mqtt/mqtt.c, line 312.</span><br></pre></td></tr></table></figure>
-
-<p>一个一个断点运行：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">(gdb) r</span><br><span class="line">Starting program: /home/sunhuashan/workplace/my_mqttclient/ours/out/bin/mqtt </span><br><span class="line"></span><br><span class="line">Breakpoint 1, main () at test/main.c:51</span><br><span class="line">51      &#123;</span><br><span class="line">(gdb) c</span><br><span class="line">Continuing.</span><br><span class="line"></span><br><span class="line">Breakpoint 2, mqtt_init (session=0x0, init_params=0x7fffffffdd00) at mqtt/mqtt.c:135</span><br><span class="line">135     &#123;</span><br><span class="line">(gdb) c</span><br><span class="line">Continuing.</span><br><span class="line"></span><br><span class="line">Breakpoint 3, mqtt_connect (session=0x7ffff7eaddfe &lt;__sleep+62&gt;) at mqtt/mqtt.c:228</span><br><span class="line">228     &#123;</span><br><span class="line">(gdb) c</span><br><span class="line">Continuing.</span><br><span class="line"></span><br><span class="line">Program received signal SIGSEGV, Segmentation fault.</span><br><span class="line">__memset_avx2_unaligned_erms () at ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S:259</span><br><span class="line">259     ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S: No such file or directory.</span><br><span class="line">(gdb) </span><br></pre></td></tr></table></figure>
-
-<p>第一次打断点我们成功的将问题定位到了 <code>mqtt_connect</code> 函数，下面在该函数中继续打断点，尝试确认错误位置：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line">(gdb) b mqtt_connect</span><br><span class="line">Breakpoint 1 at 0x1b30: file mqtt/mqtt.c, line 228.</span><br><span class="line">(gdb) r</span><br><span class="line">Starting program: /home/sunhuashan/workplace/my_mqttclient/ours/out/bin/mqtt </span><br><span class="line"></span><br><span class="line">Breakpoint 1, mqtt_connect (session=0x7ffff7eaddfe &lt;__sleep+62&gt;) at mqtt/mqtt.c:228</span><br><span class="line">228     &#123;</span><br><span class="line">(gdb) l</span><br><span class="line">223             memory_free(conn_opts);</span><br><span class="line">224             return retval;</span><br><span class="line">225     &#125;</span><br><span class="line">226</span><br><span class="line">227     int mqtt_connect(struct mqtt_session *session)</span><br><span class="line">228     &#123;</span><br><span class="line">229             int retval = 0;</span><br><span class="line">230             unsigned char *wbuf;</span><br><span class="line">231             unsigned int buflen;</span><br><span class="line">232             // struct timer_t conn_timer = &#123;0&#125;;</span><br><span class="line">(gdb) </span><br><span class="line">233             struct timer_t conn_timer;</span><br><span class="line">234             struct connack_options ack_opts = &#123;0&#125;;</span><br><span class="line">235</span><br><span class="line">236             if (!session) </span><br><span class="line">237                     return -1;</span><br><span class="line">238</span><br><span class="line">239             if (!timer_init(&amp;conn_timer))</span><br><span class="line">240                     return -1;</span><br><span class="line">241             timer_cutoff(&amp;conn_timer, session-&gt;net_timeout);</span><br><span class="line">242</span><br><span class="line">(gdb) </span><br><span class="line">243             wbuf = session-&gt;write_buf;</span><br><span class="line">244             buflen = session-&gt;write_buflen;</span><br><span class="line">245</span><br><span class="line">246             retval = network_connect(session-&gt;network);</span><br><span class="line">247             if (retval &lt; 0)</span><br><span class="line">248                     goto destory_timer;</span><br><span class="line">249             </span><br><span class="line">250             buflen = serialize_connect(wbuf, buflen, session-&gt;conn_opts);</span><br><span class="line">251             retval = mqtt_send_packet(session, buflen, &amp;conn_timer);</span><br><span class="line">252             if (retval &lt; 0)</span><br><span class="line">(gdb) </span><br><span class="line">253                     goto destory_timer;</span><br><span class="line">254</span><br><span class="line">255             retval = wait_connack(session, &amp;conn_timer);</span><br><span class="line">256             if (retval &lt; 0)</span><br><span class="line">257                     goto destory_timer;</span><br><span class="line">258</span><br><span class="line">259             retval = deserialize_connack(&amp;ack_opts, session-&gt;read_buf, session-&gt;read_buflen);</span><br><span class="line">260             if (!retval) &#123;</span><br><span class="line">261                     retval = -1;</span><br><span class="line">262                     goto destory_timer;</span><br><span class="line">(gdb) </span><br><span class="line">263             &#125;</span><br><span class="line">264</span><br><span class="line">265             if (ack_opts.return_code != ACK_RC_SUCCESS) &#123;</span><br><span class="line">266                     printf(&quot;error:\tCONNACK return_code is:\t%d\n&quot;, ack_opts.return_code);</span><br><span class="line">267                     retval = -1;</span><br><span class="line">268                     goto destory_timer;</span><br><span class="line">269             &#125;</span><br><span class="line">270</span><br><span class="line">271             session-&gt;state = SESSION_CONNECTED;</span><br><span class="line">272             printf(&quot;connect to server successful!\n&quot;);</span><br><span class="line">(gdb) b 239</span><br><span class="line">Breakpoint 2 at 0x555555555b6d: file mqtt/mqtt.c, line 239.</span><br><span class="line">(gdb) b 246</span><br><span class="line">Breakpoint 3 at 0x555555555bb2: file mqtt/mqtt.c, line 246.</span><br><span class="line">(gdb) b 250</span><br><span class="line">Breakpoint 4 at 0x555555555bcf: file mqtt/mqtt.c, line 250.</span><br><span class="line">(gdb) c</span><br><span class="line">Continuing.</span><br><span class="line"></span><br><span class="line">Breakpoint 2, mqtt_connect (session=0x55555555b2a0) at mqtt/mqtt.c:239</span><br><span class="line">239             if (!timer_init(&amp;conn_timer))</span><br><span class="line">(gdb) c</span><br><span class="line">Continuing.</span><br><span class="line"></span><br><span class="line">Program received signal SIGSEGV, Segmentation fault.</span><br><span class="line">__memset_avx2_unaligned_erms () at ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S:259</span><br><span class="line">259     ../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S: No such file or directory.</span><br><span class="line">(gdb) </span><br></pre></td></tr></table></figure>
-
-<p>上面的具体操作是，重新启动了 gdb 调试，在 <code>mqtt_connect</code> 函数入口打上断点，然后运行程序，使用 <code>list (l)</code> 命令查看该函数的代码，选择一些合适的地方打上断点，然后 <code>c</code> 继续运行。功夫不负有心人，我们又进一步确认了问题函数 <code>timer_init</code> ，继续打断点调试，由于  <code>timer_init</code>  函数比较短，这次我们单步运行即可：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">(gdb) b mqtt_connect</span><br><span class="line">Breakpoint <span class="number">1</span> at <span class="number">0x1b30</span>: file mqtt/mqtt.c, line <span class="number">228.</span></span><br><span class="line">(gdb) r</span><br><span class="line">Starting program: /home/sunhuashan/workplace/my_mqttclient/ours/out/bin/mqtt </span><br><span class="line"></span><br><span class="line">Breakpoint <span class="number">1</span>, mqtt_connect (session=<span class="number">0x7ffff7eaddfe</span> &lt;__sleep+<span class="number">62</span>&gt;) at mqtt/mqtt.c:<span class="number">228</span></span><br><span class="line"><span class="number">228</span>     &#123;</span><br><span class="line">(gdb) l</span><br><span class="line"><span class="number">223</span>             memory_free(conn_opts);</span><br><span class="line"><span class="number">224</span>             <span class="keyword">return</span> retval;</span><br><span class="line"><span class="number">225</span>     &#125;</span><br><span class="line"><span class="number">226</span></span><br><span class="line"><span class="number">227</span>     <span class="type">int</span> <span class="title function_">mqtt_connect</span><span class="params">(<span class="keyword">struct</span> mqtt_session *session)</span></span><br><span class="line">228     &#123;</span><br><span class="line"><span class="number">229</span>             <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line"><span class="number">230</span>             <span class="type">unsigned</span> <span class="type">char</span> *wbuf;</span><br><span class="line"><span class="number">231</span>             <span class="type">unsigned</span> <span class="type">int</span> buflen;</span><br><span class="line">(gdb) </span><br><span class="line"><span class="number">233</span>             <span class="class"><span class="keyword">struct</span> <span class="title">timer_t</span> <span class="title">conn_timer</span>;</span></span><br><span class="line"><span class="number">234</span>             <span class="class"><span class="keyword">struct</span> <span class="title">connack_options</span> <span class="title">ack_opts</span>;</span></span><br><span class="line"><span class="number">235</span></span><br><span class="line"><span class="number">236</span>             <span class="keyword">if</span> (!session) </span><br><span class="line"><span class="number">237</span>                     <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line"><span class="number">238</span></span><br><span class="line"><span class="number">239</span>             <span class="keyword">if</span> (!timer_init(&amp;conn_timer))</span><br><span class="line"><span class="number">240</span>                     <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line"><span class="number">241</span>             timer_cutoff(&amp;conn_timer, session-&gt;net_timeout);</span><br><span class="line"><span class="number">242</span></span><br><span class="line">(gdb) b <span class="number">239</span></span><br><span class="line">Breakpoint <span class="number">2</span> at <span class="number">0x555555555b6d</span>: file mqtt/mqtt.c, line <span class="number">239.</span></span><br><span class="line">(gdb) c</span><br><span class="line">Continuing.</span><br><span class="line"></span><br><span class="line">Breakpoint <span class="number">2</span>, mqtt_connect (session=<span class="number">0x55555555b2a0</span>) at mqtt/mqtt.c:<span class="number">239</span></span><br><span class="line"><span class="number">239</span>             <span class="keyword">if</span> (!timer_init(&amp;conn_timer))</span><br><span class="line">(gdb) s</span><br><span class="line"><span class="title function_">timer_init</span> <span class="params">(t=<span class="number">0xffffffffffffff80</span>)</span> at system/linux/timer.c:10</span><br><span class="line">10      &#123;</span><br><span class="line">(gdb) n</span><br><span class="line"><span class="number">11</span>              <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> *<span class="title">timeval</span> =</span> (<span class="keyword">struct</span> timeval*)t-&gt;timer;</span><br><span class="line">(gdb) n</span><br><span class="line"><span class="number">13</span>              <span class="keyword">if</span> (!timeval)</span><br><span class="line">(gdb) </span><br><span class="line"><span class="number">15</span>              <span class="keyword">if</span> (!timeval)</span><br><span class="line">(gdb) </span><br><span class="line"><span class="number">18</span>              <span class="built_in">memset</span>(timeval, <span class="number">0</span>, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> timeval));</span><br><span class="line">(gdb) </span><br><span class="line"></span><br><span class="line">Program received signal SIGSEGV, Segmentation fault.</span><br><span class="line">__memset_avx2_unaligned_erms () at ../sysdeps/x86_64/multiarch/<span class="built_in">memset</span>-vec-unaligned-erms.S:<span class="number">259</span></span><br><span class="line"><span class="number">259</span>     ../sysdeps/x86_64/multiarch/<span class="built_in">memset</span>-vec-unaligned-erms.S: No such file or directory.</span><br><span class="line">(gdb) </span><br></pre></td></tr></table></figure>
-
-<p>ok，最终定位到了错误，在 <code>timer_init</code> 函数第 18 行，使用 <code>memset</code> 时报错。直接分析代码：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">timer_init</span><span class="params">(<span class="keyword">struct</span> <span class="type">timer_t</span> *t)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> *<span class="title">timeval</span> =</span> (<span class="keyword">struct</span> timeval*)t-&gt;timer;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (!timeval)</span><br><span class="line">                timeval = memory_alloc(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> timeval));</span><br><span class="line">        <span class="keyword">if</span> (!timeval)</span><br><span class="line">                <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">memset</span>(timeval, <span class="number">0</span>, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> timeval));</span><br><span class="line">        t-&gt;timer = (<span class="type">void</span>*)timeval;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>在 <code>mqtt_connect</code> 函数中，我们本想初始化一个 timer_t 对象，为里面真正的 timer 分配内存空间，但是根据 gdb 的执行路径，这里直接跳过了 <code>memory_alloc</code> 函数，这又是因为 <code>if(!timer)</code> 判断为否，即 <code>t-&gt;timer != NULL</code> ，这是为什么呢？简单一分析，我们就发现，在 <code>memory_alloc</code> 函数中的 <code>conn_timer</code> 没有被初始化！这就导致其指向了一些不知道是什么的位置（取决于分配的栈内存之前被谁使用）！！</p>
-<p>只有问题找到了，解决起来就容易了，在定义<code>conn_timer</code> 时，我们同时将其初始为全 0 :</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">struct timer_t conn_timer = &#123;0&#125;;</span><br></pre></td></tr></table></figure>
-
-
-
-
-
-<h2 id="抓包分析"><a href="#抓包分析" class="headerlink" title="抓包分析"></a>抓包分析</h2><h3 id="tcpdump"><a href="#tcpdump" class="headerlink" title="tcpdump"></a>tcpdump</h3><p>虽然我们的程序可以正常运行了，但是我们并不知道是否真的将数据发送出去并且收到了响应，这里我们为了进一步验证程序的正确性，使用 Linux 下的 <code>tcpdump</code> 工具进行抓包分析，该工具十分强大，有机会后面继续深入学习，今天我们简单使用一下，知道下面几个选项的含有即可</p>
-<ul>
-<li><code>port</code> 表示根据端口号过来数据包</li>
-<li><code>-n</code> 表示不要解析域名，直接显示 ip</li>
-<li><code>-nn</code> 不要解析域名和端口</li>
-<li><code>-X</code> 同时用 hex 和 ascii 显示报文的内容</li>
-<li><code>-S</code> 显示绝对的序列号（sequence number），而不是相对编号</li>
-<li><code>-v, -vv, -vvv</code>：显示更多的详细信息</li>
-</ul>
-<p>下面我们先使用命令 <code>tcpdump port 1883 -nnXS</code>  启动 tcpdump。</p>
-<p>修改测试程序，在 <code>mqtt_connect</code> 后休眠 60s，方便查看连接时的报文：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mqtt_connect(session);</span><br><span class="line">sleep(<span class="number">60</span>);</span><br></pre></td></tr></table></figure>
-
-<p>重新编译运行，查看 <code>tcpdump</code> 的输出，如下：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$</span><span class="language-bash">tcpdump port 1883 -nnXS</span></span><br><span class="line">tcpdump: verbose output suppressed, use -v or -vv for full protocol decode</span><br><span class="line">listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes</span><br><span class="line">15:00:56.809454 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [S], seq 3452615905, win 64240, options [mss 1460,sackOK,TS val 2428129756 ecr 0,nop,wscale 7], length 0</span><br><span class="line">        0x0000:  4500 003c dcd7 4000 4006 26fe ac1c a617  E..&lt;..@.@.&amp;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bce1 0000 0000  6....f.[........</span><br><span class="line">        0x0020:  a002 faf0 3715 0000 0204 05b4 0402 080a  ....7...........</span><br><span class="line">        0x0030:  90ba 51dc 0000 0000 0103 0307            ..Q.........</span><br><span class="line">15:00:57.001812 IP 54.244.173.190.1883 &gt; 172.28.166.23.54374: Flags [S.], seq 2597959144, ack 3452615906, win 2048, options [mss 1360,sackOK,TS val 1561261964 ecr 2428129756,nop,wscale 9], length 0</span><br><span class="line">        0x0000:  4500 003c 0000 4000 2e06 15d6 36f4 adbe  E..&lt;..@.....6...</span><br><span class="line">        0x0010:  ac1c a617 075b d466 9ad9 b5e8 cdca bce2  .....[.f........</span><br><span class="line">        0x0020:  a012 0800 1b08 0000 0204 0550 0402 080a  ...........P....</span><br><span class="line">        0x0030:  5d0e f78c 90ba 51dc 0103 0309            ].....Q.....</span><br><span class="line">15:00:57.001895 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [.], ack 2597959145, win 502, options [nop,nop,TS val 2428129948 ecr 1561261964], length 0</span><br><span class="line">        0x0000:  4500 0034 dcd8 4000 4006 2705 ac1c a617  E..4..@.@.&#x27;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bce2 9ad9 b5e9  6....f.[........</span><br><span class="line">        0x0020:  8010 01f6 370d 0000 0101 080a 90ba 529c  ....7.........R.</span><br><span class="line">        0x0030:  5d0e f78c                                ]...</span><br><span class="line">15:00:57.001981 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [P.], seq 3452615906:3452615940, ack 2597959145, win 502, options [nop,nop,TS val 2428129949 ecr 1561261964], length 34</span><br><span class="line">        0x0000:  4500 0056 dcd9 4000 4006 26e2 ac1c a617  E..V..@.@.&amp;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bce2 9ad9 b5e9  6....f.[........</span><br><span class="line">        0x0020:  8018 01f6 372f 0000 0101 080a 90ba 529d  ....7/........R.</span><br><span class="line">        0x0030:  5d0e f78c 1020 0004 4d51 5454 04c0 000a  ].......MQTT....</span><br><span class="line">        0x0040:  0008 636c 6965 6e74 6964 0004 7573 6572  ..clientid..user</span><br><span class="line">        0x0050:  0004 7061 7373                           ..pass</span><br><span class="line">15:00:57.455919 IP 54.244.173.190.1883 &gt; 172.28.166.23.54374: Flags [.], ack 3452615940, win 4, options [nop,nop,TS val 1561262169 ecr 2428129949], length 0</span><br><span class="line">        0x0000:  4500 0034 de97 4000 2e06 3746 36f4 adbe  E..4..@...7F6...</span><br><span class="line">        0x0010:  ac1c a617 075b d466 9ad9 b5e9 cdca bd04  .....[.f........</span><br><span class="line">        0x0020:  8010 0004 4fbe 0000 0101 080a 5d0e f859  ....O.......]..Y</span><br><span class="line">        0x0030:  90ba 529d                                ..R.</span><br><span class="line">15:00:57.455953 IP 54.244.173.190.1883 &gt; 172.28.166.23.54374: Flags [P.], seq 2597959145:2597959149, ack 3452615940, win 4, options [nop,nop,TS val 1561262366 ecr 2428129949], length 4</span><br><span class="line">        0x0000:  4500 0038 de98 4000 2e06 3741 36f4 adbe  E..8..@...7A6...</span><br><span class="line">        0x0010:  ac1c a617 075b d466 9ad9 b5e9 cdca bd04  .....[.f........</span><br><span class="line">        0x0020:  8018 0004 2deb 0000 0101 080a 5d0e f91e  ....-.......]...</span><br><span class="line">        0x0030:  90ba 529d 2002 0100                      ..R.....</span><br><span class="line">15:00:57.456005 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [.], ack 2597959149, win 502, options [nop,nop,TS val 2428130403 ecr 1561262366], length 0</span><br><span class="line">        0x0000:  4500 0034 dcda 4000 4006 2703 ac1c a617  E..4..@.@.&#x27;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bd04 9ad9 b5ed  6....f.[........</span><br><span class="line">        0x0020:  8010 01f6 370d 0000 0101 080a 90ba 5463  ....7.........Tc</span><br><span class="line">        0x0030:  5d0e f91e                                ]...</span><br></pre></td></tr></table></figure>
-
-<p>在对报文进行解析前，先来看一下数据是如何封装的：</p>
-<h3 id="TCP-IP-数据格式"><a href="#TCP-IP-数据格式" class="headerlink" title="TCP&#x2F;IP 数据格式"></a>TCP&#x2F;IP 数据格式</h3><p>一图胜千言，这里我们的 MQTT 属于应用层。对于各协议的头部解析超出了本文章的讨论范围，所以这里我们仅仅为了方便找到 mqtt 数据，来看一下数据格式和各个协议头部的大小。</p>
-<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/image-20240717151540338.png" alt="image-20240717151540338"></p>
-<ul>
-<li>IP 头部：<strong>20字节</strong></li>
-<li>TCP 头部 ：<strong>20字节</strong>  + 选项字段（<strong>在头部中给出</strong>）</li>
-</ul>
-<p>我们以第一个报文为例分析一下各个部分（tcpdump 默认不显示 以太网帧头尾，需添加 <code>-XX</code> 标志）：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0x0000:  4500 003c dcd7 4000 4006 26fe ac1c a617  E..&lt;..@.@.&amp;.....</span><br><span class="line">0x0010:  36f4 adbe d466 075b cdca bce1 0000 0000  6....f.[........</span><br><span class="line">0x0020:  a002 faf0 3715 0000 0204 05b4 0402 080a  ....7...........</span><br><span class="line">0x0030:  90ba 51dc 0000 0000 0103 0307            ..Q.........</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>IP 头部 <strong>20字节</strong></li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0x0000</span>:  <span class="number">4500</span> <span class="number">003</span>c dcd7 <span class="number">4000</span> <span class="number">4006</span> <span class="number">26f</span>e ac1c a617  E..&lt;..@.@.&amp;.....</span><br><span class="line"><span class="number">0x0010</span>:  <span class="number">36f</span>4 adbe                            ....</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>TCP 头部(20) + 可选字段(20) &#x3D; <strong>40字节</strong></li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0x0010</span>:            d466 <span class="number">075b</span> cdca bce1 <span class="number">0000</span> <span class="number">0000</span>  <span class="number">6.</span>...f.[........</span><br><span class="line"><span class="number">0x0020</span>:  a002 faf0 <span class="number">3715</span> <span class="number">0000</span> <span class="number">0204</span> <span class="number">05b</span>4 <span class="number">0402</span> <span class="number">080</span>a  ...<span class="number">.7</span>...........</span><br><span class="line"><span class="number">0x0030</span>:  <span class="number">90b</span>a <span class="number">51</span>dc <span class="number">0000</span> <span class="number">0000</span> <span class="number">0103</span> <span class="number">0307</span>            ..Q.........</span><br></pre></td></tr></table></figure>
-
-<p>该报文为 TCP握手报文，所以没有应用层数据。</p>
-<h3 id="tcp-握手"><a href="#tcp-握手" class="headerlink" title="tcp 握手"></a>tcp 握手</h3><p>前三个 TCP 报文为建立 TCP 连接所需要的，这不是我们的主题，有兴趣的可以自行看一下：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">15:00:56.809454 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [S], seq 3452615905, win 64240, options [mss 1460,sackOK,TS val 2428129756 ecr 0,nop,wscale 7], length 0</span><br><span class="line">        0x0000:  4500 003c dcd7 4000 4006 26fe ac1c a617  E..&lt;..@.@.&amp;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bce1 0000 0000  6....f.[........</span><br><span class="line">        0x0020:  a002 faf0 3715 0000 0204 05b4 0402 080a  ....7...........</span><br><span class="line">        0x0030:  90ba 51dc 0000 0000 0103 0307            ..Q.........</span><br><span class="line">15:00:57.001812 IP 54.244.173.190.1883 &gt; 172.28.166.23.54374: Flags [S.], seq 2597959144, ack 3452615906, win 2048, options [mss 1360,sackOK,TS val 1561261964 ecr 2428129756,nop,wscale 9], length 0</span><br><span class="line">        0x0000:  4500 003c 0000 4000 2e06 15d6 36f4 adbe  E..&lt;..@.....6...</span><br><span class="line">        0x0010:  ac1c a617 075b d466 9ad9 b5e8 cdca bce2  .....[.f........</span><br><span class="line">        0x0020:  a012 0800 1b08 0000 0204 0550 0402 080a  ...........P....</span><br><span class="line">        0x0030:  5d0e f78c 90ba 51dc 0103 0309            ].....Q.....</span><br><span class="line">15:00:57.001895 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [.], ack 2597959145, win 502, options [nop,nop,TS val 2428129948 ecr 1561261964], length 0</span><br><span class="line">        0x0000:  4500 0034 dcd8 4000 4006 2705 ac1c a617  E..4..@.@.&#x27;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bce2 9ad9 b5e9  6....f.[........</span><br><span class="line">        0x0020:  8010 01f6 370d 0000 0101 080a 90ba 529c  ....7.........R.</span><br><span class="line">        0x0030:  5d0e f78c                                ]...</span><br></pre></td></tr></table></figure>
-
-<h3 id="connect-报文"><a href="#connect-报文" class="headerlink" title="connect 报文"></a>connect 报文</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">15:00:57.001981 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [P.], seq 3452615906:3452615940, ack 2597959145, win 502, options [nop,nop,TS val 2428129949 ecr 1561261964], length 34</span><br><span class="line">        0x0000:  4500 0056 dcd9 4000 4006 26e2 ac1c a617  E..V..@.@.&amp;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bce2 9ad9 b5e9  6....f.[........</span><br><span class="line">        0x0020:  8018 01f6 372f 0000 0101 080a 90ba 529d  ....7/........R.</span><br><span class="line">        0x0030:  5d0e f78c 1020 0004 4d51 5454 04c0 000a  ].......MQTT....</span><br><span class="line">        0x0040:  0008 636c 6965 6e74 6964 0004 7573 6572  ..clientid..user</span><br><span class="line">        0x0050:  0004 7061 7373                           ..pass</span><br><span class="line">15:00:57.455919 IP 54.244.173.190.1883 &gt; 172.28.166.23.54374: Flags [.], ack 3452615940, win 4, options [nop,nop,TS val 1561262169 ecr 2428129949], length 0</span><br><span class="line">        0x0000:  4500 0034 de97 4000 2e06 3746 36f4 adbe  E..4..@...7F6...</span><br><span class="line">        0x0010:  ac1c a617 075b d466 9ad9 b5e9 cdca bd04  .....[.f........</span><br><span class="line">        0x0020:  8010 0004 4fbe 0000 0101 080a 5d0e f859  ....O.......]..Y</span><br><span class="line">        0x0030:  90ba 529d                                ..R.</span><br></pre></td></tr></table></figure>
-
-<p>第一个是我们发出的 mqtt 报文封装后的包，第二个是服务器的 ack 包，我们只关注 mqtt 报文，如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">0x0030:			   1020 0004 4d51 5454 04c0 000a      ....MQTT....</span><br><span class="line">0x0040:  0008 636c 6965 6e74 6964 0004 7573 6572  ..clientid..user</span><br><span class="line">0x0050:  0004 7061 7373                           ..pass</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>固定头部：10 （0001 0000）-&gt; CONNECT 报文</p>
-</li>
-<li><p>可变长度：20 （0010 0000）-&gt; 剩余长度 32 字节</p>
-</li>
-<li><p>协议名长度：0004  -&gt; 协议名长度为 4</p>
-</li>
-<li><p>协议名： 5d51 5454 -&gt; 协议名 ”MQTT“</p>
-</li>
-<li><p>协议级别：04</p>
-</li>
-<li><p>连接标志 ：c0 (1100 0000) -&gt; 只有 username 和 password flag 标记为 1，其余均为 0</p>
-</li>
-<li><p>保持连接时间：000a -&gt; 10s 的保持连接时间</p>
-</li>
-<li><p>客户端 ID 长度：0008  -&gt; 字符串长度为 8</p>
-</li>
-<li><p>客户端 ID ：636c 6965 6e74 6964  -&gt;  “clientid”</p>
-</li>
-<li><p>用户名 长度：0004  -&gt; 字符串长度为 4</p>
-</li>
-<li><p>用户名 ： 7573 6572  -&gt;  “user”</p>
-</li>
-<li><p>密码 长度：0004  -&gt; 字符串长度为 4</p>
-</li>
-<li><p>密码 ： 7061 7373  -&gt;  “pass”</p>
-</li>
-</ul>
-<p>这与我们在测试程序中的设置完全一致！！说明程序完成了连接功能的实现。</p>
-<h3 id="connack-报文"><a href="#connack-报文" class="headerlink" title="connack 报文"></a>connack 报文</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">15:00:57.455953 IP 54.244.173.190.1883 &gt; 172.28.166.23.54374: Flags [P.], seq 2597959145:2597959149, ack 3452615940, win 4, options [nop,nop,TS val 1561262366 ecr 2428129949], length 4</span><br><span class="line">        0x0000:  4500 0038 de98 4000 2e06 3741 36f4 adbe  E..8..@...7A6...</span><br><span class="line">        0x0010:  ac1c a617 075b d466 9ad9 b5e9 cdca bd04  .....[.f........</span><br><span class="line">        0x0020:  8018 0004 2deb 0000 0101 080a 5d0e f91e  ....-.......]...</span><br><span class="line">        0x0030:  90ba 529d 2002 0100                      ..R.....</span><br><span class="line">15:00:57.456005 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [.], ack 2597959149, win 502, options [nop,nop,TS val 2428130403 ecr 1561262366], length 0</span><br><span class="line">        0x0000:  4500 0034 dcda 4000 4006 2703 ac1c a617  E..4..@.@.&#x27;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bd04 9ad9 b5ed  6....f.[........</span><br><span class="line">        0x0020:  8010 01f6 370d 0000 0101 080a 90ba 5463  ....7.........Tc</span><br><span class="line">        0x0030:  5d0e f91e                                ]...</span><br></pre></td></tr></table></figure>
-
-<p>第一条为 connack 报文，第二条为 tcp 的 ack 报文我们不关注：</p>
-<ul>
-<li><p>报文类型为：20 （0010 0000）CONNACK</p>
-</li>
-<li><p>剩余长度：02 （0000 0010） </p>
-</li>
-<li><p>session present：1 （0000 0001）</p>
-</li>
-<li><p>返回码为：00（0000 0000）</p>
-</li>
-</ul>
-<h3 id="pingreq-和-pingresp-报文"><a href="#pingreq-和-pingresp-报文" class="headerlink" title="pingreq 和 pingresp 报文"></a>pingreq 和 pingresp 报文</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">15:00:58.456300 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [P.], seq 3452615940:3452615942, ack 2597959149, win 502, options [nop,nop,TS val 2428131403 ecr 1561262366], length 2</span><br><span class="line">        0x0000:  4500 0036 dcdb 4000 4006 2700 ac1c a617  E..6..@.@.&#x27;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bd04 9ad9 b5ed  6....f.[........</span><br><span class="line">        0x0020:  8018 01f6 370f 0000 0101 080a 90ba 584b  ....7.........XK</span><br><span class="line">        0x0030:  5d0e f91e c000                           ].....</span><br><span class="line">15:00:58.735682 IP 54.244.173.190.1883 &gt; 172.28.166.23.54374: Flags [.], ack 3452615942, win 4, options [nop,nop,TS val 1561263644 ecr 2428131403], length 0</span><br><span class="line">        0x0000:  4500 0034 de99 4000 2e06 3744 36f4 adbe  E..4..@...7D6...</span><br><span class="line">        0x0010:  ac1c a617 075b d466 9ad9 b5ed cdca bd06  .....[.f........</span><br><span class="line">        0x0020:  8010 0004 4447 0000 0101 080a 5d0e fe1c  ....DG......]...</span><br><span class="line">        0x0030:  90ba 584b                                ..XK</span><br><span class="line">15:00:58.735712 IP 54.244.173.190.1883 &gt; 172.28.166.23.54374: Flags [P.], seq 2597959149:2597959151, ack 3452615942, win 4, options [nop,nop,TS val 1561263644 ecr 2428131403], length 2</span><br><span class="line">        0x0000:  4500 0036 de9a 4000 2e06 3741 36f4 adbe  E..6..@...7A6...</span><br><span class="line">        0x0010:  ac1c a617 075b d466 9ad9 b5ed cdca bd06  .....[.f........</span><br><span class="line">        0x0020:  8018 0004 743c 0000 0101 080a 5d0e fe1c  ....t&lt;......]...</span><br><span class="line">        0x0030:  90ba 584b d000                           ..XK..</span><br><span class="line">15:00:58.735732 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [.], ack 2597959151, win 502, options [nop,nop,TS val 2428131682 ecr 1561263644], length 0</span><br><span class="line">        0x0000:  4500 0034 dcdc 4000 4006 2701 ac1c a617  E..4..@.@.&#x27;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bd06 9ad9 b5ef  6....f.[........</span><br><span class="line">        0x0020:  8010 01f6 370d 0000 0101 080a 90ba 5962  ....7.........Yb</span><br><span class="line">        0x0030:  5d0e fe1c                                ]...</span><br></pre></td></tr></table></figure>
-
-<p>心跳请求和心跳响应报文，有效数据部分只有 <code>c000</code> 和 <code>d000</code> ，比较简单。</p>
-<h3 id="disconnect-报文"><a href="#disconnect-报文" class="headerlink" title="disconnect 报文"></a>disconnect 报文</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">15:00:59.456791 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [P.], seq 3452615942:3452615944, ack 2597959151, win 502, options [nop,nop,TS val 2428132403 ecr 1561263644], length 2</span><br><span class="line">        0x0000:  4500 0036 dcdd 4000 4006 26fe ac1c a617  E..6..@.@.&amp;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bd06 9ad9 b5ef  6....f.[........</span><br><span class="line">        0x0020:  8018 01f6 370f 0000 0101 080a 90ba 5c33  ....7.........\3</span><br><span class="line">        0x0030:  5d0e fe1c e000                           ].....</span><br></pre></td></tr></table></figure>
-
-<p>关闭连接报文，有效数据只有 <code>e000</code> </p>
-<h3 id="tcp-挥手"><a href="#tcp-挥手" class="headerlink" title="tcp 挥手"></a>tcp 挥手</h3><p>随后，服务器发起 TCP 连接的关闭请求，由于没有数据要继续发送，仅有三次挥手</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">15:00:59.515847 IP 54.244.173.190.1883 &gt; 172.28.166.23.54374: Flags [F.], seq 2597959151, ack 3452615942, win 4, options [nop,nop,TS val 1561264479 ecr 2428131682], length 0</span><br><span class="line">        0x0000:  4500 0034 de9b 4000 2e06 3742 36f4 adbe  E..4..@...7B6...</span><br><span class="line">        0x0010:  ac1c a617 075b d466 9ad9 b5ef cdca bd06  .....[.f........</span><br><span class="line">        0x0020:  8011 0004 3fea 0000 0101 080a 5d0f 015f  ....?.......].._</span><br><span class="line">        0x0030:  90ba 5962                                ..Yb</span><br><span class="line">15:00:59.559487 IP 172.28.166.23.54374 &gt; 54.244.173.190.1883: Flags [.], ack 2597959152, win 502, options [nop,nop,TS val 2428132506 ecr 1561264479], length 0</span><br><span class="line">        0x0000:  4500 0034 dcde 4000 4006 26ff ac1c a617  E..4..@.@.&amp;.....</span><br><span class="line">        0x0010:  36f4 adbe d466 075b cdca bd08 9ad9 b5f0  6....f.[........</span><br><span class="line">        0x0020:  8010 01f6 370d 0000 0101 080a 90ba 5c9a  ....7.........\.</span><br><span class="line">        0x0030:  5d0f 015f                                ].._</span><br><span class="line">15:01:00.028082 IP 54.244.173.190.1883 &gt; 172.28.166.23.54374: Flags [R], seq 2597959152, win 0, length 0</span><br><span class="line">        0x0000:  4500 0028 0000 4000 2e06 15ea 36f4 adbe  E..(..@.....6...</span><br><span class="line">        0x0010:  ac1c a617 075b d466 9ad9 b5f0 0000 0000  .....[.f........</span><br><span class="line">        0x0020:  5004 0000 4c6e 0000                      P...Ln..</span><br></pre></td></tr></table></figure>
-
-
+          <p>前面的文章中已经为 ”连接服务器“ 这一任务做好了足够的铺垫，这篇文章，我们在之前的基础上会构建一个简单的测试程序 和 Makefile 文件来编译程序，并让它成功运行起来。最后，为了验证我们的程序是不是真正的完成了要求的功能，我们还会使用 tcpdump 进行抓包验证。在这个过程中，代码出现 bug 时，我们使用 gdb 来进行调试和解决。下面让我们开始吧！</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/11/23/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -511,7 +383,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/17/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%E4%B8%8B%EF%BC%89%E5%8D%8F%E8%AE%AE%E5%B1%82%E5%AE%9E%E7%8E%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jfif">
@@ -525,7 +397,73 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（四）连接服务器实战-底层实现</a>
+            <a href="/2023/11/17/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%E4%B8%8B%EF%BC%89%E5%8D%8F%E8%AE%AE%E5%B1%82%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（五）连接服务器实战-协议层实现</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-11-17 18:45:52" itemprop="dateCreated datePublished" datetime="2023-11-17T18:45:52+08:00">2023-11-17</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%E4%B8%8A%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%E4%B8%8A%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（四）连接服务器实战-底层实现</a>
         </h2>
 
         <div class="post-meta">
@@ -561,7 +499,7 @@
           <p>上一篇 mqtt 协议的文章介绍了项目的整体架构，这篇文章计划将所有的接口都实现，并且能够成功连接服务器端。我会仍然按照自底向上的顺序介绍，下面先回顾一下我们的整体架构：</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/#more" rel="contents">
+              <a class="btn" href="/2023/11/14/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%9B%9B%E4%B8%8A%EF%BC%89%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -943,80 +881,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/17/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/03/17/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/" class="post-title-link" itemprop="url">【驱动开发】Linux 驱动开发入门（二） 内核模块</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-03-17 17:34:09" itemprop="dateCreated datePublished" datetime="2023-03-17T17:34:09+08:00">2023-03-17</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" itemprop="url" rel="index"><span itemprop="name">字符设备驱动</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在操作系统的组成方式上，一直有宏内核与微内核之间的争论，除了这两种方式，还有其他解决办法吗？Linux 给出了答案，那就是”使用模块“。模块允许内核在运行时动态地向其中插入或从中删除代码，无需重新编译整个内核并重新引导系统，可以方便地扩展内核的功能。在驱动开发中，设备驱动程序都是由一个个模块构成的，在我们开始编写驱动前，先看看内核模块是如何使用的吧。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/03/17/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1088,7 +952,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">32</span>
+          <span class="site-state-item-count">33</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

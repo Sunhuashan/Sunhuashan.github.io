@@ -157,6 +157,105 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/06/FFmpeg%E7%BB%84%E6%88%90/" class="post-title-link" itemprop="url">FFmpeg的组成</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-06 10:20:00" itemprop="dateCreated datePublished" datetime="2022-07-06T10:20:00+08:00">2022-07-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="FFmpeg的组成"><a href="#FFmpeg的组成" class="headerlink" title="FFmpeg的组成"></a><code>FFmpeg</code>的组成</h3><ol>
+<li><p>封装模块<code>AVFormat</code></p>
+<p>封装格式可以理解为一种将音频流和视频流组装起来的协议，实现音频与视频的同步。如，MP4，FLV等。</p>
+<p><code>AVFormat</code>模块实现了绝大多数的封装格式，可以进行封装和解封装。同时，可以自定义自己的封装格式。</p>
+</li>
+<li><p>编解码模块<code>AVCodec</code></p>
+<p>编码格式可以理解为一种将音频或者视频进行压缩的协议，减少文件大小，提高传输效率。如，MP3，H.265等。</p>
+<p><code>AVCodec</code>模块实现了绝大多数的编码格式，可以进行编码和解码。</p>
+</li>
+<li><p>滤镜模块<code>AVFilter</code></p>
+<p><code>AVFilter</code>模块提供了一个通用的音频、视频、字幕等滤镜处理框架。下面是一个滤镜处理的例子.</p>
+<p><img src="AVFilter%E4%BE%8B%E5%AD%90.png"></p>
+<p>对应的命令行如下所示：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./ffmpeg -i INPUT -vf &quot;split [mian][tmp]; [tmp] crop=iw:ih/2:0:0, vflip [flip]; [main][flip] overlay=0:H/2&quot; OUTPUT</span><br></pre></td></tr></table></figure>
+
+<p><code>split</code>滤镜 将视频流分割，并将第二部分打上<code>[tmp]</code>标签;</p>
+<p><code>crop</code>滤镜 根据给定参数，对视频进行裁剪 ；</p>
+<p><code>vflip</code>滤镜 根据给定参数，对视频进行纵坐标调换操作，打上<code>flip</code>标签；</p>
+<p><code>overlay</code>滤镜 将一路输入覆盖到另一路之上，合并输出为一路视频 。    </p>
+</li>
+<li><p>视频图像转换计算模块<code>swscale</code></p>
+<p><code>swscale</code>模块提供高级的图像转换API ,例如，可以实现1080P转720P的图片缩放， YUV转RGB的图片格式转换。</p>
+</li>
+<li><p>音频转换计算模块<code>swresample</code></p>
+<p><code>swresample</code>模块提供高级的音频重采样API，可以实现音频采样，音频通道布局转换等。</p>
+</li>
+</ol>
+<h3 id="编解码工具ffmpeg的使用"><a href="#编解码工具ffmpeg的使用" class="headerlink" title="编解码工具ffmpeg的使用"></a>编解码工具<code>ffmpeg</code>的使用</h3><p><code>ffmpeg</code>是<code>FFmpeg</code>编译后生成的一个可执行文件，下面一个例子介绍该工具的使用。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i input.mp4 -f avi output.avi</span><br></pre></td></tr></table></figure>
+
+<p>该命令将<code>MP4</code>格式的文件转换为<code>AVI</code>格式的文件，通过<code>-i</code>参数获取<code>输入源</code>，通过<code>-f</code>参数规定<code>输出格式</code>。</p>
+<p><code>ffmpeg</code>的主要工作流程包括:</p>
+<ul>
+<li>Demuxing(解封装)</li>
+<li>Decoding(解码)</li>
+<li>Encoding(编码)</li>
+<li>Muxing(封装)</li>
+</ul>
+<p>转换步骤如下图</p>
+<p><img src="ffmpeg%E5%B7%A5%E4%BD%9C%E6%AD%A5%E9%AA%A4.png"></p>
+<h3 id="播放器工具ffplay的使用"><a href="#播放器工具ffplay的使用" class="headerlink" title="播放器工具ffplay的使用"></a>播放器工具<code>ffplay</code>的使用</h3><p><code>ffplay</code>也是<code>FFmpeg</code>编译后生成的一个可执行文件，提供了音视频显示和播放相关的图像信息、音频的波形信息等。</p>
+<h3 id="多媒体分析器ffprobe的使用"><a href="#多媒体分析器ffprobe的使用" class="headerlink" title="多媒体分析器ffprobe的使用"></a>多媒体分析器<code>ffprobe</code>的使用</h3><p><code>ffplay</code>也是<code>FFmpeg</code>编译后生成的一个可执行文件，可以从媒体文件或者媒体流中获取媒体信息，比如音频的参数、视频的参数等等。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/06/19/d2l-ch1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -346,7 +445,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">32</span>
+          <span class="site-state-item-count">33</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
