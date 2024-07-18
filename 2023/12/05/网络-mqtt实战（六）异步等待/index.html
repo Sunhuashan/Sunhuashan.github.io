@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="在实现服务器连接函数时，有提到同步和异步等待 ack 的方法，因为在连接没建立起来之前，我们无其他事情可做，所以在等待 CONNACK 时，采取了同步等待的策略。但是对于 PINGRESP 报文的等待，还可以使用同步的方式吗？哪种方式更好呢？这篇文章我们就来看一下吧。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【计算机网络】mqtt通信协议入门（七）异步等待的原理与实现">
+<meta property="og:url" content="http://example.com/2023/12/05/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%85%AD%EF%BC%89%E5%BC%82%E6%AD%A5%E7%AD%89%E5%BE%85/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="在实现服务器连接函数时，有提到同步和异步等待 ack 的方法，因为在连接没建立起来之前，我们无其他事情可做，所以在等待 CONNACK 时，采取了同步等待的策略。但是对于 PINGRESP 报文的等待，还可以使用同步的方式吗？哪种方式更好呢？这篇文章我们就来看一下吧。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%85%AD%EF%BC%89%E5%BC%82%E6%AD%A5%E7%AD%89%E5%BE%85/image-20240718093229735.png">
+<meta property="article:published_time" content="2023-12-05T09:08:31.000Z">
+<meta property="article:modified_time" content="2024-07-18T13:59:14.949Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%85%AD%EF%BC%89%E5%BC%82%E6%AD%A5%E7%AD%89%E5%BE%85/image-20240718093229735.png">
+
+<link rel="canonical" href="http://example.com/2023/12/05/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%85%AD%EF%BC%89%E5%BC%82%E6%AD%A5%E7%AD%89%E5%BE%85/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【计算机网络】mqtt通信协议入门（七）异步等待的原理与实现 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/12/05/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%85%AD%EF%BC%89%E5%BC%82%E6%AD%A5%E7%AD%89%E5%BE%85/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【计算机网络】mqtt通信协议入门（七）异步等待的原理与实现
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-12-05 17:08:31" itemprop="dateCreated datePublished" datetime="2023-12-05T17:08:31+08:00">2023-12-05</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在实现服务器连接函数时，有提到同步和异步等待 ack 的方法，因为在连接没建立起来之前，我们无其他事情可做，所以在等待 CONNACK 时，采取了同步等待的策略。但是对于 PINGRESP 报文的等待，还可以使用同步的方式吗？哪种方式更好呢？这篇文章我们就来看一下吧。</p>
+<span id="more"></span>
+
+<h2 id="同步和异步"><a href="#同步和异步" class="headerlink" title="同步和异步"></a>同步和异步</h2><p>同步和异步的关注点在于消息通信机制：</p>
+<ul>
+<li>同步调用的执行是一个<strong>有序的线性序列</strong>，当 A 调用 B 后，A 会<strong>主动等待</strong> B 执行完成后再继续。比如 A 先后两次调用 B，记为 B(1)，B(2)，执行顺序一定是：“A call B(1) -&gt; B(1) run -&gt; B(1) done, return A -&gt; A call B(2) -&gt; B(2) run -&gt; B(2) done, return A -&gt; A continue”只有按照这种线性序列去执行程序，才能保证调用双方的状态同步。</li>
+<li>异步调用是指当 A 调用 B 的时候，不等 B 执行结束，这个调用就会立即返回。当 B 执行完成后，B 会通过<strong>回调</strong>函数或<strong>通知</strong> 的方式告诉 A。异步调用并<strong>不是 FIFO 的</strong>，即 A 发起的多个调用并不是按照顺序收到通知的，有可能 A 后发出的调用却先收到了 B 的回应。</li>
+</ul>
+<h3 id="同步方式等待-ack"><a href="#同步方式等待-ack" class="headerlink" title="同步方式等待 ack"></a>同步方式等待 ack</h3><p>根据上面的描述，我们把保持连接这个任务抽象成如下伪代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">mqtt_keep_alive()</span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">    mqtt_pingreq();</span><br><span class="line">    </span><br><span class="line">    ...</span><br><span class="line">    mqtt_wait_pingresp();</span><br><span class="line">    </span><br><span class="line">   	...</span><br><span class="line">    <span class="comment">// 返回做其他事</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在同步实现方式中，<code>mqtt_wait_pingresp()</code> 可以像 <code>wait_connack</code> 一样，循环等待 PINGRESP：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mqtt_wait_pingresp()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        mqtt_recv_packet(&amp;type);</span><br><span class="line">    &#125; <span class="keyword">while</span>(type == PINGRESP);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这样的实现中，执行一定是按照 <code>mqtt_pingreq()-&gt;mqtt_wait_pingresp()-&gt;返回做其他事</code> 这个顺序进行的。在等到 PINGRESP 报文之前，我们什么也做不了。</p>
+<p>这种同步的实现方式是可以正常工作的，但是，假设我们在网络较差的环境时，可能会迟迟收不到 PINGRESP 报文，这样我们就会一直等待下去（即使有定时器也要等很久），其他事情（比如 处理收到的订阅的消息）都会跟着等待，显然这不利于充分利用 CPU 的资源（等待期间都在忙等）。</p>
+<h3 id="异步方式等待-ack"><a href="#异步方式等待-ack" class="headerlink" title="异步方式等待 ack"></a>异步方式等待 ack</h3><p>铺垫了那么多，我最终想说的还是，使用异步的方式去处理 ACK 报文，是一种更好的解决方式，这样会带来更高的并发性，即更好的性能。那么异步等待如何实现呢？</p>
+<ul>
+<li><p>首先，异步等待时， <code>mqtt_wait_pingresp()</code> 和 <code>返回做其他事</code> 一定是并行执行的，所以需要使用多线程编程技术来实现。</p>
+</li>
+<li><p>其次，异步需要实现一种通知方式，用来通知主线程 “PINGRESP已经收到了&#x2F;没收到” 这一事件。</p>
+</li>
+</ul>
+<p>第一个问题比较容易解决，我们可以使用 linux 下的 POSIX 线程库来进行多线程编程。</p>
+<p>对于第二个问题，我们可以回想一下，对于每一个 session ，我们为其维护了一个 state 状态成员，那么很自然的，我们可以通过在<code>mqtt_wait_pingresp</code> 中设置 session 的状态来通知主线程！这样的话，主线程<code>做其他事情</code> 的时候，也要时刻检查一下 session 的状态，以防止断开连接。</p>
+<h4 id="多线程带来的问题"><a href="#多线程带来的问题" class="headerlink" title="多线程带来的问题"></a>多线程带来的问题</h4><p>熟悉多线程编程的读者一定意识到了，上面的描述中，session 对象的 state 成员同时被两个线程访问，这是一个典型的<strong>竞态（race condition）</strong>，所以我们需要一些保护共享变量的手段，在这里我们使用互斥量 <code>mutex</code> 。</p>
+<p>除了 state 成员外，我们在读取写入报文时还需要访问 session 的读写缓冲区，其中读缓冲区可以并发访问，但是写缓冲区不行，幸运的是，到目前为止，我们的新线程还没有访问写缓冲区的需要，所暂时就不进行访问限制了，当然这里提到这一点也是因为后续可能会需要（<del>QoS2 需要对 ACK 回复</del>）。</p>
+<h2 id="新的层次结构"><a href="#新的层次结构" class="headerlink" title="新的层次结构"></a>新的层次结构</h2><p>线程和互斥量的引入改变了我们的层次结构，主要就是需要在底层提供对这两个的支持，新的层次结构图如下：</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%85%AD%EF%BC%89%E5%BC%82%E6%AD%A5%E7%AD%89%E5%BE%85/image-20240718093229735.png" alt="image-20240718093229735"></p>
+<h3 id="thread-模块实现"><a href="#thread-模块实现" class="headerlink" title="thread 模块实现"></a>thread 模块实现</h3><h4 id="接口"><a href="#接口" class="headerlink" title="接口"></a>接口</h4><p>接口设计的比较简单，就是参考 Posix 线程库进行封装的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="type">thread_t</span> *<span class="title function_">thread_create</span><span class="params">(<span class="type">void</span> *(*entry)(<span class="type">void</span>*), <span class="type">void</span> *arg)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">thread_destory</span><span class="params">(<span class="keyword">struct</span> <span class="type">thread_t</span> *thread)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">thread_start</span><span class="params">(<span class="keyword">struct</span> <span class="type">thread_t</span> *thread)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">thread_stop</span><span class="params">(<span class="keyword">struct</span> <span class="type">thread_t</span> *thread)</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>先看看 linux 下抽象出来的的线程对象：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">thread_t</span> &#123;</span></span><br><span class="line">        <span class="type">pthread_t</span> thread;</span><br><span class="line">        <span class="type">pthread_cond_t</span> cond;</span><br><span class="line">        <span class="type">pthread_mutex_t</span> mutex;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>首先是对 pthread_t 的封装，cond 是条件变量，用来控制线程的开始于结束，mutex 用来保护条件变量。</p>
+<p>线程创建：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="type">thread_t</span> *<span class="title function_">thread_create</span><span class="params">(<span class="type">void</span> *(*entry)(<span class="type">void</span>*), <span class="type">void</span> *arg)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">thread_t</span> *<span class="title">thread</span>;</span></span><br><span class="line"></span><br><span class="line">        thread = memory_alloc(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">thread_t</span>));</span><br><span class="line">        <span class="keyword">if</span> (!thread)</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">        </span><br><span class="line">        retval = pthread_create(&amp;thread-&gt;thread, <span class="literal">NULL</span>, entry, arg);</span><br><span class="line">        <span class="keyword">if</span> (retval != <span class="number">0</span>) </span><br><span class="line">                <span class="keyword">goto</span> error;</span><br><span class="line"></span><br><span class="line">        retval = pthread_cond_init(&amp;thread-&gt;cond, <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">if</span> (retval != <span class="number">0</span>) </span><br><span class="line">                <span class="keyword">goto</span> error;</span><br><span class="line"></span><br><span class="line">        retval = pthread_mutex_init(&amp;thread-&gt;mutex, <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">if</span> (retval != <span class="number">0</span>) </span><br><span class="line">                <span class="keyword">goto</span> error;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> thread;</span><br><span class="line">error:</span><br><span class="line">        memory_free(thread);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>线程销毁：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">thread_destory</span><span class="params">(<span class="keyword">struct</span> <span class="type">thread_t</span> *thread)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">if</span> (thread)</span><br><span class="line">                pthread_detach(thread-&gt;thread);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>线程的开始、结束</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">thread_start</span><span class="params">(<span class="keyword">struct</span> <span class="type">thread_t</span> *thread)</span></span><br><span class="line">&#123;</span><br><span class="line">        pthread_mutex_lock(&amp;thread-&gt;mutex);</span><br><span class="line">        pthread_cond_signal(&amp;thread-&gt;cond);</span><br><span class="line">        pthread_mutex_unlock(&amp;thread-&gt;mutex);</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">thread_stop</span><span class="params">(<span class="keyword">struct</span> <span class="type">thread_t</span> *thread)</span></span><br><span class="line">&#123;</span><br><span class="line">        pthread_mutex_lock(&amp;thread-&gt;mutex);</span><br><span class="line">        pthread_cond_wait(&amp;thread-&gt;cond, &amp;thread-&gt;mutex);</span><br><span class="line">        pthread_mutex_unlock(&amp;thread-&gt;mutex);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="mutex-模块实现"><a href="#mutex-模块实现" class="headerlink" title="mutex 模块实现"></a>mutex 模块实现</h3><h4 id="接口-1"><a href="#接口-1" class="headerlink" title="接口"></a>接口</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mutex_t</span> &#123;</span></span><br><span class="line">        <span class="type">pthread_mutex_t</span> lock;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">mutex_init</span><span class="params">(<span class="keyword">struct</span> <span class="type">mutex_t</span> *mutex)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">mutex_lock</span><span class="params">(<span class="keyword">struct</span> <span class="type">mutex_t</span> *mutex)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">mutex_unlock</span><span class="params">(<span class="keyword">struct</span> <span class="type">mutex_t</span> *mutex)</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="实现-1"><a href="#实现-1" class="headerlink" title="实现"></a>实现</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">mutex_init</span><span class="params">(<span class="keyword">struct</span> <span class="type">mutex_t</span> *mutex)</span></span><br><span class="line">&#123;</span><br><span class="line">        pthread_mutex_init(&amp;mutex-&gt;lock, <span class="literal">NULL</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">mutex_lock</span><span class="params">(<span class="keyword">struct</span> <span class="type">mutex_t</span> *mutex)</span></span><br><span class="line">&#123;</span><br><span class="line">        pthread_mutex_lock(&amp;mutex-&gt;lock);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">mutex_unlock</span><span class="params">(<span class="keyword">struct</span> <span class="type">mutex_t</span> *mutex)</span></span><br><span class="line">&#123;</span><br><span class="line">        pthread_mutex_unlock(&amp;mutex-&gt;lock);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于 pthread_mutex_t 的简单封装，不在赘述。</p>
+<h2 id="异步等待-PINGRESP-的实现"><a href="#异步等待-PINGRESP-的实现" class="headerlink" title="异步等待 PINGRESP 的实现"></a>异步等待 PINGRESP 的实现</h2><h4 id="添加-mutex-对象"><a href="#添加-mutex-对象" class="headerlink" title="添加 mutex 对象"></a>添加 mutex 对象</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mutex_t</span> <span class="title">state_lock</span>;</span></span><br></pre></td></tr></table></figure>
+
+<p>封装修改 state 成员的函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">set_session_state</span><span class="params">(<span class="keyword">struct</span> mqtt_session *session, <span class="keyword">enum</span> session_state new_state)</span></span><br><span class="line">&#123;</span><br><span class="line">        mutex_lock(&amp;session-&gt;state_lock);</span><br><span class="line">        session-&gt;state = new_state;</span><br><span class="line">        mutex_unlock(&amp;session-&gt;state_lock);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="keyword">enum</span> session_state <span class="title function_">get_session_state</span><span class="params">(<span class="keyword">struct</span> mqtt_session *session)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">return</span> session-&gt;state;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 session 初始化时，<code>mqtt_init</code> 函数中对其初始化</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mutex_init(&amp;session-&gt;state_lock);</span><br><span class="line">set_session_state(session, SESSION_INITIALIZE);</span><br></pre></td></tr></table></figure>
+
+<h4 id="异步通知"><a href="#异步通知" class="headerlink" title="异步通知"></a>异步通知</h4><p>前面我们提到了，等待 CONNACK 的线程可以通过 session 的状态来通知主线程，例如，在长时间没有收到 PINGRESP 时将 session 设置为断开连接状态，但是这个 “长时间未收到” 如何界定呢？使用定时器可以实现，但是这样太复杂了，我们可以通过一个简单的标志位来判断！下面解释如何使用一个标志，界定 “长时间未收到” ：</p>
+<ul>
+<li>在 session 中设置一个标志，如 <code>pingresp_waiting</code>  表示正在等待 PINGRESP 响应</li>
+<li>当 <code>session-&gt;last_send_timer</code> 或者  <code>session-&gt;last_recv_timer</code> 计时器过期时（表示我们应该发送心跳包了），首先检查 <code>pingresp_waiting</code>  标志：<ul>
+<li>如果该标志为 1，表示还在等待<strong>上一个PINGREQ</strong>对应的 PINGRESP 报文，这时我们一定”长时间未收到” 报文了！</li>
+<li>如果该标志为 0，表示上一个PINGREQ被正常响应，我们发送 PINGREQ 报文，并将标志位置 1</li>
+</ul>
+</li>
+<li>同时，在收到 PINGRESP 报文时，将该标志位置 0</li>
+</ul>
+<p>下面的伪代码也描述了上述过程：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="number">1</span>)</span><br><span class="line">&#123;</span><br><span class="line">    mqtt_recv_packet(&amp;type);</span><br><span class="line">    <span class="keyword">if</span> (type == PINGRESP)</span><br><span class="line">        session-&gt;pingresp_waiting = <span class="number">0</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (timer_expire(last_send_timer) || timer_expire(last_recv_timer)) &#123;</span><br><span class="line">        <span class="comment">/* 我们该发送 PINGREQ 了 */</span></span><br><span class="line">        <span class="keyword">if</span> (session-&gt;pingresp_waiting) &#123;</span><br><span class="line">            <span class="comment">/* 上次的 PINGRESP 未收到，通知主线程出错 */</span></span><br><span class="line">            set_session_state(session, SESSION_DISCONNECT)</span><br><span class="line">            error();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="comment">/* 发送 PINGREQ 报文 */</span></span><br><span class="line">            mqtt_pingreq();</span><br><span class="line">            <span class="comment">/* 等待对应 PINGRESP */</span></span><br><span class="line">            session-&gt;pingresp_waiting = <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 session 对象中添加 pingresp_waiting，并在 <code>mqtt_init</code> 中初始化，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">char</span> pingresp_waiting;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">session-&gt;pingresp_waiting = <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="创建线程"><a href="#创建线程" class="headerlink" title="创建线程"></a>创建线程</h4><p>在连接完成后，我们需要创建新线程，用来监听所有的 ack 报文，在 <code>mqtt_connect</code> 函数中添加如下代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="literal">NULL</span> == session-&gt;thread) &#123;</span><br><span class="line">    session-&gt;thread = thread_create((<span class="type">void</span> *(*)(<span class="type">void</span>*))mqtt_ack_handler, (<span class="type">void</span>*)session);</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> != session-&gt;thread)</span><br><span class="line">        thread_start(session-&gt;thread);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中 <code>mqtt_ack_handler</code> 为该线程的主函数，就如同我们上面介绍的那样，该线程会尝试循环读取 PINGRESP 报文，并在合适的时间发送 PINGREQ 报文，先来看看该函数的实现：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">mqtt_ack_handler</span><span class="params">(<span class="type">void</span> *arg )</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timer_t</span> <span class="title">thread_timer</span>;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">mqtt_session</span> *<span class="title">session</span>;</span></span><br><span class="line">        session = (<span class="keyword">struct</span> mqtt_session*)arg;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;ack_handler thread: thread started!\n&quot;</span>);</span><br><span class="line">        timer_init(&amp;thread_timer);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (get_session_state(session) != SESSION_CONNECTED) &#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;ack_handler thread: mqtt is not connected\n&quot;</span>);</span><br><span class="line">                thread_stop(session-&gt;thread);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">/* 循环检查是否收到 PINGRESP */</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">                <span class="keyword">if</span> (handle_ack(session, &amp;thread_timer) == PINGRESP)</span><br><span class="line">                        <span class="built_in">printf</span>(<span class="string">&quot;ack_handler thread: received PINGRESP successful!\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>核心的读取 PINGRESP 和发送 PINGREQ 报文是在 <code>handle_ack</code> 函数中实现的，详细解释可以看下文注释：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">handle_ack</span><span class="params">(<span class="keyword">struct</span> mqtt_session *session, <span class="keyword">struct</span> <span class="type">timer_t</span> *timer)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval;</span><br><span class="line">        <span class="class"><span class="keyword">enum</span> <span class="title">type</span> <span class="title">type</span> =</span> <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line">        timer_init(timer);</span><br><span class="line">        timer_cutoff(timer, session-&gt;net_timeout);</span><br><span class="line">		</span><br><span class="line">    	<span class="comment">/* 阻塞读取报文 超时直接返回 */</span></span><br><span class="line">        retval = mqtt_recv_packet(session, &amp;type, timer);</span><br><span class="line">        <span class="keyword">if</span> (retval !=  <span class="number">0</span>)</span><br><span class="line">                retval = <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;ack_handler thread: try to recv packet type is %d\n&quot;</span>, type);</span><br><span class="line">    </span><br><span class="line">    	<span class="comment">/* 读到 PINGRESP 标志位清零 */</span></span><br><span class="line">        <span class="keyword">if</span> (type == PINGRESP)</span><br><span class="line">                session-&gt;pingresp_waiting = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 判断是否该发送 PINGREQ 报文 */</span></span><br><span class="line">        retval = mqtt_keep_alive(session);</span><br><span class="line">        <span class="keyword">if</span> (retval != <span class="number">0</span>) &#123;</span><br><span class="line">            	<span class="comment">/* 通知主线程连接已经断开 */</span></span><br><span class="line">                set_session_state(session, SESSION_INVALID);</span><br><span class="line">                retval = <span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (retval == <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span> type;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> 下面看 <code>mqtt_keep_alive</code> 和我们之前描述的那样实现：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">mqtt_keep_alive</span><span class="params">(<span class="keyword">struct</span> mqtt_session *session)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;ack_handler thread: keep alive timer remained %d and %d\n&quot;</span>, \</span><br><span class="line">      timer_remain(&amp;session-&gt;last_send_timer), timer_remain(&amp;session-&gt;last_recv_timer));</span><br><span class="line">   </span><br><span class="line">  	<span class="comment">/* 两个计时器任一到期，就发送 PINGREQ */</span></span><br><span class="line">    <span class="keyword">if</span> (timer_is_expired(&amp;session-&gt;last_send_timer) || \</span><br><span class="line">        timer_is_expired(&amp;session-&gt;last_recv_timer)) &#123;</span><br><span class="line">        <span class="comment">/* 上一个 PINGRESP 未被响应 错误 */</span></span><br><span class="line">        <span class="keyword">if</span> (session-&gt;pingresp_waiting) &#123;</span><br><span class="line">            retval = <span class="number">-1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">/* 发送 PINGREQ */</span></span><br><span class="line">            <span class="keyword">if</span> ((retval = mqtt_pingreq(session)) == <span class="number">0</span>)</span><br><span class="line">                session-&gt;pingresp_waiting = <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="编译运行"><a href="#编译运行" class="headerlink" title="编译运行"></a>编译运行</h2><h3 id="测序程序"><a href="#测序程序" class="headerlink" title="测序程序"></a>测序程序</h3><p>稍微修改了一下测试程序，我的 net_timeout 设为了 4000， keep_alive_interval 设为了 31：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">mqtt_init(session, &amp;init_params);</span><br><span class="line">mqtt_connect(session);</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;main thread: thread running session_state is %d\n&quot;</span>, session-&gt;state);</span><br><span class="line">    sleep(<span class="number">5</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Makefile"><a href="#Makefile" class="headerlink" title="Makefile"></a>Makefile</h3><p>因为使用到了 pthread 库，Makefile 需要添加下面的内容</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LDFLAGS = -lpthread</span><br></pre></td></tr></table></figure>
+
+<h3 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h3><p>运行结果：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">recv_packet: type is <span class="number">2</span></span><br><span class="line">connect to server successful!</span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: thread started!</span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">26869</span> and <span class="number">26972</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">22789</span> and <span class="number">22892</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">18710</span> and <span class="number">18812</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">14630</span> and <span class="number">14732</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">10549</span> and <span class="number">10652</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">6469</span> and <span class="number">6572</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">2390</span> and <span class="number">2493</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">0</span> and <span class="number">0</span></span><br><span class="line">sent pingreq to server successful!</span><br><span class="line">recv_packet: type is <span class="number">13</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">13</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">30911</span> and <span class="number">30999</span></span><br><span class="line">ack_handler thread: received PINGRESP successful!</span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">26840</span> and <span class="number">26928</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">22760</span> and <span class="number">22848</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">18680</span> and <span class="number">18768</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">14600</span> and <span class="number">14688</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">10520</span> and <span class="number">10608</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">6440</span> and <span class="number">6528</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">2360</span> and <span class="number">2448</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">0</span> and <span class="number">0</span></span><br><span class="line">sent pingreq to server successful!</span><br><span class="line">recv_packet: type is <span class="number">13</span></span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">13</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">30908</span> and <span class="number">30999</span></span><br><span class="line">ack_handler thread: received PINGRESP successful!</span><br><span class="line">ack_handler thread: try to recv packet type is <span class="number">-1</span></span><br><span class="line">ack_handler thread: keep alive timer remain <span class="number">26840</span> and <span class="number">26931</span></span><br><span class="line">main thread: thread running session_state is <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到，我们的程序中的两个线程都能正常的工作，这样我们就实现了具有更高并发度的异步等待！以上。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/network/" rel="tag"># network</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/11/23/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/" rel="prev" title="【计算机网络】mqtt 通信协议入门（六）连接服务器实战-调试运行与 tcpdump 抓包分析">
+      <i class="fa fa-chevron-left"></i> 【计算机网络】mqtt 通信协议入门（六）连接服务器实战-调试运行与 tcpdump 抓包分析
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" rel="next" title="【数据结构与算法】环形缓冲区：原理，实现，与应用">
+      【数据结构与算法】环形缓冲区：原理，实现，与应用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E5%92%8C%E5%BC%82%E6%AD%A5"><span class="nav-number">1.</span> <span class="nav-text">同步和异步</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E6%96%B9%E5%BC%8F%E7%AD%89%E5%BE%85-ack"><span class="nav-number">1.1.</span> <span class="nav-text">同步方式等待 ack</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5%E6%96%B9%E5%BC%8F%E7%AD%89%E5%BE%85-ack"><span class="nav-number">1.2.</span> <span class="nav-text">异步方式等待 ack</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%B8%A6%E6%9D%A5%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">1.2.1.</span> <span class="nav-text">多线程带来的问题</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B0%E7%9A%84%E5%B1%82%E6%AC%A1%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">新的层次结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#thread-%E6%A8%A1%E5%9D%97%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.1.</span> <span class="nav-text">thread 模块实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A5%E5%8F%A3"><span class="nav-number">2.1.1.</span> <span class="nav-text">接口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.1.2.</span> <span class="nav-text">实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mutex-%E6%A8%A1%E5%9D%97%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.2.</span> <span class="nav-text">mutex 模块实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A5%E5%8F%A3-1"><span class="nav-number">2.2.1.</span> <span class="nav-text">接口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0-1"><span class="nav-number">2.2.2.</span> <span class="nav-text">实现</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5%E7%AD%89%E5%BE%85-PINGRESP-%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">异步等待 PINGRESP 的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0-mutex-%E5%AF%B9%E8%B1%A1"><span class="nav-number">3.0.1.</span> <span class="nav-text">添加 mutex 对象</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5%E9%80%9A%E7%9F%A5"><span class="nav-number">3.0.2.</span> <span class="nav-text">异步通知</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E7%BA%BF%E7%A8%8B"><span class="nav-number">3.0.3.</span> <span class="nav-text">创建线程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E8%BF%90%E8%A1%8C"><span class="nav-number">4.</span> <span class="nav-text">编译运行</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E5%BA%8F%E7%A8%8B%E5%BA%8F"><span class="nav-number">4.1.</span> <span class="nav-text">测序程序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Makefile"><span class="nav-number">4.2.</span> <span class="nav-text">Makefile</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C"><span class="nav-number">4.3.</span> <span class="nav-text">运行</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">34</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
