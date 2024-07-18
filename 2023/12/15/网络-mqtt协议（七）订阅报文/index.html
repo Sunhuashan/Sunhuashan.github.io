@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="这篇文章来分析一下 SUBSCRIBE 相关报文，客户端向服务端发送 SUBSCRIBE 报文用于创建一个或多个订阅。每个订阅注册客户端关心的一个或多个 主题。为了将应用消息转发给与那些订阅匹配的主题，服务端发送 PUBLISH 报文给客户端。SUBSCRIBE 报文也（为每个订阅）指定了最大的 QoS 等级，服务端根据这个发送应用消息给客户端。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【计算机网络】mqtt通信协议入门（八）订阅报文">
+<meta property="og:url" content="http://example.com/2023/12/15/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="这篇文章来分析一下 SUBSCRIBE 相关报文，客户端向服务端发送 SUBSCRIBE 报文用于创建一个或多个订阅。每个订阅注册客户端关心的一个或多个 主题。为了将应用消息转发给与那些订阅匹配的主题，服务端发送 PUBLISH 报文给客户端。SUBSCRIBE 报文也（为每个订阅）指定了最大的 QoS 等级，服务端根据这个发送应用消息给客户端。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718232959849.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718233227688.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718234134808.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718234148176.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718234525012.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718234738096.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718235034217.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718235356282.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718235437451.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718235759504.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240719000049441.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240719000128591.png">
+<meta property="article:published_time" content="2023-12-15T12:58:46.000Z">
+<meta property="article:modified_time" content="2024-07-18T16:01:53.325Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718232959849.png">
+
+<link rel="canonical" href="http://example.com/2023/12/15/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【计算机网络】mqtt通信协议入门（八）订阅报文 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/12/15/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【计算机网络】mqtt通信协议入门（八）订阅报文
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-12-15 20:58:46" itemprop="dateCreated datePublished" datetime="2023-12-15T20:58:46+08:00">2023-12-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这篇文章来分析一下 SUBSCRIBE 相关报文，客户端向服务端发送 SUBSCRIBE 报文用于创建一个或多个订阅。每个订阅注册客户端关心的一个或多个 主题。为了将应用消息转发给与那些订阅匹配的主题，服务端发送 PUBLISH 报文给客户端。SUBSCRIBE 报文也（为每个订阅）指定了最大的 QoS 等级，服务端根据这个发送应用消息给客户端。</p>
+<span id="more"></span>
+
+<h2 id="SUBSCRIBE-报文"><a href="#SUBSCRIBE-报文" class="headerlink" title="SUBSCRIBE 报文"></a>SUBSCRIBE 报文</h2><h3 id="固定头部"><a href="#固定头部" class="headerlink" title="固定头部"></a>固定头部</h3><p>下面先看一下 SUBSCRIBE 报文的固定报头，和其他报文一样，包括报文类型，保留位已经剩余长度，如下图</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718232959849.png" alt="image-20240718232959849"></p>
+<p>值得注意的是，SUBSCRIBE 控制报固定报头的第 3,2,1,0 位是保留位，必须分别设置为 0,0,1,0。服务端必须将其它的任 何值都当做是不合法的并关闭网络连接。</p>
+<h3 id="可变报头"><a href="#可变报头" class="headerlink" title="可变报头"></a>可变报头</h3><p>可变报头包含客户端标识符， 下图展示了一个报文标识符等于 10 的可变报头：</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718233227688.png" alt="image-20240718233227688"></p>
+<h3 id="有效载荷"><a href="#有效载荷" class="headerlink" title="有效载荷"></a>有效载荷</h3><p>SUBSCRIBE 报文的有效载荷包含了一个主题过滤器列表，它们表示客户端想要订阅的主题。SUBSCRIBE 报文有效载荷中的主题过滤器列表必须是  UTF-8 字符串 。</p>
+<p>每一个过滤器后面跟着一个字节，这个字节被叫做 服 务质量要求（Requested QoS）。它给出了服务端向客户端发送应用消息所允许的最大 QoS 等级。</p>
+<p>SUBSCRIBE 报文的有效载荷必须包含至少一对主题过滤器 和 QoS 等级字段组合。没有有效载荷的 SUBSCRIBE 报文是违反协议的。</p>
+<p>下面举一个例子，假设客户端发送的 SUBSCRIBE 报文包含两个主题过滤器：<code>a/b</code> 和 <code>c/d</code> 对应的服务质量要求分别为 QoS1 和 QoS2，那么该报文的有效载荷会如下所示：</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718234134808.png" alt="image-20240718234134808"></p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718234148176.png" alt="image-20240718234148176"></p>
+<h2 id="SUBACK-报文"><a href="#SUBACK-报文" class="headerlink" title="SUBACK 报文"></a>SUBACK 报文</h2><p>服务端收到客户端发送的一个 SUBSCRIBE 报文时，必须使用 SUBACK 报文响应 ，SUBACK 报文必须和等待确认的 SUBSCRIBE 报文有<strong>相同的报文标识符</strong>。</p>
+<p>SUBACK 报文包含一个返回码清单，它们指定了 SUBSCRIBE 请求的每个订阅被授予的最大 QoS 等级。</p>
+<h3 id="固定报头"><a href="#固定报头" class="headerlink" title="固定报头"></a>固定报头</h3><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718234525012.png" alt="image-20240718234525012"></p>
+<h3 id="可变报头-1"><a href="#可变报头-1" class="headerlink" title="可变报头"></a>可变报头</h3><p>可变报头包含等待确认的 SUBSCRIBE 报文的报文标识符，客户端通过该报文标识符确定 SUBACK 报文是对哪个报文的响应。可变报头格式如下：</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718234738096.png" alt="image-20240718234738096"></p>
+<h3 id="有效载荷-1"><a href="#有效载荷-1" class="headerlink" title="有效载荷"></a>有效载荷</h3><p>有效载荷包含一个返回码<strong>清单</strong>。每个返回码对应等待确认的 SUBSCRIBE 报文中的一个主题过滤器。返回码的顺序必须和 SUBSCRIBE 报文中主题过滤器的顺序相同。</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718235034217.png" alt="image-20240718235034217"></p>
+<p>允许的返回码值： </p>
+<ul>
+<li><p>0x00 - 最大 QoS 0 </p>
+</li>
+<li><p>0x01 - 成功 – 最大 QoS 1 </p>
+</li>
+<li><p>0x02 - 成功 – 最大 QoS 2 </p>
+</li>
+<li><p>0x80 - Failure 失败</p>
+</li>
+</ul>
+<p>除此之外的 SUBACK 返回码是保留的，不能使用。</p>
+<h2 id="UNSUBSCRIBE-报文"><a href="#UNSUBSCRIBE-报文" class="headerlink" title="UNSUBSCRIBE 报文"></a>UNSUBSCRIBE 报文</h2><p>客户端发送 UNSUBSCRIBE 报文给服务端，用于取消订阅主题。</p>
+<h3 id="固定报头-1"><a href="#固定报头-1" class="headerlink" title="固定报头"></a>固定报头</h3><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718235356282.png" alt="image-20240718235356282"></p>
+<p>UNSUBSCRIBE 报文固定报头的第 3,2,1,0 位是保留位且必须分别设置为 0,0,1,0。服务端必须认为任何其 它的值都是不合法的并关闭网络连接 。</p>
+<h3 id="可变报头-2"><a href="#可变报头-2" class="headerlink" title="可变报头"></a>可变报头</h3><p>可变报头包含一个报文标识符。</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718235437451.png" alt="image-20240718235437451"></p>
+<h3 id="有效载荷-2"><a href="#有效载荷-2" class="headerlink" title="有效载荷"></a>有效载荷</h3><p>UNSUBSCRIBE 报文的有效载荷包含客户端想要取消订阅的主题过滤器列表。UNSUBSCRIBE 报文中的 主题过滤器必须是连续打包的 UTF-8 编码字符串。</p>
+<p>UNSUBSCRIBE 报文的有效载荷必须至少包含一个消息过滤器。没有有效载荷的 UNSUBSCRIBE 报文是违反协议的。</p>
+<p>下面还是举个例子，客户端发送取消订阅 <code>a/b</code> 和 <code>c/d</code> 订阅主题，有效负载部分会如下所示：</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240718235759504.png" alt="image-20240718235759504"></p>
+<h3 id="UNSUBACK-报文"><a href="#UNSUBACK-报文" class="headerlink" title="UNSUBACK 报文"></a>UNSUBACK 报文</h3><p>服务端必须发送 UNSUBACK 报文响应客户端的 UNSUBSCRIBE 请求。UNSUBACK 报文必须包含和 NSUBSCRIBE 报文<strong>相同的报文标识符</strong>。即使没有删除任何主题订阅，服务端也必须发 送一个 SUBACK 响应。</p>
+<h3 id="固定头部-1"><a href="#固定头部-1" class="headerlink" title="固定头部"></a>固定头部</h3><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240719000049441.png" alt="image-20240719000049441"></p>
+<p>剩余长度表示可变报头的长度，对 UNSUBACK 报文这个值等于 2。</p>
+<h3 id="可变报头-3"><a href="#可变报头-3" class="headerlink" title="可变报头"></a>可变报头</h3><p>可变报头包含等待确认的 UNSUBSCRIBE 报文的报文标识符。</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE%EF%BC%88%E4%B8%83%EF%BC%89%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87/image-20240719000128591.png" alt="image-20240719000128591"></p>
+<h3 id="有效荷载"><a href="#有效荷载" class="headerlink" title="有效荷载"></a>有效荷载</h3><p>UNSUBACK 报文没有有效载荷。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/network/" rel="tag"># network</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/12/05/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%85%AD%EF%BC%89%E5%BC%82%E6%AD%A5%E7%AD%89%E5%BE%85/" rel="prev" title="【计算机网络】mqtt通信协议入门（七）异步等待的原理与实现">
+      <i class="fa fa-chevron-left"></i> 【计算机网络】mqtt通信协议入门（七）异步等待的原理与实现
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" rel="next" title="【数据结构与算法】环形缓冲区：原理，实现，与应用">
+      【数据结构与算法】环形缓冲区：原理，实现，与应用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#SUBSCRIBE-%E6%8A%A5%E6%96%87"><span class="nav-number">1.</span> <span class="nav-text">SUBSCRIBE 报文</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E5%A4%B4%E9%83%A8"><span class="nav-number">1.1.</span> <span class="nav-text">固定头部</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E6%8A%A5%E5%A4%B4"><span class="nav-number">1.2.</span> <span class="nav-text">可变报头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E6%95%88%E8%BD%BD%E8%8D%B7"><span class="nav-number">1.3.</span> <span class="nav-text">有效载荷</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SUBACK-%E6%8A%A5%E6%96%87"><span class="nav-number">2.</span> <span class="nav-text">SUBACK 报文</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E6%8A%A5%E5%A4%B4"><span class="nav-number">2.1.</span> <span class="nav-text">固定报头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E6%8A%A5%E5%A4%B4-1"><span class="nav-number">2.2.</span> <span class="nav-text">可变报头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E6%95%88%E8%BD%BD%E8%8D%B7-1"><span class="nav-number">2.3.</span> <span class="nav-text">有效载荷</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UNSUBSCRIBE-%E6%8A%A5%E6%96%87"><span class="nav-number">3.</span> <span class="nav-text">UNSUBSCRIBE 报文</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E6%8A%A5%E5%A4%B4-1"><span class="nav-number">3.1.</span> <span class="nav-text">固定报头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E6%8A%A5%E5%A4%B4-2"><span class="nav-number">3.2.</span> <span class="nav-text">可变报头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E6%95%88%E8%BD%BD%E8%8D%B7-2"><span class="nav-number">3.3.</span> <span class="nav-text">有效载荷</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UNSUBACK-%E6%8A%A5%E6%96%87"><span class="nav-number">3.4.</span> <span class="nav-text">UNSUBACK 报文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E5%A4%B4%E9%83%A8-1"><span class="nav-number">3.5.</span> <span class="nav-text">固定头部</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E6%8A%A5%E5%A4%B4-3"><span class="nav-number">3.6.</span> <span class="nav-text">可变报头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E6%95%88%E8%8D%B7%E8%BD%BD"><span class="nav-number">3.7.</span> <span class="nav-text">有效荷载</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
