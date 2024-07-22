@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="历经重重坎坷，我们已经完成了连接报文、心跳报文以及订阅报文和取消订阅报文的分析和实战，仅仅还剩下最后一种报文 —— PUBLISH 报文我们还没学习，这也是最复杂的一种报文，我们需要支持 QoS0-QoS2 三种消息服务级别。这篇文章我们就来看看 PUBLISH 报文的结构，以及完成 QoS0 级别消息的发送与接收实战。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【计算机网络】mqtt通信协议入门（十）PUBLISH 报文结构与 QoS0 消息收发实战">
+<meta property="og:url" content="http://example.com/2024/01/10/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="历经重重坎坷，我们已经完成了连接报文、心跳报文以及订阅报文和取消订阅报文的分析和实战，仅仅还剩下最后一种报文 —— PUBLISH 报文我们还没学习，这也是最复杂的一种报文，我们需要支持 QoS0-QoS2 三种消息服务级别。这篇文章我们就来看看 PUBLISH 报文的结构，以及完成 QoS0 级别消息的发送与接收实战。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240720091843461.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240720093417787.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240720100527898.png">
+<meta property="article:published_time" content="2024-01-10T12:38:43.000Z">
+<meta property="article:modified_time" content="2024-07-21T07:55:37.665Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240720091843461.png">
+
+<link rel="canonical" href="http://example.com/2024/01/10/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【计算机网络】mqtt通信协议入门（十）PUBLISH 报文结构与 QoS0 消息收发实战 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/01/10/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【计算机网络】mqtt通信协议入门（十）PUBLISH 报文结构与 QoS0 消息收发实战
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-01-10 20:38:43" itemprop="dateCreated datePublished" datetime="2024-01-10T20:38:43+08:00">2024-01-10</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>历经重重坎坷，我们已经完成了连接报文、心跳报文以及订阅报文和取消订阅报文的分析和实战，仅仅还剩下最后一种报文 —— PUBLISH 报文我们还没学习，这也是最复杂的一种报文，我们需要支持 QoS0-QoS2 三种消息服务级别。这篇文章我们就来看看 PUBLISH 报文的结构，以及完成 QoS0 级别消息的发送与接收实战。</p>
+<span id="more"></span>
+
+<h2 id="回顾"><a href="#回顾" class="headerlink" title="回顾"></a>回顾</h2><p>在开始新的内容之前，在让我们来回顾一下项目的最新架构，如图：</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240720091843461.png" alt="image-20240720091843461"></p>
+<h4 id="系统接口层"><a href="#系统接口层" class="headerlink" title="系统接口层"></a>系统接口层</h4><ul>
+<li>network：基于 socket API实现网络连接断开，以及数据读写的功能</li>
+<li>timer：基于 timerval 结构为整个系统提供定时功能</li>
+<li>memory：基于 libc 的 malloc&#x2F;free 函数，实现内存动态申请于释放</li>
+<li>thread：基于 POSIX 线程库实现</li>
+<li>mutex：也是基于 pthread 库中提供的 pthread_mutex_t 实现</li>
+</ul>
+<h4 id="报文收发层"><a href="#报文收发层" class="headerlink" title="报文收发层"></a>报文收发层</h4><ul>
+<li>send packet：将缓冲区中的报文发送到网络</li>
+<li>receive packet：将网络中的报文接收到缓冲区</li>
+</ul>
+<h4 id="序列化-反序列化模块"><a href="#序列化-反序列化模块" class="headerlink" title="序列化&#x2F;反序列化模块"></a>序列化&#x2F;反序列化模块</h4><ul>
+<li>实现报文的序列化和反序列化</li>
+</ul>
+<h4 id="异步等待队列"><a href="#异步等待队列" class="headerlink" title="异步等待队列"></a>异步等待队列</h4><p>使用异步的方式处理<strong>来自服务器</strong> 发送的报文，所有待响应的报文都挂在等待队列上，有单独的线程异步处理</p>
+<h4 id="ACK-handler-异步处理线程"><a href="#ACK-handler-异步处理线程" class="headerlink" title="ACK handler 异步处理线程"></a>ACK handler 异步处理线程</h4><p>接收来自服务器的响应报文，并处理，同时也会扫描并移除等待队列中超时的报文</p>
+<h4 id="mqtt-协议接口"><a href="#mqtt-协议接口" class="headerlink" title="mqtt 协议接口"></a>mqtt 协议接口</h4><p>提供 mqtt 协议规定的各种报文的发送与接收，完全遵守协议的规定</p>
+<h2 id="PUBLISH-报文结构"><a href="#PUBLISH-报文结构" class="headerlink" title="PUBLISH 报文结构"></a>PUBLISH 报文结构</h2><p>PUBLISH 控制报文是指从客户端向服务端或者服务端向客户端传输一个应用消息。</p>
+<h3 id="固定报头"><a href="#固定报头" class="headerlink" title="固定报头"></a>固定报头</h3><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240720093417787.png" alt="image-20240720093417787"></p>
+<p>这里主要讲一下控制位：</p>
+<ul>
+<li><p>DUP：<strong>重发标志</strong>。如果 DUP 标志被设置为 0，表示这是客户端或服务端第一次请求发送这个 PUBLISH 报文。如果 DUP 标志 被设置为 1，表示这可能是一个早前报文请求的重发。 </p>
+<ul>
+<li>客户端或服务端请求重发一个 PUBLISH 报文时，必须将 DUP 标志设置为 1。</li>
+<li>对于 QoS0 的消息，DUP 标志必须设置为 0.</li>
+</ul>
+</li>
+<li><p>QoS：<strong>服务质量等级</strong>。不同的服务质量等级对通信双方的要求不同：</p>
+<ul>
+<li>0x00：QoS0 的服务质量，<strong>发送方最多发送一次，接收方无需回复</strong></li>
+<li>0x01：QoS1 的服务质量，<strong>发送方最少发送一次，接收方需回复一次，报文可能重复</strong></li>
+<li>0x02：QoS2 的服务质量，在 QoS1 的基础上，发送方还需要对接收方的回复进行回复，接收方收到回复后还需回复一次，即发送方发送一次回复一次，接收方回复两次。这样能够<strong>确保报文被接受且不会重复</strong></li>
+<li>PUBLISH 报文<strong>不能</strong>将 QoS 所有的位设置为 1。如果服务端或客户端收到 QoS 所有位都为 1 的 PUBLISH 报文，它必须<strong>关闭网络连接</strong>。</li>
+</ul>
+</li>
+<li><p>RETAIN：<strong>保留标志</strong>。</p>
+<ul>
+<li><p>如果客户端发给服务端的 PUBLISH 报文的保留（RETAIN）标志被设置为 1，服务端必须存储这个应用消息和它的服务质量等级（QoS），以便它可以被分发给未来的主题名匹配的<strong>订阅者</strong>。</p>
+</li>
+<li><p>一个新的订阅建立时，对每个匹配的主题名，如果存在最近保留的消息，它必须被发送给这个订阅者。</p>
+</li>
+<li><p>如果服务端收到一条保留（RETAIN）标志为 1 的 QoS0 消息，它必须丢弃之前为那个主题保留的任何消息。它应该将这个新的 QoS0 消息当作那个主题的新保留消息，但是任何时候都可以选择丢弃它 — 如果这种情况发生了，那个主题将没有保留消息。</p>
+</li>
+<li><p>如果客户端发给服务端的 PUBLISH 报文的保留标志位 0，服务端不能存储这个消息也不能移除或替换任何 现存的保留消息</p>
+</li>
+<li><p>客户端<strong>刚刚成功订阅</strong>某个主题后，如果该主题有<strong>保留消息</strong>，服务端会使用 PUBLISH 报文向客户端发布该消息，并且 RETAIN 位置 1</p>
+</li>
+<li><p>对于客户端<strong>已经订阅</strong>的主题，该主题的发布者发布新的消息时，服务端会使用 PUBLISH 报文向客户端发布该消息，并且 RETAIN 位置 0（不论该主题发布者发布该消息时 RETAIN 置为 0 还是 1）</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="可变报头"><a href="#可变报头" class="headerlink" title="可变报头"></a>可变报头</h3><p>PUBLISH 报文的可变报头按顺序包含主题名和报文标识符，下图是一个例子：</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240720100527898.png" alt="image-20240720100527898"></p>
+<ul>
+<li>主题名：用于识别有效载荷数据应该被发布到哪一个信息通道，主题名必须是 PUBLISH 报文可变报头的<strong>第一个字段</strong>，主题名<strong>不能</strong>包含通配符</li>
+<li>报文标识符：<strong>只有当 QoS 等级是 1 或 2 时，报文标识符（Packet Identifier）字段才能出现在 PUBLISH 报文中</strong></li>
+</ul>
+<h3 id="有效载荷"><a href="#有效载荷" class="headerlink" title="有效载荷"></a>有效载荷</h3><p>有效载荷包含将被发布的应用消息。数据的内容和格式是应用特定的。有效载荷的长度这样计算：用固定报头中的<strong>剩余长度字段的值减去可变报头的长度</strong>。包含零长度有效载荷的 PUBLISH 报文是合法的。</p>
+<h3 id="动作约定"><a href="#动作约定" class="headerlink" title="动作约定"></a>动作约定</h3><ul>
+<li><p>客户端使用 PUBLISH 报文发送应用消息给服务端，目的是分发到其它订阅该主题的客户端。</p>
+</li>
+<li><p>服务端使用 PUBLISH 报文发送应用消息给每一个匹配订阅主题的客户端。</p>
+</li>
+<li><p>收到一个 PUBLISH 报文时，接收者的动作取决于上面描述的 QoS 等级。</p>
+</li>
+<li><p>客户端使用带通配符的主题过滤器请求订阅时，客户端的订阅可能会重复，因此发布的消息可能会匹配多 个过滤器。</p>
+<ul>
+<li><p>假设客户端 A 订阅了 <code>foo/#</code>（QoS 1）和 <code>foo/bar</code>（QoS 2），当一条消息发布到 <code>foo/bar</code> 时，服务器会根据 QoS 2 等级将消息发送给客户端 A。</p>
+</li>
+<li><p>假设：客户端 A 订阅 <code>foo/#</code>，QoS 1；客户端 B 订阅 <code>foo/bar</code>，QoS 2；客户端 C 订阅 <code>foo/+</code>，QoS 0</p>
+<p>现在，有一条消息发布到主题 <code>foo/bar</code>，QoS 1，服务器会这样做</p>
+<ul>
+<li><strong>先按照最高 QoS 等级发送消息</strong>：服务器将这条消息以 QoS 2 的等级发送给所有匹配的订阅者。</li>
+<li><strong>分发消息副本</strong> ：服务器会根据每个匹配订阅的原始 QoS 等级，将消息副本发送给各个订阅者：<ul>
+<li>客户端 A：收到消息，QoS 1</li>
+<li>客户端 B：收到消息，QoS 2</li>
+<li>客户端 C：收到消息，QoS 0</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="收发消息的-QoS-决定"><a href="#收发消息的-QoS-决定" class="headerlink" title="收发消息的 QoS 决定"></a>收发消息的 QoS 决定</h3><ul>
+<li><p>当发布者发布消息时，它会指定一个 QoS 等级（0、1 或 2）。这个 QoS 等级决定了消息在从发布者到服务器的传递过程中需要的服务质量。</p>
+</li>
+<li><p>订阅者在订阅主题时，也会指定一个 QoS 等级。这个 QoS 等级表示订阅者期望从服务器接收消息时的服务质量。</p>
+</li>
+<li><p>当服务器收到发布者的消息后，它会将消息分发给所有订阅了该主题的订阅者。消息的最终 QoS 等级是发布者的 QoS 等级和订阅者的 QoS 等级的<strong>较低者</strong>。</p>
+</li>
+<li><p>客户端收到消息时，会将消息的 QoS 等级调整为客户端订阅时指定的 QoS 等级和消息本身的 QoS 等级中的<strong>较低者</strong>。</p>
+</li>
+</ul>
+<h2 id="新的抽象"><a href="#新的抽象" class="headerlink" title="新的抽象"></a>新的抽象</h2><h3 id="PUBLISH-报文"><a href="#PUBLISH-报文" class="headerlink" title="PUBLISH 报文"></a>PUBLISH 报文</h3><p>PUBLISH 报文作为消息的主要载体，需要对其进行抽象，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">message_t</span> &#123;</span></span><br><span class="line">        <span class="type">unsigned</span> <span class="type">char</span> retain;</span><br><span class="line">        <span class="class"><span class="keyword">enum</span> <span class="title">qos</span> <span class="title">qos</span>;</span></span><br><span class="line">        <span class="type">unsigned</span> <span class="type">char</span> dup;</span><br><span class="line">        <span class="type">char</span> *topic_name;</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">short</span> packet_id;</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">int</span> msglen;</span><br><span class="line">        <span class="type">void</span> *msg;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这些字段和上面分析的 PUBLISH 报文几乎是一一对应的，这里不在赘述。</p>
+<h3 id="消息处理"><a href="#消息处理" class="headerlink" title="消息处理"></a>消息处理</h3><p>现在有一个新的问题需要思考</p>
+<h2 id="QoS0-消息收发实战"><a href="#QoS0-消息收发实战" class="headerlink" title="QoS0 消息收发实战"></a>QoS0 消息收发实战</h2><h3 id=""><a href="#" class="headerlink" title=""></a></h3><p>按照报文进行序列化即可，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/network/" rel="tag"># network</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/12/29/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" rel="prev" title="【数据结构与算法】环形缓冲区：原理，实现，与应用">
+      <i class="fa fa-chevron-left"></i> 【数据结构与算法】环形缓冲区：原理，实现，与应用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/01/18/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/" rel="next" title="【计算机网络】mqtt通信协议入门（十一）QoS1 & QoS2 消息收发实战">
+      【计算机网络】mqtt通信协议入门（十一）QoS1 & QoS2 消息收发实战 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9E%E9%A1%BE"><span class="nav-number">1.</span> <span class="nav-text">回顾</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E6%8E%A5%E5%8F%A3%E5%B1%82"><span class="nav-number">1.0.1.</span> <span class="nav-text">系统接口层</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8A%A5%E6%96%87%E6%94%B6%E5%8F%91%E5%B1%82"><span class="nav-number">1.0.2.</span> <span class="nav-text">报文收发层</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BA%8F%E5%88%97%E5%8C%96-%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%A8%A1%E5%9D%97"><span class="nav-number">1.0.3.</span> <span class="nav-text">序列化&#x2F;反序列化模块</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5%E7%AD%89%E5%BE%85%E9%98%9F%E5%88%97"><span class="nav-number">1.0.4.</span> <span class="nav-text">异步等待队列</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ACK-handler-%E5%BC%82%E6%AD%A5%E5%A4%84%E7%90%86%E7%BA%BF%E7%A8%8B"><span class="nav-number">1.0.5.</span> <span class="nav-text">ACK handler 异步处理线程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mqtt-%E5%8D%8F%E8%AE%AE%E6%8E%A5%E5%8F%A3"><span class="nav-number">1.0.6.</span> <span class="nav-text">mqtt 协议接口</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PUBLISH-%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">PUBLISH 报文结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E6%8A%A5%E5%A4%B4"><span class="nav-number">2.1.</span> <span class="nav-text">固定报头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E6%8A%A5%E5%A4%B4"><span class="nav-number">2.2.</span> <span class="nav-text">可变报头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E6%95%88%E8%BD%BD%E8%8D%B7"><span class="nav-number">2.3.</span> <span class="nav-text">有效载荷</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E4%BD%9C%E7%BA%A6%E5%AE%9A"><span class="nav-number">2.4.</span> <span class="nav-text">动作约定</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%B6%E5%8F%91%E6%B6%88%E6%81%AF%E7%9A%84-QoS-%E5%86%B3%E5%AE%9A"><span class="nav-number">2.5.</span> <span class="nav-text">收发消息的 QoS 决定</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B0%E7%9A%84%E6%8A%BD%E8%B1%A1"><span class="nav-number">3.</span> <span class="nav-text">新的抽象</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PUBLISH-%E6%8A%A5%E6%96%87"><span class="nav-number">3.1.</span> <span class="nav-text">PUBLISH 报文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E5%A4%84%E7%90%86"><span class="nav-number">3.2.</span> <span class="nav-text">消息处理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#QoS0-%E6%B6%88%E6%81%AF%E6%94%B6%E5%8F%91%E5%AE%9E%E6%88%98"><span class="nav-number">4.</span> <span class="nav-text">QoS0 消息收发实战</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link"><span class="nav-number">4.1.</span> <span class="nav-text"></span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">39</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

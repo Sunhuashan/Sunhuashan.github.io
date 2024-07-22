@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="有了上一篇文章提出的消息接收与处理架构后，我们很容易就能在其基础上实现 QoS1 和 QoS2 级别消息的收发了。这篇文章首先会分析  QoS1 和 QoS2 级别的通信过程以及 PUBACK、PUBREC、PUBREL 以及 PUBCOMP 四种报文的结构。最后，还是和以前的文章一样，我们会继续完善之前的代码，实现 QoS1 和 QoS2 消息的收发代码，并进行实战。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【计算机网络】mqtt通信协议入门（十一）QoS1 &amp; QoS2 消息收发实战">
+<meta property="og:url" content="http://example.com/2024/01/18/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="有了上一篇文章提出的消息接收与处理架构后，我们很容易就能在其基础上实现 QoS1 和 QoS2 级别消息的收发了。这篇文章首先会分析  QoS1 和 QoS2 级别的通信过程以及 PUBACK、PUBREC、PUBREL 以及 PUBCOMP 四种报文的结构。最后，还是和以前的文章一样，我们会继续完善之前的代码，实现 QoS1 和 QoS2 消息的收发代码，并进行实战。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721162221994.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721163027498.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721163050990.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721160959088.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161012409.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161245785.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161432448.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161507950.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161600482.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161648972.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161722220.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161749410.png">
+<meta property="article:published_time" content="2024-01-18T08:57:01.000Z">
+<meta property="article:modified_time" content="2024-07-21T08:36:34.918Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721162221994.png">
+
+<link rel="canonical" href="http://example.com/2024/01/18/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【计算机网络】mqtt通信协议入门（十一）QoS1 & QoS2 消息收发实战 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/01/18/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【计算机网络】mqtt通信协议入门（十一）QoS1 & QoS2 消息收发实战
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-01-18 16:57:01" itemprop="dateCreated datePublished" datetime="2024-01-18T16:57:01+08:00">2024-01-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>有了上一篇文章提出的消息接收与处理架构后，我们很容易就能在其基础上实现 QoS1 和 QoS2 级别消息的收发了。这篇文章首先会分析  QoS1 和 QoS2 级别的通信过程以及 PUBACK、PUBREC、PUBREL 以及 PUBCOMP 四种报文的结构。最后，还是和以前的文章一样，我们会继续完善之前的代码，实现 QoS1 和 QoS2 消息的收发代码，并进行实战。</p>
+<span id="more"></span>
+
+<h2 id="QoS1-和-QoS2-的通信过程"><a href="#QoS1-和-QoS2-的通信过程" class="headerlink" title="QoS1 和 QoS2 的通信过程"></a>QoS1 和 QoS2 的通信过程</h2><h3 id="QoS1：至少分发一次"><a href="#QoS1：至少分发一次" class="headerlink" title="QoS1：至少分发一次"></a>QoS1：至少分发一次</h3><p>服务质量确保消息至少送达一次。QoS1 的 PUBLISH 报文的可变报头中包含一个<strong>报文标识符</strong>，需要 PUBACK 报文确认。</p>
+<p>对于 QoS 1 的分发协议发送者： </p>
+<ul>
+<li>每次发送新的应用消息都必须分配一个<strong>未使用</strong>的报文标识符。 </li>
+<li>发送的 PUBLISH 报文必须包含报文标识符且 <strong>QoS &#x3D; 1，DUP &#x3D; 0</strong>。</li>
+<li>必须将这个 PUBLISH 报文看作是<strong>未确认的</strong> ，直到从接收者那收到对应的 PUBACK 报文。</li>
+</ul>
+<p>对于 QoS 1 的分发协议接收者： </p>
+<ul>
+<li>响应的 PUBACK 报文必须包含一个报文标识符，这个<strong>报文标识符来自接收到</strong>的 PUBLISH 报文。 </li>
+<li>发送了 PUBACK 报文之后，接收者必须将将任何包含相同报文标识符的入站 PUBLISH 报文当作一 个<strong>新的消息</strong>，并忽略它的 DUP 标志的值。</li>
+</ul>
+<h4 id="大致流程"><a href="#大致流程" class="headerlink" title="大致流程"></a>大致流程</h4><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721162221994.png" alt="image-20240721162221994"></p>
+<h3 id="QoS2-保证分发一次"><a href="#QoS2-保证分发一次" class="headerlink" title="QoS2 保证分发一次"></a>QoS2 保证分发一次</h3><p>这是最高等级的服务质量，消息<strong>丢失和重复</strong>都是不可接受的。QoS 2 的 PUBLISH 报文的接收者使用一个两步确认过程来确认收到。</p>
+<p>对于 QoS 2 的分发协议发送者：</p>
+<ul>
+<li>必须给要发送的新应用消息分配一个<strong>未使用</strong>的报文标识符。</li>
+<li>发送的 PUBLISH 报文必须包含报文标识符且报文的 <strong>QoS &#x3D; 2, DUP &#x3D; 0</strong>。 </li>
+<li>必须将这个 PUBLISH 报文看作是<strong>未确认</strong>的 ，直到从接收者那收到对应的 <strong>PUBREC</strong> 报文。</li>
+<li>收到 PUBREC 报文后必须发送一个 PUBREL 报文。PUBREL 报文必须包含与原始 PUBLISH 报文<strong>相同的报文标识符</strong>。 </li>
+<li>必须将这个 PUBREL 报文看作是<strong>未确认</strong>的 ，直到从接收者那收到对应的 <strong>PUBCOMP</strong> 报文。 </li>
+<li>一旦发送了对应的 PUBREL 报文就<strong>不能重发</strong>这个 PUBLISH 报文。</li>
+</ul>
+<p>对于QoS 2的分发协议接收者：</p>
+<ul>
+<li>响应的 PUBREC 报文必须包含报文标识符，这个标识符<strong>来自接收到</strong>的 PUBLISH 报文。</li>
+<li>在收到对应的 PUBREL 报文之前，接收者<strong>必须发送 PUBREC</strong> 报文确认任何后续的具有<strong>相同标识符</strong> 的 PUBLISH 报文。 在这种情况下，它不能重复分发消息给任何后续的接收者。 </li>
+<li>响应 PUBREL 报文的 PUBCOMP 报文必须包含与 PUBREL 报文<strong>相同的标识符</strong>。 </li>
+<li>发送 PUBCOMP 报文之后，接收者必须将包含相同报文标识符的任何后续 PUBLISH 报文当作一 个<strong>新的</strong>发布。</li>
+</ul>
+<h4 id="大致流程-1"><a href="#大致流程-1" class="headerlink" title="大致流程"></a>大致流程</h4><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721163027498.png" alt="image-20240721163027498"></p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721163050990.png" alt="image-20240721163050990"></p>
+<h2 id="报文结构"><a href="#报文结构" class="headerlink" title="报文结构"></a>报文结构</h2><p>这四种响应报文结构都非常简单，均没有有效负载部分，可变报头都仅仅包含报文标识符，我们来快速过一下：</p>
+<h3 id="PUBACK-报文"><a href="#PUBACK-报文" class="headerlink" title="PUBACK 报文"></a>PUBACK 报文</h3><p>PUBACK 报文是对 QoS 1 等级的 PUBLISH 报文的响应。</p>
+<h4 id="固定报头"><a href="#固定报头" class="headerlink" title="固定报头"></a>固定报头</h4><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721160959088.png" alt="image-20240721160959088"></p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161012409.png" alt="image-20240721161012409"></p>
+<p>剩余长度表示可变报头的长度。对 PUBACK 报文这个值等于 2</p>
+<h4 id="可变报头"><a href="#可变报头" class="headerlink" title="可变报头"></a>可变报头</h4><p>包含等待确认的 PUBLISH 报文的报文标识符。</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161245785.png" alt="image-20240721161245785"></p>
+<h3 id="PUBREC"><a href="#PUBREC" class="headerlink" title="PUBREC"></a>PUBREC</h3><p>PUBREC 报文是对 QoS 等级 2 的 PUBLISH 报文的响应。它是 QoS 2 等级协议交换的第二个报文。</p>
+<h4 id="固定报头-1"><a href="#固定报头-1" class="headerlink" title="固定报头"></a>固定报头</h4><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161432448.png" alt="image-20240721161432448"></p>
+<p>剩余长度表示可变报头的长度。对 PUBREC 报文这个值等于 2</p>
+<h4 id="可变报头-1"><a href="#可变报头-1" class="headerlink" title="可变报头"></a>可变报头</h4><p>包含等待确认的 PUBLISH 报文的报文标识符。</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161507950.png" alt="image-20240721161507950"></p>
+<h3 id="PUBREL"><a href="#PUBREL" class="headerlink" title="PUBREL"></a>PUBREL</h3><p>PUBREL 报文是对 PUBREC 报文的响应。它是 QoS 2 等级协议交换的第三个报文。</p>
+<h4 id="固定报头-2"><a href="#固定报头-2" class="headerlink" title="固定报头"></a>固定报头</h4><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161600482.png" alt="image-20240721161600482"></p>
+<p>PUBREL 控制报文固定报头的第 3,2,1,0 位是保留位，必须被设置为 0,0,1,0。服务端必须将其它的任何值都当做是不合法的并<strong>关闭网络连接</strong>。</p>
+<h4 id="可变报头-2"><a href="#可变报头-2" class="headerlink" title="可变报头"></a>可变报头</h4><p>可变报头包含与等待确认的 PUBREC 报文相同的报文标识符。</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161648972.png" alt="image-20240721161648972"></p>
+<h3 id="PUBCOMP"><a href="#PUBCOMP" class="headerlink" title="PUBCOMP"></a>PUBCOMP</h3><p>PUBCOMP 报文是对 PUBREL 报文的响应。它是 QoS 2 等级协议交换的第四个也是最后一个报文。</p>
+<h4 id="固定报头-3"><a href="#固定报头-3" class="headerlink" title="固定报头"></a>固定报头</h4><p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161722220.png" alt="image-20240721161722220"></p>
+<p>剩余长度表示可变报头的长度。对 PUBCOMP 报文这个值等于 2。</p>
+<h4 id="可变报头-3"><a href="#可变报头-3" class="headerlink" title="可变报头"></a>可变报头</h4><p>可变报头包含与等待确认的 PUBREL 报文相同的报文标识符。</p>
+<p><img src="/./imgs/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/image-20240721161749410.png" alt="image-20240721161749410"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/network/" rel="tag"># network</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/01/10/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%EF%BC%89QoS0%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/" rel="prev" title="【计算机网络】mqtt通信协议入门（十）PUBLISH 报文结构与 QoS0 消息收发实战">
+      <i class="fa fa-chevron-left"></i> 【计算机网络】mqtt通信协议入门（十）PUBLISH 报文结构与 QoS0 消息收发实战
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/" rel="next" title="【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？">
+      【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？ <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#QoS1-%E5%92%8C-QoS2-%E7%9A%84%E9%80%9A%E4%BF%A1%E8%BF%87%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">QoS1 和 QoS2 的通信过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#QoS1%EF%BC%9A%E8%87%B3%E5%B0%91%E5%88%86%E5%8F%91%E4%B8%80%E6%AC%A1"><span class="nav-number">1.1.</span> <span class="nav-text">QoS1：至少分发一次</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%A7%E8%87%B4%E6%B5%81%E7%A8%8B"><span class="nav-number">1.1.1.</span> <span class="nav-text">大致流程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#QoS2-%E4%BF%9D%E8%AF%81%E5%88%86%E5%8F%91%E4%B8%80%E6%AC%A1"><span class="nav-number">1.2.</span> <span class="nav-text">QoS2 保证分发一次</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%A7%E8%87%B4%E6%B5%81%E7%A8%8B-1"><span class="nav-number">1.2.1.</span> <span class="nav-text">大致流程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">报文结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PUBACK-%E6%8A%A5%E6%96%87"><span class="nav-number">2.1.</span> <span class="nav-text">PUBACK 报文</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E6%8A%A5%E5%A4%B4"><span class="nav-number">2.1.1.</span> <span class="nav-text">固定报头</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E6%8A%A5%E5%A4%B4"><span class="nav-number">2.1.2.</span> <span class="nav-text">可变报头</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PUBREC"><span class="nav-number">2.2.</span> <span class="nav-text">PUBREC</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E6%8A%A5%E5%A4%B4-1"><span class="nav-number">2.2.1.</span> <span class="nav-text">固定报头</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E6%8A%A5%E5%A4%B4-1"><span class="nav-number">2.2.2.</span> <span class="nav-text">可变报头</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PUBREL"><span class="nav-number">2.3.</span> <span class="nav-text">PUBREL</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E6%8A%A5%E5%A4%B4-2"><span class="nav-number">2.3.1.</span> <span class="nav-text">固定报头</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E6%8A%A5%E5%A4%B4-2"><span class="nav-number">2.3.2.</span> <span class="nav-text">可变报头</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PUBCOMP"><span class="nav-number">2.4.</span> <span class="nav-text">PUBCOMP</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E6%8A%A5%E5%A4%B4-3"><span class="nav-number">2.4.1.</span> <span class="nav-text">固定报头</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%AF%E5%8F%98%E6%8A%A5%E5%A4%B4-3"><span class="nav-number">2.4.2.</span> <span class="nav-text">可变报头</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">39</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -27,11 +27,14 @@
 <meta property="og:site_name" content="sunhuashan">
 <meta property="og:description" content="GDB 全称 GNU Project debugger，是一个通用的 C &#x2F; C++ 程序调试器，可以用来深入分析程序的运行过程，或者排查程序崩溃的原因。本文面向的读者是 C &#x2F; C++ 程序员，主要内容包括 GDB 的基本命令、进阶用法和实践案例。目标是使读者掌握 GDB 的常见使用方法，满足日常开发所需。">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/gdb%E5%85%A5%E9%97%A8/image-20240721222903936.png">
+<meta property="og:image" content="http://example.com/imgs/gdb%E5%85%A5%E9%97%A8/image-20240721223140044.png">
 <meta property="article:published_time" content="2022-11-20T11:11:23.000Z">
-<meta property="article:modified_time" content="2024-07-17T07:50:27.857Z">
+<meta property="article:modified_time" content="2024-07-21T14:58:37.094Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="linux">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/gdb%E5%85%A5%E9%97%A8/image-20240721222903936.png">
 
 <link rel="canonical" href="http://example.com/2022/11/20/gdb%E5%85%A5%E9%97%A8/">
 
@@ -219,6 +222,382 @@
 </ol>
 <p>GDB 和 Vim 一样，只需要学会几个简单的命令，就能解决大部分问题。但它们就像一把瑞士军刀，有丰富的功能和技巧，只有深入掌握，才能成为效率提升利器。</p>
 <p>本文面向的读者是 C &#x2F; C++ 程序员，主要内容包括 GDB 的基本命令、进阶用法和实践案例。目标是使读者掌握 GDB 的常见使用方法，满足日常开发所需。读者也可以将本文作为 GDB 命令的速查手册，随时查阅。</p>
+<h2 id="Hello-World"><a href="#Hello-World" class="headerlink" title="Hello World"></a>Hello World</h2><h3 id="安装GDB"><a href="#安装GDB" class="headerlink" title="安装GDB"></a>安装GDB</h3><p>本文在 Linux (CentOS) 环境下运行 GDB，读者也可以使用<a target="_blank" rel="noopener" href="https://www.onlinegdb.com/">网页版 GDB</a>。</p>
+<p>Linux 系统可以使用包管理器安装：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> apt-get update</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> apt-get install gdb</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="使用-GDB"><a href="#使用-GDB" class="headerlink" title="使用 GDB"></a>使用 GDB</h3><p>下面是一个使用 GDB 设置断点、逐行运行程序的示例。</p>
+<ol>
+<li>编写 C++ 程序：</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// main.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line">   </span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_foo</span><span class="params">(<span class="type">int</span> v)</span> </span>&#123;</span><br><span class="line">  <span class="type">int</span> i = v + <span class="number">5</span>;</span><br><span class="line">  i = i + <span class="number">3</span>;</span><br><span class="line">  cout &lt;&lt; <span class="string">&quot;i == &quot;</span> &lt;&lt; i &lt;&lt; endl;</span><br><span class="line">&#125;</span><br><span class="line">   </span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="type">int</span> a = <span class="number">0</span>;</span><br><span class="line">  a += <span class="number">1</span>;</span><br><span class="line">  a += <span class="number">2</span>;</span><br><span class="line">  <span class="built_in">print_foo</span>(a);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><p>编译程序，添加 <code>-g</code> 选项，保留 debug info:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ g++ -g main.cpp -o example</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>进入 gdb，加载二进制程序，最后一行表示符号表加载成功：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ gdb example</span><br><span class="line">GNU gdb (GDB) 12.1</span><br><span class="line">Copyright ...</span><br><span class="line">Find the GDB manual and other documentation resources online at:</span><br><span class="line">    &lt;http://www.gnu.org/software/gdb/documentation/&gt;.</span><br><span class="line">For help, type &quot;help&quot;.</span><br><span class="line">Type &quot;apropos word&quot; to search for commands related to &quot;word&quot;...</span><br><span class="line">Reading symbols from example...</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在 <code>main()</code> 函数第一行设置一个断点，运行程序：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">(gdb) b main.cpp:12</span><br><span class="line">Breakpoint 1 at 0x55555555522c: file main.cpp, line 12.</span><br><span class="line">(gdb) r</span><br><span class="line">Starting program: /home/a.out </span><br><span class="line">Breakpoint 1, main () at main.cpp:12</span><br><span class="line">12        int a = 0;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>逐行执行程序，打印变量 <code>a</code> 的值：</p>
+<p><code>next</code> 命令输出的是下一行要执行的代码。如果下一行是函数，<code>next</code> 命令会执行完整个函数，停在函数的下一行 (step over)。</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">(gdb) next</span><br><span class="line">13        a += 1;</span><br><span class="line">(gdb) p a</span><br><span class="line">$3 = 1</span><br><span class="line">(gdb) next</span><br><span class="line">14        a += 2;</span><br><span class="line">(gdb) next</span><br><span class="line">15        print_foo(a);</span><br><span class="line">(gdb) p a</span><br><span class="line">$4 = 3</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>step</code> 命令会进入函数，停在函数的第一行 (step into)：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(gdb) step    </span><br><span class="line">print_foo (v=21845) at main.cpp:5</span><br><span class="line">5       void print_foo(int v) &#123;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>backtrack</code> 命令可以查看当前程序的调用栈：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(gdb) backtrace</span><br><span class="line">#0  print_foo (v=21845) at main.cpp:5</span><br><span class="line">#1  0x0000555555555245 in main () at main.cpp:15</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>continue</code> 命令会执行程序，直到遇到下一个断点。这里没有下一个断点了，整个程序正常退出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(gdb) continue</span><br><span class="line">Continuing.</span><br><span class="line">[Inferior 1 (process 1308) exited normally]</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="命令的简写形式"><a href="#命令的简写形式" class="headerlink" title="命令的简写形式"></a>命令的简写形式</h3><p>大部分 GDB 命令都有一个简写形式，一般是命令的首字母，比如：</p>
+<ul>
+<li><code>backtrace</code> → <code>bt</code></li>
+<li><code>break</code> → <code>b</code></li>
+<li><code>continue</code> → <code>c</code></li>
+<li><code>next</code> → <code>n</code></li>
+<li><code>info</code> → <code>i</code></li>
+</ul>
+<p>某些命令有相同的前缀，只需要写出前几个能区分的字符，GDB 就可以识别：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) i w    // 无法判断</span><br><span class="line">Ambiguous info command &quot;w&quot;: w32, warranty, watchpoints, win.</span><br><span class="line">(gdb) i wat  // 可以识别，等于 info watchpoints</span><br><span class="line">No watchpoints.</span><br></pre></td></tr></table></figure>
+
+<p>此外，在 GDB 中如果什么都不输入，直接回车，会重复执行上一条命令。</p>
+<h3 id="命令的适用场景"><a href="#命令的适用场景" class="headerlink" title="命令的适用场景"></a>命令的适用场景</h3><p>当应用程序异常退出时，操作系统会生成一个 <code>coredump</code> 文件，记录了程序退出时的所有内存状态。GDB 可以读取这个文件，查看程序退出时的变量值或者寄存器值，但是无法执行程序。即只能使用<em>静态</em>命令，如 <code>p</code>、<code>bt</code>、<code>i</code>。</p>
+<blockquote>
+<h4 id="Core-Dump"><a href="#Core-Dump" class="headerlink" title="Core Dump"></a>Core Dump</h4><p>当进程崩溃时，操作系统会把进程当前的所有内存和寄存器状态信息保存到 core dump 文件中。Core dump file 是一个二进制文件，需要配合 debug info 来赋予其含义。GDB 可以读取 core dump 文件，协助分析进程崩溃的瞬间发生了什么。</p>
+<p>可能会产生 core dump 文件的场景：</p>
+<ul>
+<li>段错误 Segmentation Fault<ul>
+<li>Null Pointer Dereference (NPD)</li>
+<li>Stack Overflow &#x2F; Buffer Overflow</li>
+<li>Use After Free (UAF)</li>
+<li>Double Free</li>
+<li>Out Of Memory (OOM)</li>
+</ul>
+</li>
+<li>其他一些会引起 core dump 的 signal</li>
+</ul>
+<h4 id="Core-Dump-Settings"><a href="#Core-Dump-Settings" class="headerlink" title="Core Dump Settings"></a>Core Dump Settings</h4><p>为了使能 core dump，首先要检查最大的 core dump 限制</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ulimit -c</span><br></pre></td></tr></table></figure>
+
+<p>如果结果是 0，那么需要设置限制为 unlimited</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ulimit -c unlimited</span><br></pre></td></tr></table></figure>
+
+<p>现在，将生成一个 core dump 并将其放置在 &#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_pattern 指定的位置 ，通过下面的命令查看 core dump 生成的位置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ cat /proc/sys/kernel/core_pattern</span><br></pre></td></tr></table></figure>
+
+<p>大部分系统的默认输出是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">core</span><br></pre></td></tr></table></figure>
+
+<p>这意味着任何核心转储都将放置在当前目录中名为 <strong>core</strong> 的文件中。<br>您可以使用以下方式更改此位置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ echo &quot;&lt;desired-file-path&gt;/&lt;desired-file-name&gt;&quot; &gt; /proc/sys/kernel/core_pattern</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>通过下面的命令可以恢复 core dump 生成时的程序运行状态：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ gdb &lt;binary-file&gt; &lt;core-dump-file&gt;</span><br></pre></td></tr></table></figure>
+
+<p>此时，这些命令： <em>where</em>, <em>up</em>, <em>down</em>, <em>print</em>, <em>info locals</em>, <em>info args</em>, <em>info registers</em> and <em>list</em> 通常非常有帮助</p>
+</blockquote>
+<p>GDB 也可以直接加载一个二进制程序并执行。在这种情况下，GDB 不仅可以随时查看程序当前的变量值或其他内存状态，还可以控制程序的运行，如设置断点、单步执行、反向执行等。即不仅可以使用<em>静态</em>命令，还可以使用 <code>r</code>、<code>b</code>、<code>c</code> 等<em>动态</em>命令。</p>
+<h3 id="帮助和术语"><a href="#帮助和术语" class="headerlink" title="帮助和术语"></a>帮助和术语</h3><p>在 GDB 内使用 <code>apropos &#123;keyword&#125;</code> 可以模糊查找某条命令：</p>
+<p><img src="/./imgs/gdb%E5%85%A5%E9%97%A8/image-20240721222903936.png" alt="image-20240721222903936"></p>
+<p>使用 <code>help &#123;command&#125;</code> 可以查看某个具体命令的帮助文档：</p>
+<p><img src="/./imgs/gdb%E5%85%A5%E9%97%A8/image-20240721223140044.png" alt="image-20240721223140044"></p>
+<h2 id="基本命令"><a href="#基本命令" class="headerlink" title="基本命令"></a>基本命令</h2><h3 id="选择线程-t"><a href="#选择线程-t" class="headerlink" title="选择线程: t"></a>选择线程: <code>t</code></h3><p><code>info thread</code> 可以查看当前进程的所有线程。示例程序是单线程的：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info threads</span><br><span class="line">  Id   Target Id            Frame </span><br><span class="line">* 1    process 1537 &quot;example&quot; main () at main.cpp:15</span><br></pre></td></tr></table></figure>
+
+<p><code>thread</code> &#x2F; <code>t</code> 可以查看当前位于哪个线程：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) t</span><br><span class="line">[Current thread is 1 (process 3496)]</span><br></pre></td></tr></table></figure>
+
+<p>在多线程程序里，可以通过 <code>t &#123;id&#125;</code> 切换线程，每个线程有独立的调用栈。</p>
+<h3 id="查看堆栈-bt"><a href="#查看堆栈-bt" class="headerlink" title="查看堆栈: bt"></a>查看堆栈: <code>bt</code></h3><p><code>backtrace</code> &#x2F; <code>bt</code> 可以查看调用栈。调用栈展示了从 <code>main()</code> 入口到当前断点或进程退出时刻的所有函数调用路径：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">(gdb) bt</span><br><span class="line">#0  0x0 in (unknown) at :0</span><br><span class="line">#1  0x1a796e7c in foo() at main.cpp:13</span><br><span class="line">#2  0x6259058 in bar() at main.cpp:17</span><br><span class="line">#3  0x6bb7580 in main() at main.cpp:83</span><br></pre></td></tr></table></figure>
+
+<h3 id="选择栈帧-f"><a href="#选择栈帧-f" class="headerlink" title="选择栈帧: f"></a>选择栈帧: <code>f</code></h3><p>每次函数调用，会创建一个独立的栈帧，对应上面的 <code>#0</code>、<code>#1</code>、<code>#2</code>。默认在 <code>#0</code>。</p>
+<p><code>frame</code> &#x2F; <code>f </code>可以跳转到指定栈帧：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(gdb) f 2</span><br><span class="line">#2  bar() at main.cpp:17</span><br><span class="line">17        int a = foo();</span><br></pre></td></tr></table></figure>
+
+<p><code>up</code> &#x2F; <code>down</code> 可以向上层或下层跳转，对应编号增大或减小。</p>
+<h3 id="打印各种信息-i"><a href="#打印各种信息-i" class="headerlink" title="打印各种信息: i"></a>打印各种信息: <code>i</code></h3><ul>
+<li><code>info locals</code>：打印当前栈帧的所有局部变量</li>
+<li><code>info args</code>：打印所有函数参数</li>
+<li><code>info threads</code>： 打印进程的线程信息</li>
+<li><code>info registers</code>： 打印当前线程的寄存器信息</li>
+<li><code>info sharedlibrary</code>：打印当前加载的动态连接库</li>
+<li><code>info proc mappings</code>：打印地址空间中的内存 map，用来确定某个地址的类型</li>
+<li><code>help info</code>：所有 info 支持的命令</li>
+</ul>
+<h3 id="打印变量-p"><a href="#打印变量-p" class="headerlink" title="打印变量: p"></a>打印变量: <code>p</code></h3><h4 id="基本使用"><a href="#基本使用" class="headerlink" title="基本使用"></a>基本使用</h4><p><code>print</code> &#x2F; <code>p</code> 可以打印一个变量的值，支持数字、字符串、结构体、指针等变量类型：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p a // int a = 3;</span><br><span class="line">$1 = 3</span><br></pre></td></tr></table></figure>
+
+<p>打印出来的值会存在名为 <code>$1</code>、<code>$2</code>、… 的变量里，后续可以直接复用：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p $1 // 等价于 p a</span><br><span class="line">$2 = 3</span><br></pre></td></tr></table></figure>
+
+<p><code>p</code> 有一些可选参数：</p>
+<ul>
+<li><code>-elements</code>：限制字符串或者数组打印的元素数量</li>
+<li><code>-max-depth</code>：限制嵌套结构体的最大打印层数</li>
+<li>…，<code>help p</code> 查看所有参数</li>
+</ul>
+<h4 id="打印指针"><a href="#打印指针" class="headerlink" title="打印指针"></a>打印指针</h4><h5 id="指针变量"><a href="#指针变量" class="headerlink" title="指针变量"></a>指针变量</h5><p><code>p</code> 后面跟一个指针类型的变量，打印的是指针的值，即指针所指向的地址：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p b // int* b = &amp;a;</span><br><span class="line">$1 = (int *) 0x7ffd3dcfa27c</span><br></pre></td></tr></table></figure>
+
+<p>可以用解引用运算符，打印指针指向的值：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p *b</span><br><span class="line">$2 = 1</span><br></pre></td></tr></table></figure>
+
+<p>如果是字符串指针，<code>p</code> 会同时输出<em>指针指向的地址</em>和<em>字符串的内容</em>：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">p str</span><br><span class="line">$3 = (char*) 0x7ffc734ff250 &quot;hello,world&quot;</span><br></pre></td></tr></table></figure>
+
+<p>如果希望只打印地址，可以使用说明符 <code>/a</code>：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p/a str</span><br><span class="line">$4 = 0x7ffc734ff250</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>/a</code> 表示 <code>address</code>，即把变量的值以地址的形式打印。</p>
+</blockquote>
+<h5 id="地址字面量"><a href="#地址字面量" class="headerlink" title="地址字面量"></a>地址字面量</h5><p><code>p</code> 默认会把十六进制的字面量看成是数字，输出一个十进制的整数：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p 0x7ffd3dcfa27c</span><br><span class="line">$1 = 140725640471164</span><br><span class="line">(gdb) p 140725640471164 == 0x7ffd3dcfa27c</span><br><span class="line">$2 = true</span><br></pre></td></tr></table></figure>
+
+<p>如果想把数字解释为地址、打印地址上的内容，需要先指定变量类型，然后解引用：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p *(int*)0x7ffd3dcfa27c</span><br><span class="line">$3 = 1</span><br></pre></td></tr></table></figure>
+
+<p>更简单的语法是 <code>&#123;TYPE&#125;ADDRESS：</code></p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p &#123;int&#125;0x7ffd3dcfa27c</span><br><span class="line">$4 = 1</span><br></pre></td></tr></table></figure>
+
+<p>也可以用 <code>x</code> 命令打印地址。</p>
+<h5 id="转换指针类型"><a href="#转换指针类型" class="headerlink" title="转换指针类型"></a>转换指针类型</h5><p>指针的类型可以转换，以不同方式解释其指向的内存区域：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// char* c = &quot;hello, world&quot;;</span><br><span class="line">(gdb) p c</span><br><span class="line">$1 = (char *) 0x7ffc734ff250 &quot;hello, world&quot;;</span><br><span class="line">(gdb) p *(int*)c</span><br><span class="line">$2 = 1819043176</span><br><span class="line">(gdb) p &#123;int&#125;c</span><br><span class="line">$3 = 1819043176</span><br></pre></td></tr></table></figure>
+
+<p>打印内存可以发现，<code>1819043176</code> 就是把 <code>h e l l</code> 四个字符解释成了一个整数：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) x/w 0x7ffc734ff250    // 以 word 形式打印，4 个字节</span><br><span class="line">0x7ffc734ff250:	1819043176  // 上述 4 个字符的 ASCII 码转成整数</span><br></pre></td></tr></table></figure>
+
+<p><code>1819043176</code> 对应的十六进制是 <code>0x6C6C6568</code>，恰好依次是 <code>l</code> , <code>l</code> , <code>e</code> 和 <code>h</code> 的 ASCII 码。</p>
+<h5 id="打印结构体的字段"><a href="#打印结构体的字段" class="headerlink" title="打印结构体的字段"></a>打印结构体的字段</h5><p>如果指针 <code>p</code> 指向某个结构体，可以用 <code>p ptr-&gt;field</code> 打印字段的值。</p>
+<p>在 GDB 里，<code>.</code> 和 <code>-&gt;</code> 是一样的，所以无论 <code>ptr</code> 是否是指针，都可以用 <code>p.field</code> 打印字段的值。</p>
+<h4 id="打印数组"><a href="#打印数组" class="headerlink" title="打印数组"></a>打印数组</h4><p>语法：<code>p ELEMENT@LEN</code>。从 <code>ELEMENT</code> 的地址开始向后解释 <code>LEN</code> 大小的内存单元，内存单元的大小是 <code>sizeof(T)</code>。</p>
+<h5 id="栈上数组"><a href="#栈上数组" class="headerlink" title="栈上数组"></a>栈上数组</h5><p>如果 array 是栈上数组，可以直接 <code>p array</code>，会打印数组的所有元素：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// int array[] = &#123;1, 2, 3, 4&#125;;</span><br><span class="line">(gdb) p array</span><br><span class="line">$1 = &#123;1, 2, 3, 4&#125;</span><br></pre></td></tr></table></figure>
+
+<p>也可以 <code>p array[INDEX]@LEN</code>，从某个下标开始打印指定的长度：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p array[1]@[3] // array[1] 的类型是 int</span><br><span class="line">$2 = &#123;1, 2, 3&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但不能 <code>p array@LEN</code>，因为栈上数组 array 的类型是 <code>int[4]</code> 而不是 <code>int</code>：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p array@3</span><br><span class="line">$3 = &#123;&#123;1, 2, 3, 4&#125;, &#123;-693741568, 32764, 1033857024, -1536906435&#125;, &#123;0, 0, -793505661, 32580&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="堆上数组"><a href="#堆上数组" class="headerlink" title="堆上数组"></a>堆上数组</h5><p>如果 array 是堆上数组，可以 <code>p *array@LEN</code>：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// int* array = (int*)malloc(3 * sizeof(int));</span><br><span class="line">(gdb) p *array@3 // *array 是数组的第一个元素，类型是 int</span><br><span class="line">$1 = &#123;1, 2, 3&#125;</span><br></pre></td></tr></table></figure>
+
+<p>或者 <code>p array[INDEX]@LEN</code>，从某个下标开始打印：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p array[1]@3 // array[1] 的类型是 int</span><br><span class="line">$2 = &#123;2, 3, 4&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但不能 <code>p array</code> ，因为堆上数组 array 的类型是 <code>int*</code> 指针，值是一个地址：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p array</span><br><span class="line">$3 = 0x55669a743eb0</span><br></pre></td></tr></table></figure>
+
+<p>也不能 <code>p array@LEN</code>，理由同上。array 是一个 <code>int*</code> 指针，保存在栈上，这里会输出栈上相邻内存的值，没有任何意义：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p array@3</span><br><span class="line">$4 = &#123;0x55669a743eb0, 0x55669a255330, 0x200000001&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果只有一个地址字面量，可以把它强制转换为指针类型，然后用同样的语法打印：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p ((int*)0x55669a743eb0))[2]</span><br><span class="line">$5 = 3</span><br></pre></td></tr></table></figure>
+
+<h4 id="格式化输出"><a href="#格式化输出" class="headerlink" title="格式化输出"></a>格式化输出</h4><p>可以在 <code>p</code> 后面添加说明符 (specifier)，把一个变量解释为给定的类型：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p foo // int foo = 98;</span><br><span class="line">$1 = 98</span><br><span class="line">(gdb) p/c foo // 将 98 解释为字符</span><br><span class="line">$2 = 98 &#x27;b&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>所有说明符：</p>
+<ul>
+<li><p><code>p/a</code>：将变量解释为指针 address，使用十六进制打印</p>
+</li>
+<li><p><code>p/c</code>：将变量解释为字符 char，打印为字符</p>
+</li>
+<li><p><code>p/o</code>：使用八进制打印变量</p>
+</li>
+<li><p><code>p/x</code>：使用十六进制打印变量</p>
+</li>
+<li><p><code>p/u</code>：将变量解释为无符号整数 unsigned，使用十进制打印</p>
+</li>
+<li><p><code>p/s</code>：将变量解释为字符串，打印输出</p>
+</li>
+<li><p><code>help x</code> 查看全部：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">o(octal), x(hex), d(decimal), u(unsigned decimal),</span><br><span class="line">t(binary), f(float), a(address), i(instruction), </span><br><span class="line">c(char), s(string) and z(hex, zero padded on the left)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="查看历史变量"><a href="#查看历史变量" class="headerlink" title="查看历史变量"></a>查看历史变量</h4><p>通过 <code>p</code> 打印出来的值会存在名为 <code>$1</code>、<code>$2</code>、… 的变量里 (<a target="_blank" rel="noopener" href="https://sourceware.org/gdb/onlinedocs/gdb/Value-History.html#Value-History">value history</a>)，后续可以直接复用：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p a</span><br><span class="line">$1 = 123</span><br><span class="line">(gdb) p $1 // 等价于 p a</span><br><span class="line">$2 = 123</span><br></pre></td></tr></table></figure>
+
+<p>一些特殊的变量：</p>
+<ul>
+<li><code>$</code>：最近打印的变量</li>
+<li><code>$$</code>：<code>$</code> 之前的变量，倒数第二个</li>
+<li><code>$$n</code>：最后一个变量往前的第 n 个变量，比如 <code>$$0</code> 就是 <code>$</code>， <code>$$1</code> 就是 <code>$$</code></li>
+</ul>
+<p>可以批量打印历史变量：</p>
+<ul>
+<li><code>show values</code>：打印最后 10 个历史变量</li>
+<li><code>show values +</code>：打印刚才打印过的历史变量的后 10 个历史变量</li>
+</ul>
+<h3 id="打印内存-x"><a href="#打印内存-x" class="headerlink" title="打印内存: x"></a>打印内存: <code>x</code></h3><p><code>x</code> 可以查看一个内存地址的值，以指定的格式打印。</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) x/s 0x7ffc734ff250  // 以字符串形式打印</span><br><span class="line">0x7ffc734ff250:	&quot;hello,world&quot;</span><br></pre></td></tr></table></figure>
+
+<p>x 支持的<strong>格式化说明符</strong>：</p>
+<ul>
+<li><p><code>x/c</code>：将地址解释为字符 char，打印为字符</p>
+</li>
+<li><p><code>x/o</code>：使用八进制打印变量</p>
+</li>
+<li><p><code>x/x</code>：使用十六进制打印变量</p>
+</li>
+<li><p><code>x/u</code>：将地址解释为无符号整数 unsigned，使用十进制打印</p>
+</li>
+<li><p><code>x/s</code>：将地址解释为字符串</p>
+</li>
+<li><p><code>help x</code> 查看全部：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">o(octal), x(hex), d(decimal), u(unsigned decimal),</span><br><span class="line">t(binary), f(float), a(address), i(instruction), </span><br><span class="line">c(char), s(string) and z(hex, zero padded on the left)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p><code>x</code> 和 <code>p</code> 的区别：</p>
+<ul>
+<li><p>传入一个数字，<code>p</code> 会当作一个数字字面量，输出原始值的十进制；而 <code>x</code> 会当作一个地址，输出对应内存区域的值。比如：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p 0x10    // 字面量</span><br><span class="line">$1 = 16  	      // 输出十进制值</span><br><span class="line">(gdb) p/x 0x10  // 以十六进制形式输出</span><br><span class="line">$2 = 0x10</span><br><span class="line">  </span><br><span class="line">(gdb) x/s 0x10  // 这个内存地址解释为字符串</span><br><span class="line">0x10 &quot;hello, world&quot;    </span><br><span class="line">(gdb) x/c 0x10  // 把这个地址上的内容解释为单个字符</span><br><span class="line">0x10:	&#x27;h&#x27;</span><br><span class="line">(gdb) x/d 0x10  // 把这个地址上的内容解释为整数</span><br><span class="line">0x10:	104</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>传入一个指针，<code>p</code> 会输出指针的值，即一个十六进制地址；而 <code>x</code> 会输出指针指向的内存区域的值：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">（gdb) p str_pointer;</span><br><span class="line">$1 = 0x7ffc</span><br><span class="line">  </span><br><span class="line">(gdb) x/s 0x7ffc</span><br><span class="line">0x7ffc &quot;hello world&quot;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p><code>x</code> 的完整语法：<code>x/FMT ADDRESS</code>，<code>F</code> &#x2F; <code>M</code> &#x2F; <code>T</code> 是可选的参数。</p>
+<ul>
+<li><code>F</code>：一个数字，表示输出几个内存单元，默认是 1</li>
+<li><code>M</code>：格式化说明符，<code>o</code> &#x2F; <code>x</code> &#x2F; <code>d</code> &#x2F; <code>u</code> &#x2F; <code>s</code> 等</li>
+<li><code>T</code>：一个内存单元的字节数，默认是 4 个字节，可选的是 b(byte), h(halfword), w(word), g(giant, 8 bytes)</li>
+<li><code>ADDRESS</code>：一个内存地址，可以是一个字面量，也可以是一个指针类型的变量</li>
+</ul>
+<blockquote>
+<p>例如，<code>x/3uh 0x1234</code> 表示从内存地址 0x1234 开始，以双字节为单位，输出 3 个无符号整数。</p>
+</blockquote>
+<h3 id="打印类型-ptype"><a href="#打印类型-ptype" class="headerlink" title="打印类型: ptype"></a>打印类型: <code>ptype</code></h3><figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) ptype foo</span><br><span class="line">type = int</span><br></pre></td></tr></table></figure>
+
+<h3 id="存储变量-修改变量的值-set"><a href="#存储变量-修改变量的值-set" class="headerlink" title="存储变量 &#x2F; 修改变量的值: set"></a>存储变量 &#x2F; 修改变量的值: <code>set</code></h3><p><code>set</code> 可以保存一个变量 ，方便后续使用：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">（gdb) set $foo = *object_ptr</span><br></pre></td></tr></table></figure>
+
+<p>查看所有存储的变量：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) show convenience</span><br><span class="line">(gdb) show conv  // 简写形式</span><br></pre></td></tr></table></figure>
+
+<p><code>set</code> 命令也可以用于在运行时修改某个变量的值：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set foo.bar = true</span><br></pre></td></tr></table></figure>
+
+<p>如果没有调试符号，上述命令将无法查找到变量的地址。可以手动修改变量所在的内存位置：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set (char)0x7e864a2b = 1</span><br></pre></td></tr></table></figure>
+
+<p>修改变量值的使用场景：</p>
+<ul>
+<li>临时修复某个 bug，使程序可以继续运行</li>
+<li>给变量设置不同的值，测试不同的 case</li>
+</ul>
+<h3 id="断点调试-b"><a href="#断点调试-b" class="headerlink" title="断点调试: b"></a>断点调试: <code>b</code></h3><h4 id="设置-清除断点"><a href="#设置-清除断点" class="headerlink" title="设置 &#x2F; 清除断点"></a>设置 &#x2F; 清除断点</h4><p>设置断点：<code>break POINT</code>，简写是 <code>b</code></p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) b foo.cpp:14</span><br></pre></td></tr></table></figure>
+
+<p>设置断点的方式有多种：</p>
+<ul>
+<li>在当前执行位置设断点：<code>b</code>，没有任何参数</li>
+<li>函数名：<code>b function</code></li>
+<li>文件名 + 函数名：<code>b filename:function</code></li>
+<li>行号：<code>b linenum</code>，在当前文件设置断点</li>
+<li>文件名 + 行号：<code>b filename:linenum</code>，在特定文件设置断点</li>
+<li>偏移量：<code>b +offset</code> &#x2F; <code>b -offset</code>，在当前栈帧执行位置的前后设置断点</li>
+<li>给汇编命令打断点：略</li>
+</ul>
+<p>删除断点：<code>clear</code></p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) clear foo.cpp:14</span><br></pre></td></tr></table></figure>
+
+<p><code>clear</code> 的语法和 <code>break</code> 相同，需要指定要删除的断点的位置：</p>
+<ul>
+<li><code>clear</code>：删除当前执行位置上的所有断点</li>
+<li><code>clear function</code>、<code>clear filename:function</code></li>
+<li><code>clear linenum</code>、<code>clear filename:linenum</code></li>
+<li><code>delete</code>：删除所有断点，简写是 <code>d</code></li>
+</ul>
+<p>设置临时断点：<code>tbreak</code>。参数同 <code>break</code>，命中一次后就会自动删除。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_28.html">GDB - Setting breakpoints</a></p>
+<p><a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_31.html#SEC32">GDB - Deleting breakpoints</a></p>
+</blockquote>
+<h4 id="停用-启用断点"><a href="#停用-启用断点" class="headerlink" title="停用 &#x2F; 启用断点"></a>停用 &#x2F; 启用断点</h4><p>停用断点：<code>disable</code></p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) disable      // 停用所有断点</span><br><span class="line">(gdb) disable NUM  // 停用编号为 n 的断点</span><br></pre></td></tr></table></figure>
+
+<p>停用断点后，断点将暂时不被触发。可以通过 <code>enable</code> 命令启用断点，语法同 <code>disable</code>。</p>
+<h4 id="继续运行-cont"><a href="#继续运行-cont" class="headerlink" title="继续运行: cont"></a>继续运行: <code>cont</code></h4><p>命中断点后程序会停止运行，此时可以输入 <code>continue</code> 命令，继续运行程序。简写是 <code>cont</code>。</p>
+<h4 id="查看所有断点：i-b"><a href="#查看所有断点：i-b" class="headerlink" title="查看所有断点：i b"></a>查看所有断点：<code>i b</code></h4><figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) i b</span><br><span class="line">(gdb) info breakpoints</span><br></pre></td></tr></table></figure>
+
+<p>这会以表格的形式展示断点编号、是否是临时断点、是否 enable、断点位置等信息。</p>
+<h4 id="在函数返回前中断"><a href="#在函数返回前中断" class="headerlink" title="在函数返回前中断"></a>在函数返回前中断</h4><p>有时候希望在函数返回前中断，从而检查函数的返回值，或者检查函数是在哪一个 <code>return</code> 语句返回的。</p>
+<p>有两种方式。一种是反向调试，先正向执行，直到函数返回，然后再反向执行，设置断点：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(gdb) record</span><br><span class="line">(gdb) fin</span><br><span class="line">(gdb) reverse-step</span><br></pre></td></tr></table></figure>
+
+<p>另一种方式更通用。所有的函数无论有多少条 <code>return</code> 语句，在编译成汇编指令后，一定是只有一条 <code>retq</code> 指令。因此可以在汇编指令里找到 <code>retq</code> 所在位置打断点：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">int main() &#123;</span><br><span class="line">  return foo(0);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">(gdb) disas foo  // 查看汇编</span><br><span class="line">Dump of assembler code for function foo:</span><br><span class="line">   0x0000000000400448 &lt;+0&gt;: push   %rbp</span><br><span class="line">   0x0000000000400449 &lt;+1&gt;: mov    %rsp,%rbp</span><br><span class="line">   ...</span><br><span class="line">   0x0000000000400473 &lt;+43&gt;:    jmp    0x40047c &lt;foo+52&gt;</span><br><span class="line">   0x0000000000400480 &lt;+56&gt;:    retq   // 这里就是函数的返回指令</span><br><span class="line">End of assembler dump.</span><br><span class="line"></span><br><span class="line">(gdb) b *0x0000000000400480  // 在 retq 指令打断点</span><br><span class="line">Breakpoint 1 at 0x400480</span><br><span class="line"></span><br><span class="line">(gdb) r  // 运行程序，直到命中断点</span><br><span class="line">Breakpoint 1, 0x0000000000400480 in foo ()</span><br><span class="line"></span><br><span class="line">(gdb) p var</span><br><span class="line">$1 = 42</span><br></pre></td></tr></table></figure>
+
+<h3 id="监控断点-watch"><a href="#监控断点-watch" class="headerlink" title="监控断点: watch"></a>监控断点: <code>watch</code></h3><p>GDB 可以监控一个变量，直到它被修改时才触发断点：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) watch foo</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) watch bar.var</span><br></pre></td></tr></table></figure>
+
+<p>如果想在变量被读取时中断，可以使用 <code>rwatch</code> 或 <code>awatch</code>：</p>
+<ul>
+<li><code>rwatch</code>：仅当变量被读取时终端</li>
+<li><code>awatch</code>：当变量被读取或写入时中断</li>
+</ul>
+<p>查看所有 watchpoints：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info watchpoints</span><br></pre></td></tr></table></figure>
+
+<p>禁用 &#x2F; 删除 watchpoints 的命令同 <code>break</code>。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_29.html#SEC30">GDB - Setting watchpoints</a></p>
+</blockquote>
+<h3 id="条件断点-b-if"><a href="#条件断点-b-if" class="headerlink" title="条件断点: b ... if"></a>条件断点: <code>b ... if</code></h3><p>常规断点 (breakpoints) 和监控断点 (watchpoints) 都可以绑定一个条件，只在满足条件时才触发断点。</p>
+<p>“条件”是一个布尔表达式：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) b foo.cpp:123 if bar == 1</span><br><span class="line">(gdb) b foo.cpp:123 if bar == 1 &amp;&amp; foo &lt; 2</span><br></pre></td></tr></table></figure>
+
+<p>如果要判断两个字符串是否相等，可以使用 gdb 的内置函数 <code>$_streq</code>：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) b foo.cpp:123 if $_streq(some_str, &quot;hello_world&quot;)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_33.html#SEC34">GDB - Break conditions</a></p>
+</blockquote>
+<h3 id="断点命令列表-commands"><a href="#断点命令列表-commands" class="headerlink" title="断点命令列表: commands"></a>断点命令列表: <code>commands</code></h3><p>可以通过 <code>commands</code> 命令给断点绑定一组自定义命令，当命中断点后会自动执行，如打印变量的值，或者设置另一个断点。</p>
+<p>语法：先指定要绑定的断点编号，然后输入自定义命令，最后以 <code>end</code> 结束。例如：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">（gdb) commands 1</span><br><span class="line">（gdb) p foo</span><br><span class="line">（gdb) end</span><br></pre></td></tr></table></figure>
+
+<p>断点编号可以通过 <code>i b</code> 或 <code>i wat</code> 获取。如果不给 <code>commands</code> 传入任何编号，则默认绑定到最近触发的断点上。</p>
+<p><code>commands</code> 的应用场景之一是收集信息。比如在某行代码后面插入一行 debug 日志，打印变量或调用栈。由于每次命中断点后，必须输入 <code>cond</code> 命令才会继续运行程序，因此可以在 <code>end</code> 前面加一个 <code>cont</code> 命令，这样程序便可以无需干预、自动运行：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">(gdb) b foo.cpp:123</span><br><span class="line">(gdb) commands</span><br><span class="line">(gdb) p bar</span><br><span class="line">(gdb) cont</span><br><span class="line">(gdb) end</span><br></pre></td></tr></table></figure>
+
+<p><code>commands</code> 的另一个应用场景是临时修复一个 bug，以便让程序正常运行。比如在某一行错误代码后面，给变量设置正确的值。同样要以 <code>continue</code> 命令结尾：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">(gdb) b foo.cpp:123</span><br><span class="line">(gdb) commands</span><br><span class="line">(gdb) silent  // 这个命令后面的命令不会有任何输出</span><br><span class="line">(gdb) set x = y + 4</span><br><span class="line">(gdb) cont</span><br><span class="line">(gdb) end</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_34.html#SEC35">GDB - Breakpoint command lists</a></p>
+</blockquote>
+<h3 id="运行程序-n-s-c-fin-u"><a href="#运行程序-n-s-c-fin-u" class="headerlink" title="运行程序: n &#x2F; s &#x2F; c &#x2F; fin &#x2F; u"></a>运行程序: <code>n</code> &#x2F; <code>s</code> &#x2F; <code>c</code> &#x2F; <code>fin</code> &#x2F; <code>u</code></h3><ul>
+<li><code>run</code> &#x2F; <code>r</code>：运行程序，直到遇到第一个断点或者运行结束</li>
+<li><code>start</code>：启动程序，临时停在 main() 的第一行</li>
+<li><code>next</code> &#x2F; <code>n</code>：逐行执行，如果某一行是函数，不会进入到函数里，而是会执行完整个函数 (step over)</li>
+<li><code>step</code> &#x2F; <code>s</code>：逐行执行，如果某一行是函数，会进入到函数的第一行 (step into)</li>
+<li><code>continue</code> &#x2F; <code>c</code>：从断点位置继续执行，直到遇到下一个断点或者运行结束</li>
+<li><code>finish</code> &#x2F; <code>fin</code>：执行到函数结束，停在 return 后的下一条语句</li>
+<li><code>until</code> &#x2F; <code>u</code> :<ul>
+<li>不加任何参数：执行直到当前语句结束，比如在 for loop 里 <code>until</code> 会跳到 for 循环体的下一行</li>
+<li>加参数：执行直到特定位置，参数的语法同 <code>break</code>，等价于 <code>tbreak</code> + <code>continue</code></li>
+</ul>
+</li>
+<li><code>quit</code> &#x2F; <code>q</code>：退出 GDB</li>
+</ul>
+<p>直接回车会重复上一次执行的命令，所以在单步跟踪的时候，无论是 <code>s</code> 还是 n 都可以连续敲回车继续执行。</p>
+<h3 id="输出日志-set-logging"><a href="#输出日志-set-logging" class="headerlink" title="输出日志: set logging"></a>输出日志: <code>set logging</code></h3><p>可以把 GDB 的所有输出打印到日志里，作进一步分析。</p>
+<p>需要执行这两个命令：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set logging file gdb.txt</span><br><span class="line">(gdb) set logging on</span><br><span class="line">copying output to gdb.txt</span><br></pre></td></tr></table></figure>
+
+<p>这样任何命令的输出便会写到 <code>gdb.txt</code>，前提是 shell 拥有该文件的写入权限。</p>
+<p>配合以下命令，确保输出完整内容：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">set print repeats 0       // 否则相同的连续字符会被合并</span><br><span class="line">set print elements 0      // 否则过长的数组会被省略</span><br><span class="line">set height 0              // 否则如果一页显示不完，会停下来要求 continue</span><br><span class="line">set width 0  </span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>掌握上面这些命令，就能够满足日常的使用了，在代码调试的过程一点要习惯使用 GDB 而不是打印输出，因为 GDB 能够极大的提高效率，更容易发现隐藏的 bug。</p>
 
     </div>
 
@@ -302,6 +681,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Hello-World"><span class="nav-number">1.</span> <span class="nav-text">Hello World</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85GDB"><span class="nav-number">1.1.</span> <span class="nav-text">安装GDB</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-GDB"><span class="nav-number">1.2.</span> <span class="nav-text">使用 GDB</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E7%9A%84%E7%AE%80%E5%86%99%E5%BD%A2%E5%BC%8F"><span class="nav-number">1.3.</span> <span class="nav-text">命令的简写形式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E7%9A%84%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">1.4.</span> <span class="nav-text">命令的适用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Core-Dump"><span class="nav-number">1.4.1.</span> <span class="nav-text">Core Dump</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Core-Dump-Settings"><span class="nav-number">1.4.2.</span> <span class="nav-text">Core Dump Settings</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%AE%E5%8A%A9%E5%92%8C%E6%9C%AF%E8%AF%AD"><span class="nav-number">1.5.</span> <span class="nav-text">帮助和术语</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E5%91%BD%E4%BB%A4"><span class="nav-number">2.</span> <span class="nav-text">基本命令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E7%BA%BF%E7%A8%8B-t"><span class="nav-number">2.1.</span> <span class="nav-text">选择线程: t</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E5%A0%86%E6%A0%88-bt"><span class="nav-number">2.2.</span> <span class="nav-text">查看堆栈: bt</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E6%A0%88%E5%B8%A7-f"><span class="nav-number">2.3.</span> <span class="nav-text">选择栈帧: f</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%93%E5%8D%B0%E5%90%84%E7%A7%8D%E4%BF%A1%E6%81%AF-i"><span class="nav-number">2.4.</span> <span class="nav-text">打印各种信息: i</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%93%E5%8D%B0%E5%8F%98%E9%87%8F-p"><span class="nav-number">2.5.</span> <span class="nav-text">打印变量: p</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8"><span class="nav-number">2.5.1.</span> <span class="nav-text">基本使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%93%E5%8D%B0%E6%8C%87%E9%92%88"><span class="nav-number">2.5.2.</span> <span class="nav-text">打印指针</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%8C%87%E9%92%88%E5%8F%98%E9%87%8F"><span class="nav-number">2.5.2.1.</span> <span class="nav-text">指针变量</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%9C%B0%E5%9D%80%E5%AD%97%E9%9D%A2%E9%87%8F"><span class="nav-number">2.5.2.2.</span> <span class="nav-text">地址字面量</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%BD%AC%E6%8D%A2%E6%8C%87%E9%92%88%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.5.2.3.</span> <span class="nav-text">转换指针类型</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%89%93%E5%8D%B0%E7%BB%93%E6%9E%84%E4%BD%93%E7%9A%84%E5%AD%97%E6%AE%B5"><span class="nav-number">2.5.2.4.</span> <span class="nav-text">打印结构体的字段</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%93%E5%8D%B0%E6%95%B0%E7%BB%84"><span class="nav-number">2.5.3.</span> <span class="nav-text">打印数组</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%A0%88%E4%B8%8A%E6%95%B0%E7%BB%84"><span class="nav-number">2.5.3.1.</span> <span class="nav-text">栈上数组</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%A0%86%E4%B8%8A%E6%95%B0%E7%BB%84"><span class="nav-number">2.5.3.2.</span> <span class="nav-text">堆上数组</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%BC%E5%BC%8F%E5%8C%96%E8%BE%93%E5%87%BA"><span class="nav-number">2.5.4.</span> <span class="nav-text">格式化输出</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E5%8E%86%E5%8F%B2%E5%8F%98%E9%87%8F"><span class="nav-number">2.5.5.</span> <span class="nav-text">查看历史变量</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%93%E5%8D%B0%E5%86%85%E5%AD%98-x"><span class="nav-number">2.6.</span> <span class="nav-text">打印内存: x</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%93%E5%8D%B0%E7%B1%BB%E5%9E%8B-ptype"><span class="nav-number">2.7.</span> <span class="nav-text">打印类型: ptype</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E5%8F%98%E9%87%8F-%E4%BF%AE%E6%94%B9%E5%8F%98%E9%87%8F%E7%9A%84%E5%80%BC-set"><span class="nav-number">2.8.</span> <span class="nav-text">存储变量 &#x2F; 修改变量的值: set</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95-b"><span class="nav-number">2.9.</span> <span class="nav-text">断点调试: b</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE-%E6%B8%85%E9%99%A4%E6%96%AD%E7%82%B9"><span class="nav-number">2.9.1.</span> <span class="nav-text">设置 &#x2F; 清除断点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%81%9C%E7%94%A8-%E5%90%AF%E7%94%A8%E6%96%AD%E7%82%B9"><span class="nav-number">2.9.2.</span> <span class="nav-text">停用 &#x2F; 启用断点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BB%A7%E7%BB%AD%E8%BF%90%E8%A1%8C-cont"><span class="nav-number">2.9.3.</span> <span class="nav-text">继续运行: cont</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E6%89%80%E6%9C%89%E6%96%AD%E7%82%B9%EF%BC%9Ai-b"><span class="nav-number">2.9.4.</span> <span class="nav-text">查看所有断点：i b</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9C%A8%E5%87%BD%E6%95%B0%E8%BF%94%E5%9B%9E%E5%89%8D%E4%B8%AD%E6%96%AD"><span class="nav-number">2.9.5.</span> <span class="nav-text">在函数返回前中断</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%91%E6%8E%A7%E6%96%AD%E7%82%B9-watch"><span class="nav-number">2.10.</span> <span class="nav-text">监控断点: watch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9D%A1%E4%BB%B6%E6%96%AD%E7%82%B9-b-if"><span class="nav-number">2.11.</span> <span class="nav-text">条件断点: b ... if</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%AD%E7%82%B9%E5%91%BD%E4%BB%A4%E5%88%97%E8%A1%A8-commands"><span class="nav-number">2.12.</span> <span class="nav-text">断点命令列表: commands</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E7%A8%8B%E5%BA%8F-n-s-c-fin-u"><span class="nav-number">2.13.</span> <span class="nav-text">运行程序: n &#x2F; s &#x2F; c &#x2F; fin &#x2F; u</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%93%E5%87%BA%E6%97%A5%E5%BF%97-set-logging"><span class="nav-number">2.14.</span> <span class="nav-text">输出日志: set logging</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -317,7 +697,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-count">39</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -328,7 +708,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
