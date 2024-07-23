@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前面的文章已经完成了 mqtt 协议所规定的所有报文的发送与接收功能，但是为了适应较差的网络环境，mqtt 协议还规定了断开连接后的网络重连功能。此外，为了满足 QoS1 和 QoS2 的通信要求，mqtt 也对消息的超时重发进行了规定。这篇文章，我们的主题就是实现网络重连和消息超时重发功能，也是 mqtt 协议入门系列的最后一篇文章。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【计算机网络】mqtt通信协议入门（十二）网络重连和消息重发实战">
+<meta property="og:url" content="http://example.com/2024/02/02/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%E6%B6%88%E6%81%AF%E9%87%8D%E5%8F%91/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="前面的文章已经完成了 mqtt 协议所规定的所有报文的发送与接收功能，但是为了适应较差的网络环境，mqtt 协议还规定了断开连接后的网络重连功能。此外，为了满足 QoS1 和 QoS2 的通信要求，mqtt 也对消息的超时重发进行了规定。这篇文章，我们的主题就是实现网络重连和消息超时重发功能，也是 mqtt 协议入门系列的最后一篇文章。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-02-02T13:32:42.000Z">
+<meta property="article:modified_time" content="2024-07-23T08:46:35.419Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2024/02/02/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%E6%B6%88%E6%81%AF%E9%87%8D%E5%8F%91/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【计算机网络】mqtt通信协议入门（十二）网络重连和消息重发实战 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/02/02/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%E6%B6%88%E6%81%AF%E9%87%8D%E5%8F%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【计算机网络】mqtt通信协议入门（十二）网络重连和消息重发实战
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-02-02 21:32:42" itemprop="dateCreated datePublished" datetime="2024-02-02T21:32:42+08:00">2024-02-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>前面的文章已经完成了 mqtt 协议所规定的所有报文的发送与接收功能，但是为了适应较差的网络环境，mqtt 协议还规定了断开连接后的网络重连功能。此外，为了满足 QoS1 和 QoS2 的通信要求，mqtt 也对消息的超时重发进行了规定。这篇文章，我们的主题就是实现网络重连和消息超时重发功能，也是 mqtt 协议入门系列的最后一篇文章。</p>
+<span id="more"></span>
+
+<h2 id="消息分发重试"><a href="#消息分发重试" class="headerlink" title="消息分发重试"></a>消息分发重试</h2><h3 id="mqtt-协议规定"><a href="#mqtt-协议规定" class="headerlink" title="mqtt 协议规定"></a>mqtt 协议规定</h3><p>在 mqtt 协议的规定中，有如下描述：</p>
+<blockquote>
+<p>客户端设置清理会话（CleanSession）标志为 0 重连时，客户端和服务端必须使用原始的报文标识符重发 任何未确认的 PUBLISH 报文（如果 QoS&gt;0）和 PUBREL 报文 。这是唯一要求客户端或 服务端重发消息的情况。</p>
+</blockquote>
+<p>从中我们可知，客户端需要在下面三种情况下进行消息重发操作：</p>
+<p>1、QoS1 服务质量的 PUBLISH 报文，在等待 PUBACK 时超时</p>
+<p>2、QoS2 服务质量的 PUBLISH 报文，在等待 PUBREC 时超时</p>
+<p>3、QoS2 服务质量的 PUBREC 报文，在等待 PUBREL 时超时</p>
+<p>4、QoS2 服务质量的 PUBREL 报文，在等待 PUBCOMP 时超时</p>
+<h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><p>显然，我们需要做的就是修改这些报文在超时情况下的处理，但是在这之前，我们需要有地方保存需要重发的报文。稍微分析一下可知，我们需要在扫描 ack 等待队列时处理超时情况，那么在等待队列实体 <code>ack_wait_entry</code> 中添加待重发的报文最合适不过了，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ack_wait_entry</span> &#123;</span></span><br><span class="line">		...</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">int</span> resend_len;</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">char</span> *resend_buf;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>两个成员分别代表序列化后的待发报文，以及报文长度。</p>
+<p>在扫描链表时，对超时等待的处理会有所不同，直接看代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">ack_wait_scan</span><span class="params">(<span class="keyword">struct</span> mqtt_session *session)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> *<span class="title">cur</span>, *<span class="title">next</span>;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">ack_wait_entry</span> *<span class="title">entry</span>;</span></span><br><span class="line"></span><br><span class="line">        list_for_each_safe(cur, next, &amp;session-&gt;wait_ack_list) &#123;</span><br><span class="line">                entry = list_entry(cur, <span class="keyword">struct</span> ack_wait_entry, <span class="built_in">list</span>);</span><br><span class="line">                <span class="class"><span class="keyword">enum</span> <span class="title">type</span> <span class="title">type</span> =</span> entry-&gt;type;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (timer_is_expired(&amp;entry-&gt;timer)) &#123;</span><br><span class="line">                        <span class="keyword">switch</span> (type) &#123;</span><br><span class="line">                        <span class="keyword">case</span> PUBACK:</span><br><span class="line">                        <span class="keyword">case</span> PUBREC:</span><br><span class="line">                        <span class="keyword">case</span> PUBREL:</span><br><span class="line">                        <span class="keyword">case</span> PUBCOMP:</span><br><span class="line">                                try_to_resend(session, entry);</span><br><span class="line">                                <span class="keyword">break</span>;</span><br><span class="line">                        <span class="keyword">default</span>:</span><br><span class="line">                                list_del(cur);</span><br><span class="line">                                timer_destory(&amp;entry-&gt;timer);</span><br><span class="line">                                memory_free(entry);</span><br><span class="line">                        &#125;</span><br><span class="line">                &#125;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于上面提到的四种报文，我们会尝试重新发送，其余的报文如果超时，那么直接删除。<code>try_to_resend</code> 函数如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">try_to_resend</span><span class="params">(<span class="keyword">struct</span> mqtt_session *session, <span class="keyword">struct</span> ack_wait_entry *ack_entry)</span></span><br><span class="line">&#123;</span><br><span class="line">        DECLARE_TIMER(resend_timer);</span><br><span class="line">        timer_cutoff(&amp;resend_timer, session-&gt;net_timeout);</span><br><span class="line">        timer_cutoff(&amp;ack_entry-&gt;timer, session-&gt;net_timeout);</span><br><span class="line"></span><br><span class="line">        mutex_lock(&amp;session-&gt;write_lock);</span><br><span class="line">        <span class="built_in">memcpy</span>(session-&gt;write_buf, ack_entry-&gt;resend_buf, ack_entry-&gt;resend_len);  </span><br><span class="line">        </span><br><span class="line">        mqtt_send_packet(session, ack_entry-&gt;resend_len, &amp;resend_timer);     </span><br><span class="line">        mutex_unlock(&amp;session-&gt;write_lock);</span><br><span class="line">    	timer_destory(&amp;resend_timer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>主要是修改等待实体的等待时间，获取到等待实体对应的重发报文，最后重新发送即可。</p>
+<p>剩下的工作就是在发送上面各个报文时，将待发送的序列化报文备份一份到 <code>ack_wait_entry</code> 即可。因为所有的等待实体都是通过函数 <code>ack_wait_list_add</code> 添加到等待队列的，所以我们要修改此函数，原来的参数列表以及不能满足要求，需要新添加一个参数表示序列化的报文长度，修改后的函数如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">ack_wait_list_add</span><span class="params">(<span class="keyword">struct</span> mqtt_session *session, <span class="keyword">enum</span> type t, <span class="type">unsigned</span> <span class="type">short</span> packet_id, <span class="keyword">struct</span> msg_wait_entry *msg_entry, <span class="type">unsigned</span> <span class="type">int</span> packet_len)</span></span><br><span class="line">&#123;		</span><br><span class="line">		...</span><br><span class="line">    	<span class="comment">/* 申请新的空间并备份 待发送缓冲区 */</span></span><br><span class="line">        resend_buf = memory_alloc(packet_len);</span><br><span class="line">        <span class="keyword">if</span> (!resend_buf)</span><br><span class="line">                <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">        <span class="built_in">memcpy</span>(resend_buf, session-&gt;write_buf, packet_len);</span><br><span class="line">        </span><br><span class="line">		...</span><br><span class="line">        <span class="comment">/* 初始化 */</span></span><br><span class="line">        entry-&gt;resend_len = packet_len;</span><br><span class="line">        entry-&gt;resend_buf = resend_buf;</span><br><span class="line">        list_add(&amp;entry-&gt;<span class="built_in">list</span>, &amp;session-&gt;wait_ack_list);</span><br><span class="line">    	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，为了阻止内存泄漏，需要在移除等待实体时，释放申请的空间：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ack_entry_free:</span><br><span class="line">        timer_destory(&amp;ack_entry-&gt;timer);</span><br><span class="line">        memory_free(ack_entry-&gt;resend_buf);</span><br><span class="line">        memory_free(ack_entry);</span><br></pre></td></tr></table></figure>
+
+<p>项目中涉及释放 <code>ack_wait_entry</code> 实体空间时，都需要按照此方式释放。</p>
+<h3 id="互斥访问"><a href="#互斥访问" class="headerlink" title="互斥访问"></a>互斥访问</h3><p>最后的最后，在调用 <code>ack_wait_list_add</code> 将等待实体加入到队列中时，要确保 该函数在 互斥锁的保护中进行，因为在未修改这个函数之前，它不会访问缓冲区，但是修改后会访问，所以我们需要将其保护起来。下面以 PUBLISH 的 QoS1 和 QoS2 发布为例：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line"><span class="comment">/* 先添加到等待队列 */</span></span><br><span class="line"><span class="keyword">if</span> (qos == QoS1) &#123;</span><br><span class="line">	retval = ack_wait_list_add(session, PUBACK, packet_id, <span class="literal">NULL</span>, packet_len);</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (qos == QoS2) &#123;</span><br><span class="line">	retval = ack_wait_list_add(session, PUBREC, packet_id, <span class="literal">NULL</span>, packet_len);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* 再释放互斥锁 */</span></span><br><span class="line">mutex_unlock(&amp;session-&gt;write_lock);</span><br></pre></td></tr></table></figure>
+
+<h2 id="超时重连"><a href="#超时重连" class="headerlink" title="超时重连"></a>超时重连</h2><p>当超过一定时间没有收到 或者 发送报文时，session 中的两个计时器会过期，并将 session 的状态设置为 无效状态。同时，线程会循环检测 session 的状态，一旦其断开连接，就尝试重连：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (get_session_state(session) != SESSION_CONNECTED) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;ack_handler thread: mqtt is not connected, reconnecting\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (try_to_reconnect(session) &gt; <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        thread_stop(session-&gt;thread);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    handle_ack(session, &amp;thread_timer);</span><br><span class="line">    debug_dump_ack_wait_list(session);</span><br><span class="line">    debug_dump_msg_wait_list(session);</span><br><span class="line">    ack_wait_scan(session);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>为了限制重连的尝试时间，需要在 session 中指定一个新的字段：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mqtt_session</span> &#123;</span></span><br><span class="line">		...</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">int</span> try_reconn_timeout;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>尝试重连的函数实现如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">try_to_reconnect</span><span class="params">(<span class="keyword">struct</span> mqtt_session *session)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line">        DECLARE_TIMER(timer);</span><br><span class="line">		</span><br><span class="line">    	<span class="comment">/* 设置重连计时器 */</span></span><br><span class="line">        timer_init(&amp;timer);</span><br><span class="line">        timer_cutoff(&amp;timer, session-&gt;try_reconn_timeout);</span><br><span class="line">		</span><br><span class="line">    	<span class="comment">/* 尝试重连 */</span></span><br><span class="line">        <span class="keyword">do</span> &#123;</span><br><span class="line">                retval = mqtt_connect(session);</span><br><span class="line">        &#125; <span class="keyword">while</span> (!timer_is_expired(&amp;timer) &amp;&amp; get_session_state(session) != SESSION_CONNECTED);</span><br><span class="line">		</span><br><span class="line">    	<span class="comment">/* 重连后重新订阅报文 */</span></span><br><span class="line">        <span class="keyword">if</span> (get_session_state(session) == SESSION_CONNECTED)</span><br><span class="line">                try_to_resubscribe(session);</span><br><span class="line"></span><br><span class="line">        timer_destory(&amp;timer);</span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="重新订阅报文"><a href="#重新订阅报文" class="headerlink" title="重新订阅报文"></a>重新订阅报文</h3><p>最后，看看重连后重新订阅报文的函数实现，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">try_to_resubscribe</span><span class="params">(<span class="keyword">struct</span> mqtt_session *session)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> *<span class="title">cur</span>, *<span class="title">next</span>;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">msg_wait_entry</span> *<span class="title">entry</span>;</span></span><br><span class="line">		</span><br><span class="line">        <span class="keyword">if</span> (list_empty(&amp;session-&gt;wait_msg_list))</span><br><span class="line">                <span class="keyword">return</span> retval;</span><br><span class="line">		</span><br><span class="line">    	<span class="comment">/* 遍历 msg_wait_list 消息处理链表 */</span></span><br><span class="line">        list_for_each_safe(cur, next, &amp;session-&gt;wait_msg_list) &#123;</span><br><span class="line">                entry = list_entry(cur, <span class="keyword">struct</span> msg_wait_entry, <span class="built_in">list</span>);</span><br><span class="line">					</span><br><span class="line">            	<span class="comment">/* 获取主题过滤器 */</span></span><br><span class="line">                <span class="type">msg_handler_t</span> handler = entry-&gt;msg_handler;</span><br><span class="line">                <span class="class"><span class="keyword">struct</span> <span class="title">topic_filter_t</span> <span class="title">tf</span> =</span> &#123;</span><br><span class="line">                        .filter = entry-&gt;topic_filter,</span><br><span class="line">                        .qos = tf.qos</span><br><span class="line">                &#125;;                 </span><br><span class="line">				</span><br><span class="line">            	<span class="comment">/* 重新订阅主题 */</span></span><br><span class="line">                retval = mqtt_subscribe(session, &amp;tf, handler);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>有时间会将整个项目进行一个总结，未完待续……</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/network/" rel="tag"># network</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/01/18/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%B8%80%EF%BC%89QoS1%E5%8F%91%E5%B8%83%E4%B8%8E%E6%8E%A5%E6%94%B6/" rel="prev" title="【计算机网络】mqtt通信协议入门（十一）QoS1 & QoS2 消息收发实战">
+      <i class="fa fa-chevron-left"></i> 【计算机网络】mqtt通信协议入门（十一）QoS1 & QoS2 消息收发实战
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/07/11/%E6%89%93%E5%BC%80%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6-%E4%BB%8E%E5%BA%94%E7%94%A8%E5%88%B0%E5%86%85%E6%A0%B8/" rel="next" title="【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？">
+      【经典问题】在 Linux 上打开一个字符设备文件会经历哪些过程？ <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E5%88%86%E5%8F%91%E9%87%8D%E8%AF%95"><span class="nav-number">1.</span> <span class="nav-text">消息分发重试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#mqtt-%E5%8D%8F%E8%AE%AE%E8%A7%84%E5%AE%9A"><span class="nav-number">1.1.</span> <span class="nav-text">mqtt 协议规定</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.2.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%92%E6%96%A5%E8%AE%BF%E9%97%AE"><span class="nav-number">1.3.</span> <span class="nav-text">互斥访问</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B6%85%E6%97%B6%E9%87%8D%E8%BF%9E"><span class="nav-number">2.</span> <span class="nav-text">超时重连</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8D%E6%96%B0%E8%AE%A2%E9%98%85%E6%8A%A5%E6%96%87"><span class="nav-number">2.1.</span> <span class="nav-text">重新订阅报文</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">40</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
