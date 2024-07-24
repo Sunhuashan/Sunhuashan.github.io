@@ -300,6 +300,80 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/02/27/ivshmem%EF%BC%88%E4%B8%80%EF%BC%89%E5%9F%BA%E4%BA%8E%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E7%9A%84%E8%99%9A%E6%8B%9F%E6%9C%BA%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/02/27/ivshmem%EF%BC%88%E4%B8%80%EF%BC%89%E5%9F%BA%E4%BA%8E%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E7%9A%84%E8%99%9A%E6%8B%9F%E6%9C%BA%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" class="post-title-link" itemprop="url">ivshmem（一）基于共享内存的虚拟机通信方式</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-02-27 18:47:06" itemprop="dateCreated datePublished" datetime="2024-02-27T18:47:06+08:00">2024-02-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%99%9A%E6%8B%9F%E5%8C%96/" itemprop="url" rel="index"><span itemprop="name">虚拟化</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>ivshmem（Inter-VM shared memory device）是QEMU提供的一种宿主机与虚拟机之间或多个虚拟机之间共享内存的特殊设备。这种设备在虚拟机内部表现为PCI设备，共享的内存区域则以 PCI BAR 的形式存在。最近项目需要基于 ivshmem 实现一个虚拟机之间的通信，这里记录一下自己从零学习的过程。这篇文章我们先从上层角度看看在虚拟机内部如何识别和使用 ivshmem。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/02/27/ivshmem%EF%BC%88%E4%B8%80%EF%BC%89%E5%9F%BA%E4%BA%8E%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E7%9A%84%E8%99%9A%E6%8B%9F%E6%9C%BA%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2024/02/02/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E5%8D%81%E4%BA%8C%EF%BC%89%E6%B6%88%E6%81%AF%E9%87%8D%E5%8F%91/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -814,84 +888,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/23/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/11/23/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/" class="post-title-link" itemprop="url">【计算机网络】mqtt 通信协议入门（六）连接服务器实战-调试运行与 tcpdump 抓包分析</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-11-23 21:01:43" itemprop="dateCreated datePublished" datetime="2023-11-23T21:01:43+08:00">2023-11-23</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">网络原理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>前面的文章中已经为 ”连接服务器“ 这一任务做好了足够的铺垫，这篇文章，我们在之前的基础上会构建一个简单的测试程序 和 Makefile 文件来编译程序，并让它成功运行起来。最后，为了验证我们的程序是不是真正的完成了要求的功能，我们还会使用 tcpdump 进行抓包验证。在这个过程中，代码出现 bug 时，我们使用 gdb 来进行调试和解决。下面让我们开始吧！</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/11/23/%E7%BD%91%E7%BB%9C-mqtt%E5%AE%9E%E6%88%98%EF%BC%88%E4%BA%94%EF%BC%89%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -959,18 +959,18 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">40</span>
+          <span class="site-state-item-count">41</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">13</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
