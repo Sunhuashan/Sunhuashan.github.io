@@ -157,6 +157,154 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/17/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/17/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/" class="post-title-link" itemprop="url">【驱动开发】Linux 驱动开发入门（二） 内核模块</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-17 17:34:09" itemprop="dateCreated datePublished" datetime="2023-03-17T17:34:09+08:00">2023-03-17</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" itemprop="url" rel="index"><span itemprop="name">字符设备驱动</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在操作系统的组成方式上，一直有宏内核与微内核之间的争论，除了这两种方式，还有其他解决办法吗？Linux 给出了答案，那就是”使用模块“。模块允许内核在运行时动态地向其中插入或从中删除代码，无需重新编译整个内核并重新引导系统，可以方便地扩展内核的功能。在驱动开发中，设备驱动程序都是由一个个模块构成的，在我们开始编写驱动前，先看看内核模块是如何使用的吧。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/03/17/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A8%A1%E5%9D%97/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/03/12/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A6%82%E8%BF%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/12/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A6%82%E8%BF%B0/" class="post-title-link" itemprop="url">【驱动开发】Linux 驱动开发入门（一） 概述</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-03-12 18:56:05" itemprop="dateCreated datePublished" datetime="2023-03-12T18:56:05+08:00">2023-03-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" itemprop="url" rel="index"><span itemprop="name">字符设备驱动</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>目前打算写一下 Linux 驱动开发入门系列的博客，一方面是为了方便日后复习，另一方面也是希望能够捋顺一下自己的思路。这是此系列的第一篇文章，目的是简单概述一下驱动程序在 Linux 内核中扮演的角色。后续文章计划从字符设备驱动框架、设备树、pinctrl 和 GPIO 子系统、IO模型、内核锁机制、中断等几个主题梳理字符驱动程序的编写方法。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/03/12/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-%E6%A6%82%E8%BF%B0/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2023/01/05/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E9%98%BB%E5%A1%9E%E3%80%81%E9%9D%9E%E9%98%BB%E5%A1%9E%E3%80%81%E5%90%8C%E6%AD%A5%E3%80%81%E5%BC%82%E6%AD%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1078,240 +1226,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/" class="post-title-link" itemprop="url">【Linux命令】Linux-05-关机重启命令及用户管理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-09-16 21:47:12" itemprop="dateCreated datePublished" datetime="2022-09-16T21:47:12+08:00">2022-09-16</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="关机-重启命令"><a href="#关机-重启命令" class="headerlink" title="关机&amp;重启命令"></a>关机&amp;重启命令</h3><ul>
-<li><p>关闭系统</p>
-<ul>
-<li><p>shutdown -h now </p>
-<p>立刻进行关机</p>
-</li>
-<li><p>shutdown -h 1 “hello everyone ,一分钟后关机”</p>
-<p>1分钟后关机并通知所有登陆到该系统的用户</p>
-</li>
-<li><p>shutdown -r now</p>
-<p>立刻重启计算机</p>
-</li>
-<li><p>halt</p>
-<p>关机，作用与”shutdown”相同</p>
-</li>
-<li><p>reboot</p>
-<p>立刻重启计算机</p>
-</li>
-<li><p>sync</p>
-<p>把内存数据写入到磁盘，一般在关机或重启前要执行</p>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="用户注销与登录"><a href="#用户注销与登录" class="headerlink" title="用户注销与登录"></a>用户注销与登录</h3><ul>
-<li><p>su - 用户名</p>
-<p>用户切换</p>
-<p><img src="/%E7%94%A8%E6%88%B7%E5%88%87%E6%8D%A2.png"></p>
-</li>
-<li><p>logout（在图形化界面无效，在运行级别3有效）</p>
-<p>注销当前用户</p>
-</li>
-</ul>
-<h3 id="用户管理"><a href="#用户管理" class="headerlink" title="用户管理"></a>用户管理</h3><ul>
-<li><p>uesradd 用户名</p>
-<p>添加用户</p>
-</li>
-<li><p>useradd -d 指定目录 用户名</p>
-<p>添加用户并指定用户目录</p>
-</li>
-<li><p>passwd 用户名 </p>
-<p>为指定用户修改密码</p>
-</li>
-<li><p>pwd</p>
-<p>显示当前所在目录</p>
-</li>
-<li><p>userdel 用户名</p>
-<p>删除用户账号，但是保留用户的目录</p>
-</li>
-<li><p>userdel -r 用户名（谨慎使用）</p>
-<p>删除用户账号以及用户的目录</p>
-</li>
-<li><p>id 用户名</p>
-<p>查询用户信息（用户id，组id，用户组id）</p>
-</li>
-<li><p>whoami&#x2F;who am i</p>
-<p>查询当前用户</p>
-</li>
-</ul>
-<h5 id="用户组"><a href="#用户组" class="headerlink" title="用户组"></a>用户组</h5><p>类似于角色，系统对有共性（权限）的多个用户进行统一管理</p>
-<ul>
-<li><p>groupadd 组名</p>
-<p>添加用户组</p>
-</li>
-<li><p>groupdel 组名</p>
-<p>删除用户组</p>
-</li>
-<li><p>useradd -g 用户组名 用户名</p>
-<p>添加用户至指定组</p>
-</li>
-<li><p>usermod -g 用户组名 用户名</p>
-<p>修改用户所在的用户组</p>
-</li>
-</ul>
-<h5 id="用户和组的相关文件"><a href="#用户和组的相关文件" class="headerlink" title="用户和组的相关文件"></a>用户和组的相关文件</h5><ul>
-<li><p>&#x2F;etc&#x2F;passwd 文件（用户信息配置文件）</p>
-<p>格式  用户名：口令：uid：gid：注释性描述：主目录：登陆shell</p>
-</li>
-<li><p>&#x2F;etc&#x2F;shadow文件（口令配置文件）</p>
-<p>格式  登录名：加密口令：最后一次修改时间：最小时间间隔：最大时间间隔：警告时间：不活动时间：失效时间：标志</p>
-</li>
-<li><p>&#x2F;etc&#x2F;group文件 （组配置文件）</p>
-<p>格式 组名：口令：组标识号：组内用户列表</p>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/16/Linux-04-vim/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/09/16/Linux-04-vim/" class="post-title-link" itemprop="url">【Linux命令】Linux-04-vim</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-09-16 20:59:14" itemprop="dateCreated datePublished" datetime="2022-09-16T20:59:14+08:00">2022-09-16</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ul>
-<li><p>vim的模式及切换</p>
-<p><img src="/%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2.png"></p>
-</li>
-<li><p>快捷键的使用</p>
-<ul>
-<li><p>拷贝&#x2F;粘贴（一般模式）</p>
-<p>拷贝当前行：yy</p>
-<p>拷贝当前行至下5行：5yy</p>
-<p>粘贴：p</p>
-</li>
-<li><p>删除（一般模式）</p>
-<p>删除当前行：dd</p>
-<p>删除当前行至下5行：5dd</p>
-</li>
-<li><p>查找（&#x2F;命令行模式）</p>
-<p>输入 ”&#x2F;“ 进入命令行模式，输入要查找的内容，按”n”切换匹配结果</p>
-</li>
-<li><p>设置&#x2F;取消文件行号（:命令行模式）</p>
-<p>设置行号：set nu</p>
-<p>取消行号：set nonu</p>
-</li>
-<li><p>到达文件末行和首行(一般模式)</p>
-<p>到达文件末行：G</p>
-<p>到达文件首行：gg</p>
-</li>
-<li><p>撤销（一般模式）</p>
-<p>撤销最新的动作：u</p>
-</li>
-<li><p>移动光标至指定行（一般模式）</p>
-<p>光标移动到第23行：23G</p>
-</li>
-</ul>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1383,18 +1297,18 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">41</span>
+          <span class="site-state-item-count">43</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">9</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-count">14</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

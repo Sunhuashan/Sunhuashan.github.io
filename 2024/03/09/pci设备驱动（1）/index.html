@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="PCI 总线是目前应用最广泛的计算机总线标准，而且是一种兼容性最强，功能最全的计算机总线。最近需要编写 PCI 设备相关的驱动，这里记录下学习过程，主要会涉及 PCI 总线的拓扑结构，驱动编写的要点等，后续有时间会深入分析源码。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【设备驱动】PCI 设备驱动程序（一）PCI 总线与驱动概述">
+<meta property="og:url" content="http://example.com/2024/03/09/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="PCI 总线是目前应用最广泛的计算机总线标准，而且是一种兼容性最强，功能最全的计算机总线。最近需要编写 PCI 设备相关的驱动，这里记录下学习过程，主要会涉及 PCI 总线的拓扑结构，驱动编写的要点等，后续有时间会深入分析源码。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/image-20240724143217323.png">
+<meta property="og:image" content="http://example.com/imgs/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/image-20240724144201545.png">
+<meta property="og:image" content="http://example.com/imgs/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/image-20240724150840915.png">
+<meta property="article:published_time" content="2024-03-09T12:08:16.000Z">
+<meta property="article:modified_time" content="2024-07-25T06:43:20.134Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="pci linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/image-20240724143217323.png">
+
+<link rel="canonical" href="http://example.com/2024/03/09/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【设备驱动】PCI 设备驱动程序（一）PCI 总线与驱动概述 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/03/09/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【设备驱动】PCI 设备驱动程序（一）PCI 总线与驱动概述
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-03-09 20:08:16" itemprop="dateCreated datePublished" datetime="2024-03-09T20:08:16+08:00">2024-03-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">驱动开发</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>PCI 总线是目前应用最广泛的计算机总线标准，而且是一种兼容性最强，功能最全的计算机总线。最近需要编写 PCI 设备相关的驱动，这里记录下学习过程，主要会涉及 PCI 总线的拓扑结构，驱动编写的要点等，后续有时间会深入分析源码。</p>
+<span id="more"></span>
+
+<h2 id="驱动概述"><a href="#驱动概述" class="headerlink" title="驱动概述"></a>驱动概述</h2><p>应用程序位于用户空间，驱动程序位于内核空间。linux系统规定，用户空间不可以直接调用内核函数，所以必须经过系统调用，应用程序才可以调用驱动程序的函数。另外应用程序通过系统调用去调用驱动程序的函数，还有一个前提就是驱动程序必须留有接口，这里的接口就是ops函数的操作集合。</p>
+<p><img src="/./imgs/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/image-20240724143217323.png" alt="image-20240724143217323"></p>
+<p>驱动最终通过与文件系统相关的系统调用或 C 库函数（本质也是基于系统调用）被访问，而设备驱动的结构也是为了迎合应用程序，提供给应用程序的 SDK API。</p>
+<p><strong>sys</strong>：linux设备驱动模型中的总线、驱动和设备都可以在 <code>sysfs</code> 文件系统中找到相应的节点。当内核检测到系统中出现新的设备后，内核会在 <code>sysfs</code> 文件系统中为设备生成一项新的记录。</p>
+<p><code>sysfs</code> 是一个虚拟的文件系统，它可以产生一个包括所有系统硬件的层级视图，与提供进程和状态的 <code>proc</code> 文件系统十分类似。可以让用户空间存取，向用户空间导出内核数据结构以及它的属性。</p>
+<p>在 linux 内核中，设备和驱动是分开注册的，注册1个设备的时候，并不需要驱动已经存在，而1个驱动被注册的时候，也不需要对应的设备被注册。设备和驱动各自涌入内核，而每个设备和驱动涌入内核的时候，都会寻找另外一半。而正是 bus_type 的 match() 成员函数将两者绑定在一起。</p>
+<p>简单来说，设备和驱动就是男男女女，而 bus_type 的 match() 则是牵引红线的月老，它可以识别什么设备与什么驱动，是配对的。一旦成功，xxx_driver 的 probe 设备探测函数就被执行。</p>
+<h2 id="PCI-总线协议概述"><a href="#PCI-总线协议概述" class="headerlink" title="PCI 总线协议概述"></a>PCI 总线协议概述</h2><h3 id="PCI-拓扑结构"><a href="#PCI-拓扑结构" class="headerlink" title="PCI 拓扑结构"></a>PCI 拓扑结构</h3><p><img src="/./imgs/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/image-20240724144201545.png" alt="image-20240724144201545"></p>
+<p>PCI 是 CPU 和外围设备通信的高速传输总线。普通 PCI 总线带宽一般为132MB&#x2F;s或者264MB&#x2F;s。</p>
+<p>PCI总线体系结构是一种层次式的体系结构，PCI 桥设备占据重要的地位，它将父总线与子总线连接在一起，从而使整个系统看起来像一颗倒置的树形结构。对于驱动开发而言，刚开始我们就不对这些物理结构的抽象进行深入研究了，这些 host 和 bridge 都是由内核实现抽象的，我们专注于 PCI 设备的驱动编写即可。</p>
+<h3 id="PCI-寻址方式"><a href="#PCI-寻址方式" class="headerlink" title="PCI 寻址方式"></a>PCI 寻址方式</h3><p>每个 PCI 外设由 1 个总线编号，1 个设备编号以及 1 个功能编号来标识。PCI 协议规定每个系统支持 256 条总线，每条总线 32 个设备，每个设备最多 8 个功能。此外，对于一些大型系统，Linux 支持 PCI 域，每个 PCI 域支持 256 个总线。所以每个功能都可以由 16 地址来标识，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0e3</span>c:<span class="number">00</span>:<span class="number">00.0</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>0e3c：该功能的域</li>
+<li>00：该功能的总线</li>
+<li>00：该功能的设备</li>
+<li>0：具体功能</li>
+</ul>
+<p>这些与 PCI 物理外设相关联的 16 位地址，往往被 Linux 隐藏在了 <code>struct pci_dev</code> 结构中，但有时仍可见，比如使用 <code>lspci</code> 命令或者在 <code>proc</code> 与 <code>sysfs</code> 中的布局就是这样组织的。</p>
+<h3 id="PCI-配置空间"><a href="#PCI-配置空间" class="headerlink" title="PCI 配置空间"></a>PCI 配置空间</h3><p>所以的 PCI 设备都至少要有 256 字节的配置空间，前 64 个字节是标准化的，其余是设备相关的。如下图所示，标准化的配置寄存器中，有些是必需的，有些是可选的。</p>
+<p><img src="/./imgs/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/image-20240724150840915.png" alt="image-20240724150840915"></p>
+<p>对于这些寄存器的解释暂时不太需要，我们仅看一些关键的，即驱动程序如何根据配置寄存器区分设备。</p>
+<ul>
+<li>vendorID：厂商 ID，标识硬件制造商，该值由国际组织维护，每个厂商全球唯一</li>
+<li>deviceID：由制造商选择，无需注册，用于区分不同设备</li>
+<li>class：某些驱动程序可能可以支持多个不同签名（vendorID + deviceID）的设备，但同属一个类</li>
+<li>subsystem vendorID：用于进一步区分设备</li>
+<li>subsystem deviceID：用于进一步区分设备</li>
+</ul>
+<p>在 Linux 中，使用 <code>struct pci_device_id</code> 来描述一个驱动程序支持的 PCI 设备列表，例如：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_VENDOR_ID_QEMU		0x1234</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_KMOD_EDU_VENDOR_ID		PCI_VENDOR_ID_QEMU</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_KMOD_EDU_DEVICE_ID		0x7863</span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_device_id</span> <span class="title">ids</span>[] =</span> &#123;</span><br><span class="line">	&#123; PCI_DEVICE(PCI_KMOD_EDU_VENDOR_ID, PCI_KMOD_EDU_DEVICE_ID), &#125;,</span><br><span class="line">	&#123; <span class="number">0</span>, &#125;</span><br><span class="line">&#125;;</span><br><span class="line">MODULE_DEVICE_TABLE(pci, ids);</span><br></pre></td></tr></table></figure>
+
+<p><strong>MODULE_DEVICE_TABLE</strong> 的作用：将该模块<strong>支持的设备</strong>以及<strong>模块名</strong>导出到用户空间（记录在一个文件中），当内核出现热插拔事件时，会扫描这个文件，加载主持的驱动模块。</p>
+<p><code>pci_device_id</code> 结构如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pci_device_id</span> &#123;</span></span><br><span class="line">	__u32 vendor, device;		<span class="comment">/* Vendor and device ID or PCI_ANY_ID*/</span></span><br><span class="line">	__u32 subvendor, subdevice;	<span class="comment">/* Subsystem ID&#x27;s or PCI_ANY_ID */</span></span><br><span class="line">	__u32 <span class="class"><span class="keyword">class</span>, <span class="title">class_mask</span>;</span>	<span class="comment">/* (class,subclass,prog-if) triplet */</span></span><br><span class="line">	<span class="type">kernel_ulong_t</span> driver_data;	<span class="comment">/* Data private to the driver */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="PCI-初始化"><a href="#PCI-初始化" class="headerlink" title="PCI 初始化"></a>PCI 初始化</h3><p>在系统引导阶段，PCI 设备仅会对<strong>配置事务</strong>做出响应，此时，固件（或者 Linux 内核）会为每一个 PCI 设备执行配置事务，该过程会为其分配<strong>内存空间</strong>以及<strong>IRQ</strong>号等资源，并且将资源记录到 PCI 设备的配置空间中，供驱动程序使用。可以通过 <code>sysfs</code> 文件系统查看设备分配的资源：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">/sys/bus/pci/devices/0e3c:00:00.0</span><br><span class="line">├── ari_enabled</span><br><span class="line">├── broken_parity_status</span><br><span class="line">├── class</span><br><span class="line">├── config</span><br><span class="line">├── consistent_dma_mask_bits</span><br><span class="line">├── device</span><br><span class="line">├── dma_mask_bits</span><br><span class="line">├── driver -&gt; ../../../../../../../../bus/pci/drivers/dxgkrnl</span><br><span class="line">├── driver_override</span><br><span class="line">├── <span class="built_in">enable</span></span><br><span class="line">├── irq</span><br><span class="line">├── <span class="built_in">link</span></span><br><span class="line">├── local_cpulist</span><br><span class="line">├── local_cpus</span><br><span class="line">├── modalias</span><br><span class="line">├── msi_bus</span><br><span class="line">├── remove</span><br><span class="line">├── rescan</span><br><span class="line">├── resource</span><br><span class="line">├── revision</span><br><span class="line">├── subsystem -&gt; ../../../../../../../../bus/pci</span><br><span class="line">├── subsystem_device</span><br><span class="line">├── subsystem_vendor</span><br><span class="line">├── uevent</span><br><span class="line">└── vendor</span><br></pre></td></tr></table></figure>
+
+<p>其中，irq 代表分配的中断号，resource 代表分配的内存空间，可以继续查看：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> /sys/bus/pci/devices/0e3c\:00\:00.0/resource</span> </span><br><span class="line">起始地址（Start Address）结束地址（End Address）标志（Flags）</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /sys/bus/pci/devices/0e3c\:00\:00.0/irq </span><br><span class="line">irq_number</span><br></pre></td></tr></table></figure>
+
+<h2 id="PCI-驱动程序"><a href="#PCI-驱动程序" class="headerlink" title="PCI 驱动程序"></a>PCI 驱动程序</h2><h3 id="注册驱动程序"><a href="#注册驱动程序" class="headerlink" title="注册驱动程序"></a>注册驱动程序</h3><p>为了能够正确注册驱动程序到内核，所有的 PCI 设备必须创建的主要结构体是 <code>struct pci_driver</code>，其结构如下所示：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">struct pci_driver &#123;</span><br><span class="line">    struct list_head node;</span><br><span class="line">    char *name; /* 驱动程序的名称 */</span><br><span class="line">    struct module *owner;</span><br><span class="line">    /* 指向设备驱动程序感兴趣的设备ID的一个列表，包括：</span><br><span class="line">     * 厂商ID、设备ID、子厂商ID、子设备ID、类别、类别掩码、私有数据</span><br><span class="line">     */</span><br><span class="line">    const struct pci_device_id *id_table;</span><br><span class="line">    /* 指向一个函数对于每一个id_table中的项匹配的且未被其他驱动程序处理的设备，</span><br><span class="line">     * 在执行pci_register_driver时候调用此函数或者如果是以后插入的一个新设备的话，只要满足上述条件也会调* 用此函数</span><br><span class="line">     */</span><br><span class="line">    int (*probe) (struct pci_dev *dev, const struct pci_device_id *<span class="built_in">id</span>);</span><br><span class="line">    /* 指向一个函数当驱动函数程序卸载或者被该驱动程序管理的设备被卸下的时候，调用此函数</span><br><span class="line">     */</span><br><span class="line">    int (*remove) (struct pci_dev *dev);</span><br><span class="line">    int (*save_state) (struct pci_dev *dev, u32 state); /* 设备被挂起之前保存的相关状态 */</span><br><span class="line">    int (*<span class="built_in">suspend</span>) (struct pci_dev *dev, u32 state); /* 挂起设备使之处于节能状态 */</span><br><span class="line">    int (*resume) (struct pci_dev *dev); /* 唤醒挂起的设备 */</span><br><span class="line">    /* 使设备能够从挂起态产生唤醒事件*/</span><br><span class="line">    int   (*enable_wake) (struct pci_dev *dev, u32 state, int <span class="built_in">enable</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>为了创建一个正确的 pci_driver 结构体，只需实现下面四个成员：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_driver</span> <span class="title">pci_drv</span> =</span> &#123;</span><br><span class="line">    .name = <span class="string">&quot;pci_skel&quot;</span>,</span><br><span class="line">    .id_table = ids,</span><br><span class="line">    .probe = my_proce,</span><br><span class="line">    .remove = my_remove</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>一般的，需要在入口函数中注册驱动：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> __init <span class="title function_">pci_init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> pci_register_driver(&amp;pci_drv);</span><br><span class="line">&#125;</span><br><span class="line">module_init(pci_init))</span><br></pre></td></tr></table></figure>
+
+<p>在出口函数中注销驱动：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> __exit <span class="title function_">pci_exit</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> pci_unregister_driver(&amp;pci_drv);</span><br><span class="line">&#125;</span><br><span class="line">module_exit(pci_exit))</span><br></pre></td></tr></table></figure>
+
+<h3 id="激活-PCI-设备"><a href="#激活-PCI-设备" class="headerlink" title="激活 PCI 设备"></a>激活 PCI 设备</h3><p>在 PCI 驱动探测（probe）设备时，访问 PCI 设备的任何资源之前（IO 或 中断），<strong>必须</strong>调用 <code>pci_enable_device</code> 函数，该函数会使能底层的 I&#x2F;O 和内存，唤醒挂起的设备：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Initialize device before it&#x27;s used by a driver. Ask low-level code</span></span><br><span class="line"><span class="comment"> * to enable I/O and memory. Wake up the device if it was suspended.</span></span><br><span class="line"><span class="comment"> * Beware, this function can fail.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">pci_enable_device</span><span class="params">(<span class="keyword">struct</span> pci_dev *dev)</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="访问配置空间"><a href="#访问配置空间" class="headerlink" title="访问配置空间"></a>访问配置空间</h3><p>在驱动程序检测到设备之后，通常需要读取和写入三个地址空间：<strong>内存</strong> 、<strong>端口</strong> 以及 <strong>配置</strong> 空间。其中，范围配置空间尤其重要，因为这是确定<strong>设备映射到内存和IO空间哪个位置</strong>的唯一方式。那么系统初始化的时候该如何访问这些寄存器？</p>
+<p>对于 Linux 驱动程序而言，内核提供了一系列封装好的接口：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">pci_read_config_byte</span><span class="params">(<span class="type">const</span> <span class="keyword">struct</span> pci_dev *dev, <span class="type">int</span> where, u8 *val)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">pci_read_config_word</span><span class="params">(<span class="type">const</span> <span class="keyword">struct</span> pci_dev *dev, <span class="type">int</span> where, u16 *val)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">pci_read_config_dword</span><span class="params">(<span class="type">const</span> <span class="keyword">struct</span> pci_dev *dev, <span class="type">int</span> where, u32 *val)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">pci_write_config_byte</span><span class="params">(<span class="type">const</span> <span class="keyword">struct</span> pci_dev *dev, <span class="type">int</span> where, u8 val)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">pci_write_config_word</span><span class="params">(<span class="type">const</span> <span class="keyword">struct</span> pci_dev *dev, <span class="type">int</span> where, u16 val)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">pci_write_config_dword</span><span class="params">(<span class="type">const</span> <span class="keyword">struct</span> pci_dev *dev, <span class="type">int</span> where, u32 val)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>dev</code> 代表了 PCI 设备， <code>where</code> 代表了配置空间的偏移，上述函数一次分别可以读写 1，2，4 个字节。</p>
+<p>使用上述函数的首选方式是利用 &lt;linux&#x2F;pci.h&gt; 中定义的宏取代 <code>where</code>，例如：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_BASE_ADDRESS_0	0x10	<span class="comment">/* 32 bits */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_BASE_ADDRESS_1	0x14	<span class="comment">/* 32 bits [htype 0,1 only] */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_BASE_ADDRESS_2	0x18	<span class="comment">/* 32 bits [htype 0 only] */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_BASE_ADDRESS_3	0x1c	<span class="comment">/* 32 bits */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_BASE_ADDRESS_4	0x20	<span class="comment">/* 32 bits */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_BASE_ADDRESS_5	0x24	<span class="comment">/* 32 bits */</span></span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>对于i386结构的处理器，PCI总线的设计者在I&#x2F;O地址空间保留了8个字节用于这个目的，那就是<strong>0xCF8~0xCFF,这8个字节的地址空间构成了两个32位的寄存器，第一个是“地址寄存器”0xCF8,第二个是“数据寄存器”0xCFC</strong>,<strong>要访问配置空间的寄存器时，CPU先向地址寄存器写入目标地址，然后通过数据寄存器进行读写数据</strong>。<strong>不过，写入地址寄存器的目标地址是一种包括总线号、设备号、功能号以及配置寄存器地址的综合地址</strong>。每个PCI设备最多有8个功能，所以设备号和功能号组合在一起又被称作“逻辑设备”号。</p>
+</blockquote>
+<h3 id="访问-BAR-空间"><a href="#访问-BAR-空间" class="headerlink" title="访问 BAR 空间"></a>访问 BAR 空间</h3><p>在内核中，PCI 设备的 BAR 空间已经被纳入到通用资源管理中，因此不需要通过读取配置空间区访问 BAR 空间，可以直接使用内核提供的方法获取：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">long</span> <span class="title function_">pci_resource_start</span><span class="params">(<span class="keyword">struct</span> pci_dev *dev, <span class="type">int</span> bar)</span>;</span><br><span class="line"><span class="type">unsigned</span> <span class="type">long</span> <span class="title function_">pci_resource_end</span><span class="params">(<span class="keyword">struct</span> pci_dev *dev, <span class="type">int</span> bar)</span>;</span><br><span class="line"><span class="type">unsigned</span> <span class="type">long</span> <span class="title function_">pci_resource_flags</span><span class="params">(<span class="keyword">struct</span> pci_dev *dev, <span class="type">int</span> bar)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>分别返回第 <code>bar</code> 个空间中 第一个和最后一个 <strong>可用</strong> 地址，以及资源相关的标志。</p>
+<p>资源的相关标志来定义单个资源的某些特性，例如：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">IORESOURCE_IO</span><br><span class="line">IORESOURCE_MEM</span><br><span class="line">    如果相关的 IO 区域存在，将设置这些标志</span><br><span class="line">IORESOURCE_PREFETCH</span><br><span class="line">IORESOURCE_READONLY</span><br><span class="line">    表明区域是否为可预取的或是写保护的</span><br></pre></td></tr></table></figure>
+
+<h3 id="PCI-中断"><a href="#PCI-中断" class="headerlink" title="PCI 中断"></a>PCI 中断</h3><p>很容易就可以使用 PCI 中断。在 Linux 引导阶段，计算机固件（或内核）已经为设备分配了一个唯一的中断号，驱动程序只需要使用就好了。中断号保存在寄存器 60（PCI_INTERRUPT_LINE）中，该寄存器为一个字节宽，这允许多达 256 个中断线。</p>
+<p>驱动程序无需检测中断号，因为从 PCI_INTERRUPT_LINE 中找到的值肯定是正确的。</p>
+<p>如果设备不支持中断，寄存器 61（PCI_INTERRUPT_PIN）是 0；否则为非 0。但是，驱动程序知道自己的设备是否是中断驱动的，所以，它无需读取该寄存器。</p>
+<h2 id="PCI-设备驱动框架"><a href="#PCI-设备驱动框架" class="headerlink" title="PCI 设备驱动框架"></a>PCI 设备驱动框架</h2><p>最后，以一个 PCI 设备驱动的框架结束本文：</p>
+<h3 id="模块入口与出口"><a href="#模块入口与出口" class="headerlink" title="模块入口与出口"></a>模块入口与出口</h3><p>此部分注册和注销 PCI 驱动。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> __init <span class="title function_">pci_init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">return</span> pci_register_driver(&amp;pci_drv);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> __exit <span class="title function_">pci_exit</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        pci_unregister_driver(&amp;pci_drv);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">module_init(pci_init);</span><br><span class="line">module_exit(pci_exit);</span><br></pre></td></tr></table></figure>
+
+<h3 id="PCI-驱动对象"><a href="#PCI-驱动对象" class="headerlink" title="PCI 驱动对象"></a>PCI 驱动对象</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_driver</span> <span class="title">pci_drv</span> =</span> &#123;</span><br><span class="line">        .name = MODULE_NAME,</span><br><span class="line">        .id_table = ids,</span><br><span class="line">        .probe = pci_probe,</span><br><span class="line">        .remove = pci_remove,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="PCI-设备匹配表"><a href="#PCI-设备匹配表" class="headerlink" title="PCI 设备匹配表"></a>PCI 设备匹配表</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_device_id</span> <span class="title">ids</span>[] =</span> &#123;</span><br><span class="line">        &#123;</span><br><span class="line">                .vendor = PCI_VENDOR_ID_QEMU,</span><br><span class="line">                .device = PCI_DEVICE_ID_QEMU,</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123; <span class="number">0</span> &#125;,</span><br><span class="line">&#125;;</span><br><span class="line">MODULE_DEVICE_TABLE(pci, ids);</span><br></pre></td></tr></table></figure>
+
+<h3 id="探测函数"><a href="#探测函数" class="headerlink" title="探测函数"></a>探测函数</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">pci_probe</span><span class="params">(<span class="keyword">struct</span> pci_dev *pdev, <span class="type">const</span> <span class="keyword">struct</span> pci_device_id *ids)</span>&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        pr_debug(<span class="string">&quot;New pci device probing\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">        retval = pci_enable_device(pdev);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t enable PCI device\n&quot;</span>);</span><br><span class="line">                <span class="keyword">return</span> -ENODEV;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        pci_read_config_byte(pdev, PCI_REVISION_ID ,&amp;pci_prv.reversion);</span><br><span class="line">        pr_debug(<span class="string">&quot;Revision: %d\n&quot;</span>, pci_prv.reversion);</span><br><span class="line"></span><br><span class="line">        pci_read_config_byte(pdev, PCI_INTERRUPT_LINE ,&amp;pci_prv.int_line);</span><br><span class="line">        pr_debug(<span class="string">&quot;Interrupt line: %d\n&quot;</span>, pci_prv.int_line);</span><br><span class="line"></span><br><span class="line">        pci_read_config_byte(pdev, PCI_INTERRUPT_PIN ,&amp;pci_prv.int_pin);</span><br><span class="line">        pr_debug(<span class="string">&quot;Interrupt pin: %d\n&quot;</span>, pci_prv.int_pin);</span><br><span class="line"></span><br><span class="line">        retval = map_bars(pdev);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                dev_err(pdev-&gt;dev, <span class="string">&quot;can&#x27;t map bars\n&quot;</span>)</span><br><span class="line">                <span class="keyword">return</span> retval;          </span><br><span class="line">        &#125; </span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="获取-BAR-空间"><a href="#获取-BAR-空间" class="headerlink" title="获取 BAR 空间"></a>获取 BAR 空间</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">map_bars</span><span class="params">(<span class="keyword">struct</span> pci_dev *pdev)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> i;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; PCI_BAR_NUMBER; ++i) &#123;</span><br><span class="line">                retval = map_sigal_bar(pdev, i);</span><br><span class="line">                <span class="keyword">if</span> (retval == <span class="number">0</span>) &#123;</span><br><span class="line">                        <span class="keyword">continue</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                        <span class="keyword">return</span> -EINVAL;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">map_sigal_bar</span><span class="params">(<span class="keyword">struct</span> pci_dev *pdev, <span class="type">int</span> idx)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">resource_size_t</span> bar_start;</span><br><span class="line">        <span class="type">resource_size_t</span> bar_len;</span><br><span class="line">        <span class="type">void</span> *__iomem bar_map;</span><br><span class="line"></span><br><span class="line">        bar_start = pci_resource_start(pdev, idx);</span><br><span class="line">        bar_len = pci_resource_len(pdev, idx);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (bar_len == <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        bar_map = pci_iomap(pdev, idx, bar_len);</span><br><span class="line">        pr_info(<span class="string">&quot;BAR%d at 0x%llx mapped at 0x%p, length=%llu(0x%llx)\n&quot;</span>, idx, (u64)bar_start, \</span><br><span class="line">                bar_map, (u64)bar_len, (u64)bar_len);</span><br><span class="line"></span><br><span class="line">        pci_prv.bar_start[idx] = bar_map;</span><br><span class="line">        pci_prv.bar_len[idx] = bar_len;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> (<span class="type">int</span>)bar_len;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="完成模块代码"><a href="#完成模块代码" class="headerlink" title="完成模块代码"></a>完成模块代码</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/init.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/kernel.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/module.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/pci.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> macro</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MODULE_NAME <span class="string">&quot;pci_skel&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_VENDOR_ID_QEMU		0x1234</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_DEVICE_ID_QEMU		0x7863</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_BAR_NUMBER                  6</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pci_private_t</span> &#123;</span></span><br><span class="line">        <span class="comment">/* 1st 16 bytes */</span></span><br><span class="line">        <span class="type">uint16_t</span>        vendor_id;</span><br><span class="line">        <span class="type">uint16_t</span>        device_id;</span><br><span class="line">        <span class="type">uint16_t</span>        command_reg;</span><br><span class="line">        <span class="type">uint16_t</span>        state_reg;</span><br><span class="line">        <span class="type">uint8_t</span>         reversion;</span><br><span class="line">        <span class="type">uint32_t</span>        <span class="class"><span class="keyword">class</span> :</span> <span class="number">24</span>;</span><br><span class="line">        <span class="type">uint32_t</span>        cacheline : <span class="number">8</span>;</span><br><span class="line">        <span class="type">uint8_t</span>         delay_timer;</span><br><span class="line">        <span class="type">uint8_t</span>         header_type;</span><br><span class="line">        <span class="type">uint8_t</span>         BIST;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 2ed 16 bytes*/</span></span><br><span class="line">        <span class="type">void</span> *__iomem   bar_start[PCI_BAR_NUMBER];</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 3nd 16 bytes*/</span></span><br><span class="line">        <span class="comment">// uint32_t        bar4;</span></span><br><span class="line">        <span class="comment">// uint32_t        bar5;</span></span><br><span class="line">        <span class="type">uint16_t</span>        card_bus;</span><br><span class="line">        <span class="type">uint8_t</span>         subsys_vendor;</span><br><span class="line">        <span class="type">uint8_t</span>         subsys_device;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 4th 16 bytes*/</span></span><br><span class="line">        <span class="type">uint16_t</span>        extend_rom;</span><br><span class="line">        <span class="type">uint32_t</span>        reserved[<span class="number">2</span>];</span><br><span class="line">        <span class="type">uint8_t</span>         int_line;</span><br><span class="line">        <span class="type">uint8_t</span>         int_pin;</span><br><span class="line">        <span class="type">uint8_t</span>         min_gnd;</span><br><span class="line">        <span class="type">uint8_t</span>         max_lat;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 冗余信息 */</span></span><br><span class="line">        <span class="type">uint32_t</span>        bar_len[PCI_BAR_NUMBER];</span><br><span class="line">&#125; __packed;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_private_t</span> <span class="title">pci_prv</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_device_id</span> <span class="title">ids</span>[] =</span> &#123;</span><br><span class="line">        &#123;</span><br><span class="line">                .vendor = PCI_VENDOR_ID_QEMU,</span><br><span class="line">                .device = PCI_DEVICE_ID_QEMU,</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123; <span class="number">0</span> &#125;,</span><br><span class="line">&#125;;</span><br><span class="line">MODULE_DEVICE_TABLE(pci, ids);</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">map_sigal_bar</span><span class="params">(<span class="keyword">struct</span> pci_dev *pdev, <span class="type">int</span> idx)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">resource_size_t</span> bar_start;</span><br><span class="line">        <span class="type">resource_size_t</span> bar_len;</span><br><span class="line">        <span class="type">void</span> *__iomem bar_map;</span><br><span class="line"></span><br><span class="line">        bar_start = pci_resource_start(pdev, idx);</span><br><span class="line">        bar_len = pci_resource_len(pdev, idx);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (bar_len == <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        bar_map = pci_iomap(pdev, idx, bar_len);</span><br><span class="line">        pr_info(<span class="string">&quot;BAR%d at 0x%llx mapped at 0x%p, length=%llu(0x%llx)\n&quot;</span>, idx, (u64)bar_start, \</span><br><span class="line">                bar_map, (u64)bar_len, (u64)bar_len);</span><br><span class="line"></span><br><span class="line">        pci_prv.bar_start[idx] = bar_map;</span><br><span class="line">        pci_prv.bar_len[idx] = bar_len;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> (<span class="type">int</span>)bar_len;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">map_bars</span><span class="params">(<span class="keyword">struct</span> pci_dev *pdev)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> i;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; PCI_BAR_NUMBER; ++i) &#123;</span><br><span class="line">                retval = map_sigal_bar(pdev, i);</span><br><span class="line">                <span class="keyword">if</span> (retval == <span class="number">0</span>) &#123;</span><br><span class="line">                        <span class="keyword">continue</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                        <span class="keyword">return</span> -EINVAL;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">pci_probe</span><span class="params">(<span class="keyword">struct</span> pci_dev *pdev, <span class="type">const</span> <span class="keyword">struct</span> pci_device_id *ids)</span>&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        pr_debug(<span class="string">&quot;New pci device probing\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">        retval = pci_enable_device(pdev);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t enable PCI device\n&quot;</span>);</span><br><span class="line">                <span class="keyword">return</span> -ENODEV;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        pci_read_config_byte(pdev, PCI_REVISION_ID ,&amp;pci_prv.reversion);</span><br><span class="line">        pr_debug(<span class="string">&quot;Revision: %d\n&quot;</span>, pci_prv.reversion);</span><br><span class="line"></span><br><span class="line">        pci_read_config_byte(pdev, PCI_INTERRUPT_LINE ,&amp;pci_prv.int_line);</span><br><span class="line">        pr_debug(<span class="string">&quot;Interrupt line: %d\n&quot;</span>, pci_prv.int_line);</span><br><span class="line"></span><br><span class="line">        pci_read_config_byte(pdev, PCI_INTERRUPT_PIN ,&amp;pci_prv.int_pin);</span><br><span class="line">        pr_debug(<span class="string">&quot;Interrupt pin: %d\n&quot;</span>, pci_prv.int_pin);</span><br><span class="line"></span><br><span class="line">        retval = map_bars(pdev);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t map bars\n&quot;</span>);</span><br><span class="line">                <span class="keyword">return</span> retval;          </span><br><span class="line">        &#125; </span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">pci_remove</span><span class="params">(<span class="keyword">struct</span> pci_dev *pdev)</span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_driver</span> <span class="title">pci_drv</span> =</span> &#123;</span><br><span class="line">        .name = MODULE_NAME,</span><br><span class="line">        .id_table = ids,</span><br><span class="line">        .probe = pci_probe,</span><br><span class="line">        .remove = pci_remove,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> __init <span class="title function_">pci_init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">return</span> pci_register_driver(&amp;pci_drv);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> __exit <span class="title function_">pci_exit</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        pci_unregister_driver(&amp;pci_drv);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">module_init(pci_init);</span><br><span class="line">module_exit(pci_exit);</span><br><span class="line">MODULE_LICENSE(<span class="string">&quot;GPL&quot;</span>);</span><br><span class="line">MODULE_AUTHOR(<span class="string">&quot;Huashan Sun &lt;huashan.sun@qq.com&gt;&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/pci-linux/" rel="tag"># pci linux</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/02/27/ivshmem%EF%BC%88%E4%B8%80%EF%BC%89%E5%9F%BA%E4%BA%8E%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E7%9A%84%E8%99%9A%E6%8B%9F%E6%9C%BA%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" rel="prev" title="【虚拟化】ivshmem（一）基于共享内存的虚拟机通信方式">
+      <i class="fa fa-chevron-left"></i> 【虚拟化】ivshmem（一）基于共享内存的虚拟机通信方式
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/04/09/ivshmem%EF%BC%88%E4%BA%8C%EF%BC%89%E5%9F%BA%E4%BA%8E%E4%B8%AD%E6%96%AD%E7%9A%84%E9%80%9A%E4%BF%A1%E5%AE%9E%E6%88%98/" rel="next" title="【虚拟化】ivshmem（二）基于中断的通信原理与实现--PCI设备驱动">
+      【虚拟化】ivshmem（二）基于中断的通信原理与实现--PCI设备驱动 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A9%B1%E5%8A%A8%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">驱动概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PCI-%E6%80%BB%E7%BA%BF%E5%8D%8F%E8%AE%AE%E6%A6%82%E8%BF%B0"><span class="nav-number">2.</span> <span class="nav-text">PCI 总线协议概述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PCI-%E6%8B%93%E6%89%91%E7%BB%93%E6%9E%84"><span class="nav-number">2.1.</span> <span class="nav-text">PCI 拓扑结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PCI-%E5%AF%BB%E5%9D%80%E6%96%B9%E5%BC%8F"><span class="nav-number">2.2.</span> <span class="nav-text">PCI 寻址方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PCI-%E9%85%8D%E7%BD%AE%E7%A9%BA%E9%97%B4"><span class="nav-number">2.3.</span> <span class="nav-text">PCI 配置空间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PCI-%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">2.4.</span> <span class="nav-text">PCI 初始化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PCI-%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F"><span class="nav-number">3.</span> <span class="nav-text">PCI 驱动程序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E5%86%8C%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F"><span class="nav-number">3.1.</span> <span class="nav-text">注册驱动程序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BF%80%E6%B4%BB-PCI-%E8%AE%BE%E5%A4%87"><span class="nav-number">3.2.</span> <span class="nav-text">激活 PCI 设备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BF%E9%97%AE%E9%85%8D%E7%BD%AE%E7%A9%BA%E9%97%B4"><span class="nav-number">3.3.</span> <span class="nav-text">访问配置空间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BF%E9%97%AE-BAR-%E7%A9%BA%E9%97%B4"><span class="nav-number">3.4.</span> <span class="nav-text">访问 BAR 空间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PCI-%E4%B8%AD%E6%96%AD"><span class="nav-number">3.5.</span> <span class="nav-text">PCI 中断</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PCI-%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E6%A1%86%E6%9E%B6"><span class="nav-number">4.</span> <span class="nav-text">PCI 设备驱动框架</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E5%85%A5%E5%8F%A3%E4%B8%8E%E5%87%BA%E5%8F%A3"><span class="nav-number">4.1.</span> <span class="nav-text">模块入口与出口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PCI-%E9%A9%B1%E5%8A%A8%E5%AF%B9%E8%B1%A1"><span class="nav-number">4.2.</span> <span class="nav-text">PCI 驱动对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PCI-%E8%AE%BE%E5%A4%87%E5%8C%B9%E9%85%8D%E8%A1%A8"><span class="nav-number">4.3.</span> <span class="nav-text">PCI 设备匹配表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A2%E6%B5%8B%E5%87%BD%E6%95%B0"><span class="nav-number">4.4.</span> <span class="nav-text">探测函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96-BAR-%E7%A9%BA%E9%97%B4"><span class="nav-number">4.5.</span> <span class="nav-text">获取 BAR 空间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%8C%E6%88%90%E6%A8%A1%E5%9D%97%E4%BB%A3%E7%A0%81"><span class="nav-number">4.6.</span> <span class="nav-text">完成模块代码</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
