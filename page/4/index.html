@@ -157,6 +157,226 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/09/17/Linux-06-%E5%B8%B8%E7%94%A8%E6%8C%87%E4%BB%A4/" class="post-title-link" itemprop="url">【Linux命令】Linux-06-常用指令</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-09-17 09:27:04" itemprop="dateCreated datePublished" datetime="2022-09-17T09:27:04+08:00">2022-09-17</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="指定运行级别"><a href="#指定运行级别" class="headerlink" title="指定运行级别"></a>指定运行级别</h3><ul>
+<li><p>运行级别介绍</p>
+<ul>
+<li>0：关机</li>
+<li>1：单用户【找回密码】</li>
+<li>2：多用户状态无网络服务</li>
+<li><strong>3：多用户状态有网络服务</strong></li>
+<li>4：系统未使用保留给用户</li>
+<li><strong>5：图形界面</strong></li>
+<li>6：系统重启</li>
+</ul>
+</li>
+<li><p>init 0&#x2F;1&#x2F;2&#x2F;3&#x2F;4&#x2F;5&#x2F;6</p>
+<p>切换运行级别</p>
+</li>
+<li><p>systemctl get-default</p>
+<p>查看系统默认运行级别</p>
+</li>
+<li><p>systemctl set-default multi-user.target（3）&#x2F;graphical.target（5）</p>
+<p>设置系统的默认运行级别（CentOS7将运行级别简化为3和5）</p>
+</li>
+</ul>
+<h3 id="找回root密码（CentOS7）"><a href="#找回root密码（CentOS7）" class="headerlink" title="找回root密码（CentOS7）"></a>找回root密码（CentOS7）</h3><p>在系统启动时按“e”，编辑所选项</p>
+<p><img src="/%E6%8C%89e.png"></p>
+<p>将光标移动至红色方框处，并追加“init&#x3D;&#x2F;bin&#x2F;sh”，追加后按 Ctrl + x 进入单用户模式</p>
+<p><img src="/%E8%BF%BD%E5%8A%A0%E5%86%85%E5%AE%B9.png"></p>
+<p><img src="/%E8%BF%BD%E5%8A%A0%E5%90%8E.png"></p>
+<p>接着在光标闪烁出输入”mount -o remount,rw &#x2F;“，按回车，输入”passwd”,按回车，连续输入新密码两次后光标继续闪烁</p>
+<p><img src="/%E6%96%B0%E5%AF%86%E7%A0%81.png"></p>
+<p>接着输入“touch &#x2F;.autorelabel”后按回车，再输入“exec &#x2F;sbin&#x2F;init“后回车，等待系统重启即成功重置密码</p>
+<p><img src="/%E9%87%8D%E7%BD%AE%E6%88%90%E5%8A%9F.png"></p>
+<h3 id="帮助指令"><a href="#帮助指令" class="headerlink" title="帮助指令"></a>帮助指令</h3><ul>
+<li><p>man 命令或者配置文件</p>
+<p>获取相关命令的帮助信息</p>
+</li>
+<li><p>help 命令</p>
+<p>获得shell内置命令的帮助信息</p>
+</li>
+</ul>
+<h3 id="文件目录相关指令"><a href="#文件目录相关指令" class="headerlink" title="文件目录相关指令"></a>文件目录相关指令</h3><ul>
+<li><p>pwd </p>
+<p>显示当前工作目录的绝对路径</p>
+</li>
+<li><p>ls [选项] [文件或目录]</p>
+<ul>
+<li>-a 显示所有，包括隐藏的（.开头）</li>
+<li>-l 以列表方式显示信息</li>
+<li>-al &#x2F; -la 组合使用</li>
+</ul>
+</li>
+<li><p>cd [目录]</p>
+</li>
+</ul>
+<p>​		切换至指定目录</p>
+<p>​		cd ~ 切换至当前用户的家目录</p>
+<p>​		cd ..&#x2F; 切换至上一级目录pwd</p>
+<ul>
+<li><p>mkdir [选项] 要创建的目录</p>
+<ul>
+<li><p>-p 创建多级目录</p>
+<p>案例1：mkdir &#x2F;home&#x2F;dog 创建一个目录</p>
+<p>案例2：mkdir -p &#x2F;home&#x2F;animal&#x2F;dog 创建多级目录</p>
+</li>
+</ul>
+</li>
+<li><p>rmdir [选项] 要删除的空目录</p>
+<ul>
+<li><p>rm -rf 强制删除目录（无论是否为空）</p>
+<p>案例一：rmdir &#x2F;home&#x2F;dog</p>
+<p>案例二：rm -rf &#x2F;home&#x2F;animal&#x2F;dog</p>
+</li>
+</ul>
+</li>
+<li><p>touch 文件名</p>
+<p>创建新的空文件</p>
+</li>
+<li><p>cp [选项] 源文件&#x2F;目录 目标目录</p>
+<ul>
+<li>-r 递归复制整个目录</li>
+<li>\cp 强制覆盖原有的旧文件</li>
+</ul>
+</li>
+<li><p>rm [选项] 要删除的文件或目录</p>
+<ul>
+<li>-r 递归删除目录</li>
+<li>-f 强制删除，不提示</li>
+</ul>
+</li>
+<li><p>mv 旧名 新名</p>
+<p>重命名文件或目录</p>
+</li>
+<li><p>mv 文件或目录  新目录</p>
+<p>移动文件或目录</p>
+</li>
+<li><p>cat [选项] 要查看的文件</p>
+<p>查看文件</p>
+<ul>
+<li>-n 显示行号</li>
+</ul>
+</li>
+<li><p>more  要查看的文件</p>
+<p>按页显示文件</p>
+<ul>
+<li>空格键 向下翻一页</li>
+<li>Enter 向下翻一行</li>
+<li>q 离开more不在显示文件</li>
+<li>Ctrl + f 向下滚动一屏</li>
+<li>Ctrl + b 向上滚动一屏</li>
+<li>&#x3D; 输出当前行的行号</li>
+<li>:f 输出文件名和当前行的行号</li>
+</ul>
+</li>
+<li><p>less 要查看的文件（适合查看较大的文件）</p>
+<p>分屏查看文件内容，支持各种显示终端，并非一次全部加载整个文件，而是根据显示的需要加载</p>
+<ul>
+<li>空格键 向下翻一页</li>
+<li>pagedown 向下翻一页</li>
+<li>pageup 向上翻一页</li>
+<li>&#x2F;字串 向下搜寻字串；”n“向下查找；”N”向上查找</li>
+<li>?字串 向上搜寻字串；”n”向上查找；”N”向下查找</li>
+<li>q 离开less</li>
+</ul>
+</li>
+<li><p>echo [选项] 输出内容</p>
+<p>输出内容至控制台</p>
+</li>
+</ul>
+<p>​		案例1：echo $PATH ;输出环境变量</p>
+<p>​		案例2：echo $HOSTNAME;输出主机名</p>
+<p>​		案例3：echo “hello,world”;输出指定内容</p>
+<ul>
+<li><p>“&gt;”  目标文件（覆盖写）</p>
+<p>输出重定向指令，将输出内容重新覆盖到目标文件</p>
+<p>案例1：ls -l &gt; 文件</p>
+<p>案例2：cat 文件1 &gt; 文件2</p>
+</li>
+<li><p>“&gt;&gt;” 目标文件（追加写）</p>
+<p>输出重定向指令，将输出内容重新追加到目标文件</p>
+<p>案例1：echo “追加内容” &gt;&gt; 目标文件</p>
+<p>案例2：cal  &gt;&gt; &#x2F;home&#x2F;mycal  (cal命令输出当前日期)</p>
+</li>
+<li><p>head [选项] 文件</p>
+<p>查看文件前10行内容</p>
+<ul>
+<li>-n 指定显示行数</li>
+</ul>
+</li>
+<li><p>tail [选项] 文件</p>
+<p>查看文件后10行内容</p>
+<ul>
+<li>-n 指定显示行数</li>
+<li>-f  实时监控文件的追加内容（Ctrl + c 退出）</li>
+</ul>
+</li>
+<li><p>ln -s [源文件或目录] [软链接名]</p>
+<p>为原文件创建一个软链接</p>
+</li>
+<li><p>history </p>
+<p>查看操作历史</p>
+<p>案例1：history 10 ；显示最新十条</p>
+<p>案例2：!5;重新执行编号为5的指令</p>
+</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/16/Linux-05-%E5%85%B3%E6%9C%BA%E9%87%8D%E5%90%AF%E5%91%BD%E4%BB%A4%E5%8F%8A%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -960,71 +1180,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jfif">
-      <meta itemprop="name" content="sunhuashan">
-      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="sunhuashan">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">【FFmpeg使用】FFmpeg命令</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-07-06 21:51:01" itemprop="dateCreated datePublished" datetime="2022-07-06T21:51:01+08:00">2022-07-06</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><code>ffmpeg</code>常用命令</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/07/06/FFmpeg%E5%91%BD%E4%BB%A4/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1096,7 +1251,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-count">44</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

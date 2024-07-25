@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="传统上，外设向 CPU 发送中断请求时，会通过物理总线（PCB上的丝印）向中断控制器发送电信号，中断控制器再进一步将中断信号发送到 CPU，这也是通过物理上与 CPU 引脚连接实现的。这就带来了一个问题，CPU 或 中断控制器的物理引脚总是有限的，设备却是无限的，想要让每个设备都物理上连接到中断控制器是不现实的，所以必须通过中断线复用&#x2F;共享的方式来实现上述要求。在中断共享的情况下，CPU">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【设备驱动】PCI 设备驱动程序（一）MSI 中断">
+<meta property="og:url" content="http://example.com/2024/03/20/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%882%EF%BC%89/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="传统上，外设向 CPU 发送中断请求时，会通过物理总线（PCB上的丝印）向中断控制器发送电信号，中断控制器再进一步将中断信号发送到 CPU，这也是通过物理上与 CPU 引脚连接实现的。这就带来了一个问题，CPU 或 中断控制器的物理引脚总是有限的，设备却是无限的，想要让每个设备都物理上连接到中断控制器是不现实的，所以必须通过中断线复用&#x2F;共享的方式来实现上述要求。在中断共享的情况下，CPU">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-03-20T09:54:23.000Z">
+<meta property="article:modified_time" content="2024-07-25T10:49:59.665Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="pci linux">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2024/03/20/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%882%EF%BC%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【设备驱动】PCI 设备驱动程序（一）MSI 中断 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/03/20/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%882%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【设备驱动】PCI 设备驱动程序（一）MSI 中断
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-03-20 17:54:23" itemprop="dateCreated datePublished" datetime="2024-03-20T17:54:23+08:00">2024-03-20</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">驱动开发</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>传统上，外设向 CPU 发送中断请求时，会通过物理总线（PCB上的丝印）向中断控制器发送电信号，中断控制器再进一步将中断信号发送到 CPU，这也是通过物理上与 CPU 引脚连接实现的。这就带来了一个问题，CPU 或 中断控制器的物理引脚总是有限的，设备却是无限的，想要让每个设备都物理上连接到中断控制器是不现实的，所以必须通过<strong>中断线复用&#x2F;共享</strong>的方式来实现上述要求。在中断共享的情况下，CPU 收到一个中断信号，需要尝试运行所有共享该中断号的 ISR，这必然带来了性能上的损耗。而 MSI （Message Signaled Interrupt）中断通过基于消息的方式传递中断，从而避免了上述问题。</p>
+<span id="more"></span>
+
+<h2 id="什么是-MSI"><a href="#什么是-MSI" class="headerlink" title="什么是 MSI"></a>什么是 MSI</h2><p>MSI 消息信号中断，通过使用消息信号而不是硬件中断引脚来通知处理器有中断请求。本质上，消息就是设备向一个<strong>特定地址</strong>的写入的<strong>特定数据</strong>：</p>
+<ul>
+<li>当设备需要中断时，它会生成一个消息，通常是向特定内存地址写入一个特定的数据值。</li>
+<li>处理器和中断控制器<strong>监控</strong>这些特定内存地址，当检测到写入操作时，会将其解释为中断请求。</li>
+</ul>
+<p>MSI 功能最初在 PCI 2.2 中指定，后来在 PCI 3.0 中得到增强，以允许每个中断单独被屏蔽。MSI-X 功能也随 PCI 3.0 引入。它每个设备支持的中断比 MSI <strong>更多</strong>，并允许中断被<strong>独立配置</strong>。</p>
+<p>设备可能同时支持 MSI 和 MSI-X，但一次只能启用其中一个。 </p>
+<h2 id="使用-MSI-的好处"><a href="#使用-MSI-的好处" class="headerlink" title="使用 MSI 的好处"></a>使用 MSI 的好处</h2><p>与传统基于引脚的重点，基于消息信号的 MSI&#x2F;MSI-X 中断有如下优点：</p>
+<ul>
+<li><p><strong>无需共享</strong>：基于引脚的 PCI 中断通常在多个设备之间共享。为支持这一点，内核必须调用与每个中断相关联的中断处理程序，这导致整个系统的性能降低。MSI 从不共享，因此不会出现此问题。 </p>
+</li>
+<li><p><strong>更多中断</strong> ：通常 PCI 只有一个中断引脚，但是该设备往往可能会产生多种事件，使用基于引脚的中的时，通常的做法是在中断服务程序中再次查询设备寄存器来确定设备事件，这无疑减慢了中断处理速度。使用 MSI 中断，可以为每种事件设置不同的中断（不同消息）和中断处理函数，换句话说，设备可以支持更多中断，允许每个中断专门用于不同的目的。</p>
+</li>
+<li><p><strong>数据一致性</strong> ：在基于引脚的中断中，设备通过硬件中断引脚向处理器发送中断信号。然而，存在一个潜在的问题：设备在写入数据到内存后，立即触发中断信号，可能导致中断信号在所有数据完全写入内存之前到达处理器。这种情况在设备通过 PCI-PCI 桥连接时尤为明显，因为桥接设备可能引入额外的延迟。（简单描述就是，中断信号传递的速度快于数据写入内存速度）。对于 MSI 中断来说，不存在这个问题，因为中断信号也是<strong>写入内存</strong>的，这时只要保证数据和中断消息的写入顺序即可。</p>
+</li>
+</ul>
+<h2 id="使用-MSI"><a href="#使用-MSI" class="headerlink" title="使用 MSI"></a>使用 MSI</h2><p>PCI 设备被初始化为使用基于引脚的中断。设备驱动程序<strong>必须设置</strong>设备以使用 MSI 或 MSI-X。并非所有机器都能正确支持 MSI，对于那些机器，下面描述的 API 将简单地失败，设备将继续使用基于引脚的中断。</p>
+<h3 id="内核配置"><a href="#内核配置" class="headerlink" title="内核配置"></a>内核配置</h3><p>要支持 MSI 或 MSI-X，内核必须在启用 <code>CONFIG_PCI_MSI</code> 选项的情况下构建。此选项仅在某些架构上可用，并且可能还取决于其他一些选项的设置。例如，在 x86 上，您还必须启用 <code>X86_UP_APIC</code> 或 <code>SMP</code> 才能看到 <code>CONFIG_PCI_MSI</code> 选项。</p>
+<h3 id="分配和释放中断向量"><a href="#分配和释放中断向量" class="headerlink" title="分配和释放中断向量"></a>分配和释放中断向量</h3><p>大部分的硬件工作是在 PCI 层为驱动程序完成的。驱动程序只需要请求 PCI 层为该设备设置 MSI 功能。</p>
+<p>若要自动使用 MSI 或 MSI-X 中断向量，请使用以下函数，该函数为设备分配多个中断号&#x2F;向量：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 成功时返回分配的中断数量，失败返回负值 */</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">pci_alloc_irq_vectors</span><span class="params">(<span class="keyword">struct</span> pci_dev *dev, <span class="type">unsigned</span> <span class="type">int</span> min_vecs,</span></span><br><span class="line"><span class="params">              <span class="type">unsigned</span> <span class="type">int</span> max_vecs, <span class="type">unsigned</span> <span class="type">int</span> flags)</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>dev：内核中，PCI 设备的抽象</li>
+<li>min_vecs：请求申请的中断向量的数量下限</li>
+<li>max_vecs：请求申请的中断向量的数量上限</li>
+<li>flags：指定设备和驱动程序可以使用哪种类型的中断(<code>PCI_IRQ_LEGACY</code>，<code>PCI_IRQ_MSI</code>，<code>PCI_IRQ_MSIX</code>)。一个方便的快捷方式 <code>PCI_IRQ_ALL_TYPES</code> 可用于请求任何可能的中断类型。</li>
+</ul>
+<p>有获取就应该有分配，在设备 <code>remove</code> 时，应该释放申请的中断：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">pci_free_irq_vectors</span><span class="params">(<span class="keyword">struct</span> pci_dev *dev)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>如果一个设备同时支持 MSI-X 和 MSI 功能，上述 API 将优先使用 MSI-X 设施而非 MSI 设施。MSI-X 支持 1 到 2048 之间的任意数量的中断。相比之下，MSI 被限制为最多 32 个中断（并且必须是 2 的幂）。此外，MSI 中断向量必须连续分配，因此系统可能无法为 MSI 分配与为 MSI-X 一样多的向量。</p>
+<p>在某些平台上，MSI 中断必须全部针对同一组 CPU，而 MSI-X 中断可以全部针对不同的 CPU。 </p>
+<p>如果一个设备既不支持 MSI-X 也不支持 MSI，它将回退到单个传统 IRQ 向量。</p>
+<h4 id="尽可能多的分配方式"><a href="#尽可能多的分配方式" class="headerlink" title="尽可能多的分配方式"></a>尽可能多的分配方式</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">nvec = pci_alloc_irq_vectors(pdev, <span class="number">1</span>, nvec, PCI_IRQ_ALL_TYPES)</span><br><span class="line"><span class="keyword">if</span> (nvec &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">goto</span> out_err;</span><br></pre></td></tr></table></figure>
+
+<p>MSI 或 MSI-X 中断的典型用法是分配尽可能多的向量，可能达到设备支持的极限。如果 <code>nvec</code> 大于设备支持的数量，它将<strong>自动被限制为支持的极限</strong>，因此无需事先查询支持的向量数量。</p>
+<h4 id="固定数量的分配方式"><a href="#固定数量的分配方式" class="headerlink" title="固定数量的分配方式"></a>固定数量的分配方式</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ret = pci_alloc_irq_vectors(pdev, nvec, nvec, PCI_IRQ_ALL_TYPES);</span><br><span class="line"><span class="keyword">if</span> (ret &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">goto</span> out_err;</span><br></pre></td></tr></table></figure>
+
+<p>如果不想处理可变数量的中断，那么直接使用上面这种方式即可，<code>nvec</code> 为固定的中断数量。</p>
+<h4 id="唯一中断的分配方式"><a href="#唯一中断的分配方式" class="headerlink" title="唯一中断的分配方式"></a>唯一中断的分配方式</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ret = pci_alloc_irq_vectors(pdev, <span class="number">1</span>, <span class="number">1</span>, PCI_IRQ_ALL_TYPES);</span><br><span class="line"><span class="keyword">if</span> (ret &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">goto</span> out_err;</span><br></pre></td></tr></table></figure>
+
+<p>很简单，就是只申请 1 个中断向量。</p>
+<h4 id="只申请-MSI-MSI-X-中断"><a href="#只申请-MSI-MSI-X-中断" class="headerlink" title="只申请 MSI&#x2F;MSI-X 中断"></a>只申请 MSI&#x2F;MSI-X 中断</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">nvec = pci_alloc_irq_vectors(pdev, <span class="number">1</span>, nvec, PCI_IRQ_MSI | PCI_IRQ_MSIX);</span><br><span class="line"><span class="keyword">if</span> (nvec &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">goto</span> out_err;</span><br></pre></td></tr></table></figure>
+
+<p>某些设备可能不支持使用传统的线路中断，在这种情况下，驱动程序可以指定仅 MSI 或 MSI-X。 </p>
+<h3 id="MSI-中断向量转换到-Linux-IRQ"><a href="#MSI-中断向量转换到-Linux-IRQ" class="headerlink" title="MSI 中断向量转换到 Linux IRQ"></a>MSI 中断向量转换到 Linux IRQ</h3><p>要获取传递给 <code>request_irq()</code> 和 <code>free_irq()</code> 的 Linux IRQ 编号以及向量，要使用以下函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">pci_irq_vector</span><span class="params">(<span class="keyword">struct</span> pci_dev *dev, <span class="type">unsigned</span> <span class="type">int</span> nr)</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="废弃接口"><a href="#废弃接口" class="headerlink" title="废弃接口"></a>废弃接口</h3><p>下面这些接口会在老代码中看到，但务必不要继续使用：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">pci_enable_msi()              /* deprecated */</span><br><span class="line">pci_disable_msi()             /* deprecated */</span><br><span class="line">pci_enable_msix_range()       /* deprecated */</span><br><span class="line">pci_enable_msix_exact()       /* deprecated */</span><br><span class="line">pci_disable_msix()            /* deprecated */</span><br></pre></td></tr></table></figure>
+
+<h2 id="驱动编写"><a href="#驱动编写" class="headerlink" title="驱动编写"></a>驱动编写</h2><h3 id="模块入口和出口"><a href="#模块入口和出口" class="headerlink" title="模块入口和出口"></a>模块入口和出口</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> __init <span class="title function_">pci_init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">return</span> pci_register_driver(&amp;pci_drv);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> __exit <span class="title function_">pci_exit</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        pci_unregister_driver(&amp;pci_drv);</span><br><span class="line">&#125;</span><br><span class="line">module_init(pci_init);</span><br><span class="line">module_exit(pci_exit);</span><br></pre></td></tr></table></figure>
+
+<h3 id="pci-driver-驱动对象"><a href="#pci-driver-驱动对象" class="headerlink" title="pci_driver 驱动对象"></a>pci_driver 驱动对象</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_driver</span> <span class="title">pci_drv</span> =</span> &#123;</span><br><span class="line">        .name = MODULE_NAME,</span><br><span class="line">        .id_table = ids,</span><br><span class="line">        .probe = pci_probe,</span><br><span class="line">        .remove = pci_remove,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="id-table-设备匹配表"><a href="#id-table-设备匹配表" class="headerlink" title="id_table 设备匹配表"></a>id_table 设备匹配表</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_device_id</span> <span class="title">ids</span>[] =</span> &#123;</span><br><span class="line">        &#123;</span><br><span class="line">                .vendor = PCI_VENDOR_ID_QEMU,</span><br><span class="line">                .device = PCI_DEVICE_ID_QEMU,</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123; <span class="number">0</span> &#125;,</span><br><span class="line">&#125;;</span><br><span class="line">MODULE_DEVICE_TABLE(pci, ids);</span><br></pre></td></tr></table></figure>
+
+<h3 id="pci-私有设备对象"><a href="#pci-私有设备对象" class="headerlink" title="pci 私有设备对象"></a>pci 私有设备对象</h3><p>保存了驱动程序会经常使用的一些成员，如设备号，字符设备，pci_dev 等，还对设备的 BAR 空间，irq 等进行保存：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pci_private_t</span> &#123;</span></span><br><span class="line">        <span class="type">dev_t</span>           devt;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">cdev</span>     <span class="title">cdev</span>;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_dev</span>  *<span class="title">pdev</span>;</span></span><br><span class="line">        <span class="type">uint32_t</span>        irq_nr;</span><br><span class="line">        <span class="type">uint32_t</span>        irqs[PCI_VEC_NUMBER];</span><br><span class="line">        <span class="type">uint32_t</span>        bar_nr;</span><br><span class="line">        <span class="type">void</span> *__iomem   bars[PCI_BAR_NUMBER];</span><br><span class="line">        <span class="type">uint32_t</span>        barlens[PCI_BAR_NUMBER];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="probe-探测设备"><a href="#probe-探测设备" class="headerlink" title="probe 探测设备"></a>probe 探测设备</h3><h4 id="使能-PCI-设备"><a href="#使能-PCI-设备" class="headerlink" title="使能 PCI 设备"></a>使能 PCI 设备</h4><p>按照 PCI 设备驱动的编写顺序，首先使能设备：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">retval = pci_enable_device(pdev);</span><br><span class="line"><span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t enable PCI device\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> -ENODEV;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="为设备数据申请空间"><a href="#为设备数据申请空间" class="headerlink" title="为设备数据申请空间"></a>为设备数据申请空间</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">pci_prv = kzalloc(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">pci_private_t</span>), GFP_KERNEL);</span><br><span class="line"><span class="keyword">if</span> (!pci_prv) &#123;</span><br><span class="line">    dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t alloc memory for pci device\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> -ENOMEM;</span><br><span class="line">&#125;</span><br><span class="line">pci_prv-&gt;pdev = pdev;</span><br></pre></td></tr></table></figure>
+
+<h4 id="申请-MSI-中断"><a href="#申请-MSI-中断" class="headerlink" title="申请 MSI 中断"></a>申请 MSI 中断</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">retval = irq_alloc(pci_prv);</span><br><span class="line"><span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">goto</span> irq_alloc_err;</span><br></pre></td></tr></table></figure>
+
+<p>具体实现都在 <code>irq_alloc</code> 函数中，该函数首先使用上面提到的接口 <code>pci_alloc_irq_vectors</code> 申请 MSI 中断向量，然后将 MSI 向量转换成 Linux IRQ 号，并保存到设备数据中，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">irq_alloc</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;       </span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>, i;</span><br><span class="line">        <span class="type">int</span> nvec, irq;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_dev</span> *<span class="title">pdev</span> =</span> pci_prv-&gt;pdev;</span><br><span class="line"></span><br><span class="line">        nvec = pci_alloc_irq_vectors(pdev, <span class="number">1</span>, PCI_VEC_NUMBER, PCI_IRQ_MSI | PCI_IRQ_MSIX);</span><br><span class="line">        <span class="keyword">if</span> (nvec &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;pci_alloc_irq_vectors failed\n&quot;</span>);</span><br><span class="line">                retval = nvec;</span><br><span class="line">                <span class="keyword">goto</span> exit_err;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; nvec; i++) &#123;</span><br><span class="line">                irq = pci_irq_vector(pdev, i);</span><br><span class="line">            	<span class="comment">/* 使用 pci_prv-&gt;irqs 的地址作为释放时的 cookie */</span></span><br><span class="line">                retval = request_irq(irq, default_pci_isr, <span class="number">0</span>, MODULE_NAME, pci_prv-&gt;irqs + i);</span><br><span class="line">                <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                        dev_err(&amp;pci_prv-&gt;pdev-&gt;dev, <span class="string">&quot;request_irq failed\n&quot;</span>);</span><br><span class="line">                        <span class="keyword">goto</span> req_irq_err;</span><br><span class="line">                &#125;</span><br><span class="line">                pci_prv-&gt;irqs[i] = irq;</span><br><span class="line">                pci_prv-&gt;irq_nr++;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">req_irq_err:</span><br><span class="line">        irq_free(pci_prv);</span><br><span class="line">exit_err:</span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>相应的，释放 IRQ 的函数如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">irq_free</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;       </span><br><span class="line">        <span class="type">int</span> i;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; pci_prv-&gt;irq_nr; ++i) &#123;</span><br><span class="line">                <span class="keyword">if</span> (pci_prv-&gt;irqs[i])</span><br><span class="line">                        free_irq(pci_prv-&gt;irqs[i], pci_prv-&gt;irqs + i);</span><br><span class="line">        &#125;</span><br><span class="line">        pci_free_irq_vectors(pci_prv-&gt;pdev);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>中断处理函数如下，只是简单打印：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">irqreturn_t</span> <span class="title function_">default_pci_isr</span><span class="params">(<span class="type">int</span> irq, <span class="type">void</span> *dev_id)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_private_t</span> *<span class="title">pci_prv</span> =</span> dev_id;</span><br><span class="line">        (<span class="type">void</span>)pci_prv;</span><br><span class="line"></span><br><span class="line">        pr_debug(<span class="string">&quot;pci interrupt triggered!\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> IRQ_HANDLED;</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="映射-BAR-空间"><a href="#映射-BAR-空间" class="headerlink" title="映射 BAR 空间"></a>映射 BAR 空间</h4><p>这部分在本系列文章已经讲述过，这里不在赘述，直接看代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">retval = map_bars(pci_prv);</span><br><span class="line"><span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t map bars\n&quot;</span>);</span><br><span class="line">    <span class="keyword">goto</span> map_bars_err;          </span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+
+<p>其主要的实现也封装到了函数 <code>map_bars</code> 中，具体实现如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">map_sigal_bar</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv, <span class="type">int</span> idx)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_dev</span> *<span class="title">pdev</span> =</span> pci_prv-&gt;pdev;</span><br><span class="line">        <span class="type">resource_size_t</span> bar_start;</span><br><span class="line">        <span class="type">resource_size_t</span> bar_len;</span><br><span class="line">        <span class="type">void</span> *__iomem bar_map;</span><br><span class="line"></span><br><span class="line">        bar_start = pci_resource_start(pdev, idx);</span><br><span class="line">        bar_len = pci_resource_len(pdev, idx);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (bar_len == <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        bar_map = pci_iomap(pdev, idx, bar_len);</span><br><span class="line"></span><br><span class="line">        pr_info(<span class="string">&quot;BAR%d at 0x%llx mapped at 0x%p, length=%llu(0x%llx)\n&quot;</span>, idx, (u64)bar_start, \</span><br><span class="line">                bar_map, (u64)bar_len, (u64)bar_len);</span><br><span class="line"></span><br><span class="line">        pci_prv-&gt;bars[pci_prv-&gt;bar_nr++] = bar_map;</span><br><span class="line">        pci_prv-&gt;barlens[pci_prv-&gt;bar_nr] = bar_len;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> (<span class="type">int</span>)bar_len;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">map_bars</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> i;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; PCI_BAR_NUMBER; ++i) &#123;</span><br><span class="line">                retval = map_sigal_bar(pci_prv, i);</span><br><span class="line">                <span class="keyword">if</span> (retval == <span class="number">0</span>) &#123;</span><br><span class="line">                        <span class="keyword">continue</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                        retval = -EINVAL;</span><br><span class="line">                        <span class="keyword">goto</span> fail;</span><br><span class="line">                &#125;</span><br><span class="line">        &#125;</span><br><span class="line">fail:   </span><br><span class="line">        unmap_bars(pci_prv);</span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>相应的，也有 <code>unmap_bars</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">unmap_bars</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> i;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; pci_prv-&gt;bar_nr; i++)</span><br><span class="line">                pci_iounmap(pci_prv-&gt;pdev, pci_prv-&gt;bars[i]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="创建字符设备"><a href="#创建字符设备" class="headerlink" title="创建字符设备"></a>创建字符设备</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">retval = create_cdev(pci_prv);</span><br><span class="line"><span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t create cdev\n&quot;</span>);</span><br><span class="line">    <span class="keyword">goto</span> creat_cdev_err;          </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看具体实现，比较常规：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">create_cdev</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        retval = alloc_chrdev_region(&amp;pci_prv-&gt;devt, <span class="number">0</span>, <span class="number">1</span>, MODULE_NAME);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span> retval;</span><br><span class="line"></span><br><span class="line">        cdev_init(&amp;pci_prv-&gt;cdev, &amp;pci_fops);</span><br><span class="line">        retval = cdev_add(&amp;pci_prv-&gt;cdev, pci_prv-&gt;devt, <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">goto</span> cdev_add_err;</span><br><span class="line"></span><br><span class="line">cdev_add_err:</span><br><span class="line">        unregister_chrdev_region(pci_prv-&gt;devt, <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="remove-移除设备"><a href="#remove-移除设备" class="headerlink" title="remove 移除设备"></a>remove 移除设备</h3><p>按照和 <code>probe</code> 相反的顺序释放设备占用的资源：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">pci_remove</span><span class="params">(<span class="keyword">struct</span> pci_dev *pdev)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_private_t</span> *<span class="title">pci_prv</span> =</span> dev_get_drvdata(&amp;pdev-&gt;dev);</span><br><span class="line"></span><br><span class="line">        destory_cdev(pci_prv);</span><br><span class="line">        unmap_bars(pci_prv);</span><br><span class="line">        irq_free(pci_prv);</span><br><span class="line">        kfree(pci_prv);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="完整的驱动代码"><a href="#完整的驱动代码" class="headerlink" title="完整的驱动代码"></a>完整的驱动代码</h2><p>和上一节的代码相同，这里直接放出所有细节，内核版本是 5.10 ：</p>
+<h3 id="头文件"><a href="#头文件" class="headerlink" title="头文件"></a>头文件</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __MAIN_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __MAIN_H</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MODULE_NAME <span class="string">&quot;pci_skel&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_VENDOR_ID_QEMU		0x1234</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_DEVICE_ID_QEMU		0x7863</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_BAR_NUMBER                  6</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PCI_VEC_NUMBER                  8</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pci_private_t</span> &#123;</span></span><br><span class="line">        <span class="type">dev_t</span>           devt;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">cdev</span>     <span class="title">cdev</span>;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_dev</span>  *<span class="title">pdev</span>;</span></span><br><span class="line">        <span class="type">uint32_t</span>        irq_nr;</span><br><span class="line">        <span class="type">uint32_t</span>        irqs[PCI_VEC_NUMBER];</span><br><span class="line">        <span class="type">uint32_t</span>        bar_nr;</span><br><span class="line">        <span class="type">void</span> *__iomem   bars[PCI_BAR_NUMBER];</span><br><span class="line">        <span class="type">uint32_t</span>        barlens[PCI_BAR_NUMBER];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/* __MAIN_H */</span></span></span><br></pre></td></tr></table></figure>
+
+<h3 id="源文件"><a href="#源文件" class="headerlink" title="源文件"></a>源文件</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/cdev.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/fs.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/init.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/irq.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/kernel.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/module.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/pci.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/types.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;main.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">pci_open</span><span class="params">(<span class="keyword">struct</span> inode *node, <span class="keyword">struct</span> file *filp)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">dev_t</span> devt = node-&gt;i_rdev;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_private_t</span> *<span class="title">pci_prv</span> =</span> container_of(&amp;devt, <span class="keyword">struct</span> <span class="type">pci_private_t</span>, devt);</span><br><span class="line"></span><br><span class="line">        iowrite32(<span class="number">1</span>, pci_prv-&gt;bars[<span class="number">0</span>]);</span><br><span class="line"></span><br><span class="line">        pr_err(<span class="string">&quot;%s&quot;</span>, __FUNCTION__);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">pci_release</span><span class="params">(<span class="keyword">struct</span> inode *node, <span class="keyword">struct</span> file *filp)</span></span><br><span class="line">&#123;</span><br><span class="line">        pr_err(<span class="string">&quot;%s() is invoked\n&quot;</span>, __FUNCTION__);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> <span class="title">pci_fops</span> =</span> &#123;</span><br><span class="line">        .owner = THIS_MODULE,</span><br><span class="line">        .open = pci_open,</span><br><span class="line">        .release = pci_release,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_device_id</span> <span class="title">ids</span>[] =</span> &#123;</span><br><span class="line">        &#123;</span><br><span class="line">                .vendor = PCI_VENDOR_ID_QEMU,</span><br><span class="line">                .device = PCI_DEVICE_ID_QEMU,</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123; <span class="number">0</span> &#125;,</span><br><span class="line">&#125;;</span><br><span class="line">MODULE_DEVICE_TABLE(pci, ids);</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">map_sigal_bar</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv, <span class="type">int</span> idx)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_dev</span> *<span class="title">pdev</span> =</span> pci_prv-&gt;pdev;</span><br><span class="line">        <span class="type">resource_size_t</span> bar_start;</span><br><span class="line">        <span class="type">resource_size_t</span> bar_len;</span><br><span class="line">        <span class="type">void</span> *__iomem bar_map;</span><br><span class="line"></span><br><span class="line">        bar_start = pci_resource_start(pdev, idx);</span><br><span class="line">        bar_len = pci_resource_len(pdev, idx);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (bar_len == <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        bar_map = pci_iomap(pdev, idx, bar_len);</span><br><span class="line"></span><br><span class="line">        pr_info(<span class="string">&quot;BAR%d at 0x%llx mapped at 0x%p, length=%llu(0x%llx)\n&quot;</span>, idx, (u64)bar_start, \</span><br><span class="line">                bar_map, (u64)bar_len, (u64)bar_len);</span><br><span class="line"></span><br><span class="line">        pci_prv-&gt;bars[pci_prv-&gt;bar_nr++] = bar_map;</span><br><span class="line">        pci_prv-&gt;barlens[pci_prv-&gt;bar_nr] = bar_len;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> (<span class="type">int</span>)bar_len;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">unmap_bars</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> i;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; pci_prv-&gt;bar_nr; i++)</span><br><span class="line">                pci_iounmap(pci_prv-&gt;pdev, pci_prv-&gt;bars[i]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">map_bars</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> i;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; PCI_BAR_NUMBER; ++i) &#123;</span><br><span class="line">                retval = map_sigal_bar(pci_prv, i);</span><br><span class="line">                <span class="keyword">if</span> (retval == <span class="number">0</span>) &#123;</span><br><span class="line">                        <span class="keyword">continue</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                        retval = -EINVAL;</span><br><span class="line">                        <span class="keyword">goto</span> fail;</span><br><span class="line">                &#125;</span><br><span class="line">        &#125;</span><br><span class="line">fail:   </span><br><span class="line">        unmap_bars(pci_prv);</span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">irqreturn_t</span> <span class="title function_">default_pci_isr</span><span class="params">(<span class="type">int</span> irq, <span class="type">void</span> *dev_id)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_private_t</span> *<span class="title">pci_prv</span> =</span> dev_id;</span><br><span class="line">        (<span class="type">void</span>)pci_prv;</span><br><span class="line"></span><br><span class="line">        pr_debug(<span class="string">&quot;pci interrupt triggered!\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> IRQ_HANDLED;</span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">irq_free</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;       </span><br><span class="line">        <span class="type">int</span> i;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; pci_prv-&gt;irq_nr; ++i) &#123;</span><br><span class="line">                <span class="keyword">if</span> (pci_prv-&gt;irqs[i])</span><br><span class="line">                        free_irq(pci_prv-&gt;irqs[i], pci_prv-&gt;irqs + i);</span><br><span class="line">        &#125;</span><br><span class="line">        pci_free_irq_vectors(pci_prv-&gt;pdev);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">irq_alloc</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;       </span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>, i;</span><br><span class="line">        <span class="type">int</span> nvec, irq;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_dev</span> *<span class="title">pdev</span> =</span> pci_prv-&gt;pdev;</span><br><span class="line"></span><br><span class="line">        nvec = pci_alloc_irq_vectors(pdev, <span class="number">1</span>, PCI_VEC_NUMBER, PCI_IRQ_MSI | PCI_IRQ_MSIX);</span><br><span class="line">        <span class="keyword">if</span> (nvec &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;pci_alloc_irq_vectors failed\n&quot;</span>);</span><br><span class="line">                retval = nvec;</span><br><span class="line">                <span class="keyword">goto</span> exit_err;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; nvec; i++) &#123;</span><br><span class="line">                irq = pci_irq_vector(pdev, i);</span><br><span class="line">                retval = request_irq(irq, default_pci_isr, <span class="number">0</span>, MODULE_NAME, pci_prv-&gt;irqs + i);</span><br><span class="line">                <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                        dev_err(&amp;pci_prv-&gt;pdev-&gt;dev, <span class="string">&quot;request_irq failed\n&quot;</span>);</span><br><span class="line">                        <span class="keyword">goto</span> req_irq_err;</span><br><span class="line">                &#125;</span><br><span class="line">                pci_prv-&gt;irqs[i] = irq;</span><br><span class="line">                pci_prv-&gt;irq_nr++;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">req_irq_err:</span><br><span class="line">        irq_free(pci_prv);</span><br><span class="line">exit_err:</span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">destory_cdev</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;</span><br><span class="line">        cdev_del(&amp;pci_prv-&gt;cdev);</span><br><span class="line">        unregister_chrdev_region(pci_prv-&gt;devt, <span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">create_cdev</span><span class="params">(<span class="keyword">struct</span> <span class="type">pci_private_t</span> *pci_prv)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        retval = alloc_chrdev_region(&amp;pci_prv-&gt;devt, <span class="number">0</span>, <span class="number">1</span>, MODULE_NAME);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span> retval;</span><br><span class="line"></span><br><span class="line">        cdev_init(&amp;pci_prv-&gt;cdev, &amp;pci_fops);</span><br><span class="line">        retval = cdev_add(&amp;pci_prv-&gt;cdev, pci_prv-&gt;devt, <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">goto</span> cdev_add_err;</span><br><span class="line"></span><br><span class="line">cdev_add_err:</span><br><span class="line">        unregister_chrdev_region(pci_prv-&gt;devt, <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">pci_probe</span><span class="params">(<span class="keyword">struct</span> pci_dev *pdev, <span class="type">const</span> <span class="keyword">struct</span> pci_device_id *ids)</span>&#123;</span><br><span class="line">        <span class="type">uint8_t</span> reversion;</span><br><span class="line">        <span class="type">int</span> retval = <span class="number">0</span>;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_private_t</span> *<span class="title">pci_prv</span>;</span></span><br><span class="line"></span><br><span class="line">        pr_debug(<span class="string">&quot;New pci device probing\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">        retval = pci_enable_device(pdev);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t enable PCI device\n&quot;</span>);</span><br><span class="line">                <span class="keyword">return</span> -ENODEV;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        pci_read_config_byte(pdev, PCI_REVISION_ID, &amp;reversion);</span><br><span class="line">        pr_debug(<span class="string">&quot;Revision: %d\n&quot;</span>, reversion);</span><br><span class="line">        </span><br><span class="line">        pci_prv = kzalloc(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">pci_private_t</span>), GFP_KERNEL);</span><br><span class="line">        <span class="keyword">if</span> (!pci_prv) &#123;</span><br><span class="line">                dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t alloc memory for pci device\n&quot;</span>);</span><br><span class="line">                <span class="keyword">return</span> -ENOMEM;</span><br><span class="line">        &#125;</span><br><span class="line">        pci_prv-&gt;pdev = pdev;</span><br><span class="line">        </span><br><span class="line">        retval = irq_alloc(pci_prv);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">goto</span> irq_alloc_err;</span><br><span class="line"></span><br><span class="line">        retval = map_bars(pci_prv);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t map bars\n&quot;</span>);</span><br><span class="line">                <span class="keyword">goto</span> map_bars_err;          </span><br><span class="line">        &#125; </span><br><span class="line"></span><br><span class="line">        retval = create_cdev(pci_prv);</span><br><span class="line">        <span class="keyword">if</span> (retval &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                dev_err(&amp;pdev-&gt;dev, <span class="string">&quot;can&#x27;t create cdev\n&quot;</span>);</span><br><span class="line">                <span class="keyword">goto</span> creat_cdev_err;          </span><br><span class="line">        &#125;</span><br><span class="line">        dev_set_drvdata(&amp;pdev-&gt;dev, pci_prv);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">creat_cdev_err:</span><br><span class="line">        unmap_bars(pci_prv);</span><br><span class="line">map_bars_err:</span><br><span class="line">        irq_free(pci_prv);</span><br><span class="line">irq_alloc_err:</span><br><span class="line">        kfree(pci_prv);</span><br><span class="line">        <span class="keyword">return</span> retval;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">pci_remove</span><span class="params">(<span class="keyword">struct</span> pci_dev *pdev)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pci_private_t</span> *<span class="title">pci_prv</span> =</span> dev_get_drvdata(&amp;pdev-&gt;dev);</span><br><span class="line"></span><br><span class="line">        destory_cdev(pci_prv);</span><br><span class="line">        unmap_bars(pci_prv);</span><br><span class="line">        irq_free(pci_prv);</span><br><span class="line">        kfree(pci_prv);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pci_driver</span> <span class="title">pci_drv</span> =</span> &#123;</span><br><span class="line">        .name = MODULE_NAME,</span><br><span class="line">        .id_table = ids,</span><br><span class="line">        .probe = pci_probe,</span><br><span class="line">        .remove = pci_remove,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> __init <span class="title function_">pci_init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">return</span> pci_register_driver(&amp;pci_drv);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> __exit <span class="title function_">pci_exit</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        pci_unregister_driver(&amp;pci_drv);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">module_init(pci_init);</span><br><span class="line">module_exit(pci_exit);</span><br><span class="line">MODULE_LICENSE(<span class="string">&quot;GPL&quot;</span>);</span><br><span class="line">MODULE_AUTHOR(<span class="string">&quot;Huashan Sun &lt;huashan.sun@qq.com&gt;&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/pci-linux/" rel="tag"># pci linux</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/03/09/pci%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%EF%BC%881%EF%BC%89/" rel="prev" title="【设备驱动】PCI 设备驱动程序（一）PCI 总线与驱动概述">
+      <i class="fa fa-chevron-left"></i> 【设备驱动】PCI 设备驱动程序（一）PCI 总线与驱动概述
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/04/09/ivshmem%EF%BC%88%E4%BA%8C%EF%BC%89%E5%9F%BA%E4%BA%8E%E4%B8%AD%E6%96%AD%E7%9A%84%E9%80%9A%E4%BF%A1%E5%AE%9E%E6%88%98/" rel="next" title="【虚拟化】ivshmem（二）基于中断的通信原理与实现--PCI设备驱动">
+      【虚拟化】ivshmem（二）基于中断的通信原理与实现--PCI设备驱动 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-MSI"><span class="nav-number">1.</span> <span class="nav-text">什么是 MSI</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-MSI-%E7%9A%84%E5%A5%BD%E5%A4%84"><span class="nav-number">2.</span> <span class="nav-text">使用 MSI 的好处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-MSI"><span class="nav-number">3.</span> <span class="nav-text">使用 MSI</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.</span> <span class="nav-text">内核配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E9%85%8D%E5%92%8C%E9%87%8A%E6%94%BE%E4%B8%AD%E6%96%AD%E5%90%91%E9%87%8F"><span class="nav-number">3.2.</span> <span class="nav-text">分配和释放中断向量</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B0%BD%E5%8F%AF%E8%83%BD%E5%A4%9A%E7%9A%84%E5%88%86%E9%85%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">3.2.1.</span> <span class="nav-text">尽可能多的分配方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E6%95%B0%E9%87%8F%E7%9A%84%E5%88%86%E9%85%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">3.2.2.</span> <span class="nav-text">固定数量的分配方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%94%AF%E4%B8%80%E4%B8%AD%E6%96%AD%E7%9A%84%E5%88%86%E9%85%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">3.2.3.</span> <span class="nav-text">唯一中断的分配方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%AA%E7%94%B3%E8%AF%B7-MSI-MSI-X-%E4%B8%AD%E6%96%AD"><span class="nav-number">3.2.4.</span> <span class="nav-text">只申请 MSI&#x2F;MSI-X 中断</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MSI-%E4%B8%AD%E6%96%AD%E5%90%91%E9%87%8F%E8%BD%AC%E6%8D%A2%E5%88%B0-Linux-IRQ"><span class="nav-number">3.3.</span> <span class="nav-text">MSI 中断向量转换到 Linux IRQ</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%9F%E5%BC%83%E6%8E%A5%E5%8F%A3"><span class="nav-number">3.4.</span> <span class="nav-text">废弃接口</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A9%B1%E5%8A%A8%E7%BC%96%E5%86%99"><span class="nav-number">4.</span> <span class="nav-text">驱动编写</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E5%85%A5%E5%8F%A3%E5%92%8C%E5%87%BA%E5%8F%A3"><span class="nav-number">4.1.</span> <span class="nav-text">模块入口和出口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pci-driver-%E9%A9%B1%E5%8A%A8%E5%AF%B9%E8%B1%A1"><span class="nav-number">4.2.</span> <span class="nav-text">pci_driver 驱动对象</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#id-table-%E8%AE%BE%E5%A4%87%E5%8C%B9%E9%85%8D%E8%A1%A8"><span class="nav-number">4.2.1.</span> <span class="nav-text">id_table 设备匹配表</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pci-%E7%A7%81%E6%9C%89%E8%AE%BE%E5%A4%87%E5%AF%B9%E8%B1%A1"><span class="nav-number">4.3.</span> <span class="nav-text">pci 私有设备对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#probe-%E6%8E%A2%E6%B5%8B%E8%AE%BE%E5%A4%87"><span class="nav-number">4.4.</span> <span class="nav-text">probe 探测设备</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E8%83%BD-PCI-%E8%AE%BE%E5%A4%87"><span class="nav-number">4.4.1.</span> <span class="nav-text">使能 PCI 设备</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E8%AE%BE%E5%A4%87%E6%95%B0%E6%8D%AE%E7%94%B3%E8%AF%B7%E7%A9%BA%E9%97%B4"><span class="nav-number">4.4.2.</span> <span class="nav-text">为设备数据申请空间</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%B3%E8%AF%B7-MSI-%E4%B8%AD%E6%96%AD"><span class="nav-number">4.4.3.</span> <span class="nav-text">申请 MSI 中断</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%98%A0%E5%B0%84-BAR-%E7%A9%BA%E9%97%B4"><span class="nav-number">4.4.4.</span> <span class="nav-text">映射 BAR 空间</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87"><span class="nav-number">4.4.5.</span> <span class="nav-text">创建字符设备</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#remove-%E7%A7%BB%E9%99%A4%E8%AE%BE%E5%A4%87"><span class="nav-number">4.5.</span> <span class="nav-text">remove 移除设备</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%8C%E6%95%B4%E7%9A%84%E9%A9%B1%E5%8A%A8%E4%BB%A3%E7%A0%81"><span class="nav-number">5.</span> <span class="nav-text">完整的驱动代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%B4%E6%96%87%E4%BB%B6"><span class="nav-number">5.1.</span> <span class="nav-text">头文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BA%90%E6%96%87%E4%BB%B6"><span class="nav-number">5.2.</span> <span class="nav-text">源文件</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">44</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
