@@ -27,11 +27,14 @@
 <meta property="og:site_name" content="sunhuashan">
 <meta property="og:description" content="这篇文章是用来总结 C&#x2F;C++ 开发校招面试的笔记汇总，内容主要会涉及操作系统，计算机网络，计算机组成原理，编程语言，Linux，Git，多线程，数据结构与算法等等。这篇文章会持续更新，用作复习阶段的知识点梳理，也用作面试前的快速回顾。">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E3%80%90%E7%BB%8F%E5%85%B8%E9%97%AE%E9%A2%98%E3%80%91%E6%8A%80%E6%9C%AF%E9%9D%A2%E8%AF%95%E9%A2%98%E6%B1%87%E6%80%BB/image-20240726085124985.png">
+<meta property="og:image" content="http://example.com/imgs/%E3%80%90%E7%BB%8F%E5%85%B8%E9%97%AE%E9%A2%98%E3%80%91%E6%8A%80%E6%9C%AF%E9%9D%A2%E8%AF%95%E9%A2%98%E6%B1%87%E6%80%BB/image-20240726085151116.png">
 <meta property="article:published_time" content="2024-07-21T14:58:24.000Z">
-<meta property="article:modified_time" content="2024-07-22T14:17:08.503Z">
+<meta property="article:modified_time" content="2024-07-26T00:58:00.375Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="面试题">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E3%80%90%E7%BB%8F%E5%85%B8%E9%97%AE%E9%A2%98%E3%80%91%E6%8A%80%E6%9C%AF%E9%9D%A2%E8%AF%95%E9%A2%98%E6%B1%87%E6%80%BB/image-20240726085124985.png">
 
 <link rel="canonical" href="http://example.com/2024/07/21/%E3%80%90%E7%BB%8F%E5%85%B8%E9%97%AE%E9%A2%98%E3%80%91%E6%8A%80%E6%9C%AF%E9%9D%A2%E8%AF%95%E9%A2%98%E6%B1%87%E6%80%BB/">
 
@@ -201,8 +204,36 @@
         <p>这篇文章是用来总结 C&#x2F;C++ 开发校招面试的笔记汇总，内容主要会涉及操作系统，计算机网络，计算机组成原理，编程语言，Linux，Git，多线程，数据结构与算法等等。这篇文章会持续更新，用作复习阶段的知识点梳理，也用作面试前的快速回顾。</p>
 <span id="more"></span>
 
-<p>[TOC]</p>
-<h2 id="问题索引"><a href="#问题索引" class="headerlink" title="问题索引"></a>问题索引</h2><h2 id="操作系统"><a href="#操作系统" class="headerlink" title="操作系统"></a>操作系统</h2><h3 id="用户态和内核态"><a href="#用户态和内核态" class="headerlink" title="用户态和内核态"></a>用户态和内核态</h3><h4 id="内核态和用户态的区别"><a href="#内核态和用户态的区别" class="headerlink" title="内核态和用户态的区别?"></a>内核态和用户态的区别?</h4><blockquote>
+<!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
+
+<ul>
+<li><a href="#">问题索引</a></li>
+<li><a href="#-1">操作系统</a><ul>
+<li><a href="#-2">用户态和内核态</a><ul>
+<li><a href="#-3">内核态和用户态的区别?</a></li>
+<li><a href="#-4">什么时候会陷入内核态?</a></li>
+<li><a href="#c-">C 访问空指针会不会陷入内核态？</a></li>
+</ul>
+</li>
+<li><a href="#-5">陷阱、中断、异常、信号</a><ul>
+<li><a href="#-6">陷阱、中断、异常、信号的概念</a></li>
+<li><a href="#-7">陷阱、中断、异常、信号的处理流程</a></li>
+<li><a href="#-8">常见的陷阱、中断、异常、信号有哪些？</a></li>
+<li><a href="#ctrl-cctrl-zkill-9-"><code>Ctrl + C</code>、<code>Ctrl + Z</code>、<code>kill -9</code> 的原理</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<!-- TOC end -->
+
+
+
+<!-- TOC --><a name=""></a>
+<h2 id="问题索引"><a href="#问题索引" class="headerlink" title="问题索引"></a>问题索引</h2><!-- TOC --><a name="-1"></a>
+<h2 id="操作系统"><a href="#操作系统" class="headerlink" title="操作系统"></a>操作系统</h2><!-- TOC --><a name="-2"></a>
+<h3 id="用户态和内核态"><a href="#用户态和内核态" class="headerlink" title="用户态和内核态"></a>用户态和内核态</h3><!-- TOC --><a name="-3"></a>
+<h4 id="内核态和用户态的区别"><a href="#内核态和用户态的区别" class="headerlink" title="内核态和用户态的区别?"></a>内核态和用户态的区别?</h4><blockquote>
 <p>最简单的运行程序的方式是“直接执行”，即直接在 CPU 上执行任意程序。直接执行的问题是：</p>
 <ol>
 <li>如何限制代码行为？比如禁止：设置特殊寄存器的值、访问存储器的任意位置、I&#x2F;O 请求、申请更多系统资源等</li>
@@ -211,18 +242,23 @@
 <p>因此引入用户态和内核态和两种模式。用户态无法执行受限操作，如 I&#x2F;O 请求，执行这些操作会引发异常。核心态只能由操作系统运行，可以执行特权操作。用户程序通过<strong>系统调用</strong> system call 执行这些特权操作。OS 执行前会判断进程是否有<strong>权限</strong>执行相应的指令。</p>
 <p>区分用户态和核心态的执行机制称为“受限直接执行”（Limited Direct Execution）。</p>
 </blockquote>
+<!-- TOC --><a name="-4"></a>
 <h4 id="什么时候会陷入内核态"><a href="#什么时候会陷入内核态" class="headerlink" title="什么时候会陷入内核态?"></a>什么时候会陷入内核态?</h4><blockquote>
 <p>系统调用（trap）、中断（interrupt）和异常（exception）。</p>
 <p>系统调用是用户进程主动发起的操作。发起系统调用，陷入内核，由操作系统执行系统调用，然后再返回到进程。</p>
 <p>中断和异常是被动的，无法预测发生时机。中断包括 I&#x2F;O 中断、外部信号中断、各种定时器引起的时钟中断等。异常包括程序运算引起的各种错误如除 0、缓冲区溢出、缺页等。</p>
 <p>在系统的处理上，中断和异常类似，都是通过中断向量表来找到相应的处理程序进行处理。区别在于，中断来自处理器外部，不是由任何一条专门的指令造成，而异常是执行当前指令的结果。</p>
 </blockquote>
+<!-- TOC --><a name="c-"></a>
+
 <h4 id="C-访问空指针会不会陷入内核态？"><a href="#C-访问空指针会不会陷入内核态？" class="headerlink" title="C 访问空指针会不会陷入内核态？"></a>C 访问空指针会不会陷入内核态？</h4><blockquote>
 <p>会。</p>
 <p>访问指针相当于访问一个虚拟地址，硬件会将虚拟地址映射到真实的物理内存。如果映射失败，硬件会抛出一个段错误<strong>异常</strong>（page fault exception），此时会<strong>从用户态转为内核态</strong>进行处理。</p>
 <p>OS 会在中断描述符表中，找到处理 page fault exception 的中断向量，执行相应的 handler。一般情况下，OS 会抛出一个 <code>SIGSEGV</code> 信号给进程，中止进程，打印出 debug 信息。</p>
 </blockquote>
-<h3 id="陷阱、中断、异常、信号"><a href="#陷阱、中断、异常、信号" class="headerlink" title="陷阱、中断、异常、信号"></a>陷阱、中断、异常、信号</h3><h4 id="陷阱、中断、异常、信号的概念"><a href="#陷阱、中断、异常、信号的概念" class="headerlink" title="陷阱、中断、异常、信号的概念"></a>陷阱、中断、异常、信号的概念</h4><p><strong>陷阱</strong> </p>
+<!-- TOC --><a name="-5"></a>
+<h3 id="陷阱、中断、异常、信号"><a href="#陷阱、中断、异常、信号" class="headerlink" title="陷阱、中断、异常、信号"></a>陷阱、中断、异常、信号</h3><!-- TOC --><a name="-6"></a>
+<h4 id="陷阱、中断、异常、信号的概念"><a href="#陷阱、中断、异常、信号的概念" class="headerlink" title="陷阱、中断、异常、信号的概念"></a>陷阱、中断、异常、信号的概念</h4><p><strong>陷阱</strong> </p>
 <p>陷阱是<strong>有意</strong>造成的“异常”，是执行一条指令的结果。陷阱是同步的。</p>
 <p>陷阱的主要作用是实现<strong>系统调用</strong>。比如，进程可以执行 <code>syscall n</code> 指令向内核请求服务。当进程执行这条指令后，会中断当前的控制流，<strong>陷入</strong>到内核态，执行相应的系统调用。内核的处理程序在执行结束后，会将结果返回给进程，同时退回到用户态。进程此时继续执行<strong>下一条指令</strong>。</p>
 <p>每个系统调用有一个唯一的整数号，对应于内核中一个跳转表的偏移量。这个跳转表中的每个条目表示一个系统调用的代码位置。执行系统调用时，通过这个整数号作为跳转表的偏移量，就可以执行相应的系统调用。</p>
@@ -238,6 +274,7 @@
 <p><strong>信号</strong> </p>
 <p>信号是一种<strong>更高层的</strong>软件形式的异常，同样会中断进程的控制流，可以由进程进行处理。一个信号代表了一个消息。信号的作用是用来<strong>通知进程</strong>发生了某种系统事件。</p>
 <p>上文的陷阱、中断和异常都是低层异常机制，由内核的异常处理程序进行处理，正常情况下对用户进程是不可见的。信号提供了一种机制，通知用户进程发生了这些异常。</p>
+<!-- TOC --><a name="-7"></a>
 <h4 id="陷阱、中断、异常、信号的处理流程"><a href="#陷阱、中断、异常、信号的处理流程" class="headerlink" title="陷阱、中断、异常、信号的处理流程"></a>陷阱、中断、异常、信号的处理流程</h4><p>陷阱&#x2F;系统调用的处理流程：</p>
 <ul>
 <li><strong>库函数</strong>：首先在用户空间，库函数会装配系统调用号和参数到指定寄存器中，然后执行特殊指令(svc &#x2F; int 80)陷入内核</li>
@@ -246,7 +283,50 @@
 <li>内核找到<strong>调用入口</strong>：接着，内核会检查系统调用的参数是否合法，并根据系统调用号和系统调用表找到指定系统调用的入口，装配好调用参数后跳转到具体系统调用</li>
 <li><strong>返回</strong>：系统调用函数完成指定功能后，会将结果保存到指定寄存器中，然后恢复用户上下文，</li>
 </ul>
-<h4 id="常见的陷阱、中断、异常、信号有哪些？"><a href="#常见的陷阱、中断、异常、信号有哪些？" class="headerlink" title="常见的陷阱、中断、异常、信号有哪些？"></a>常见的陷阱、中断、异常、信号有哪些？</h4><h4 id="Ctrl-C、Ctrl-Z、kill-9-的原理"><a href="#Ctrl-C、Ctrl-Z、kill-9-的原理" class="headerlink" title="Ctrl + C、Ctrl + Z、kill -9 的原理"></a><code>Ctrl + C</code>、<code>Ctrl + Z</code>、<code>kill -9</code> 的原理</h4>
+<p>中断的处理流程（异常也是类似的）：</p>
+<p><strong>中断产生</strong> ：与系统调用不同的是，中断是异步发生的，CPU 并不知道何时会发生中断，这是由外设在就绪时主动告诉 CPU 的，CPU 会在每执行完一条指令后去检查中断信号。</p>
+<p><strong>栈的切换</strong> ：产生中断后，系统会切换当前程序使用的栈（在 Linux 内核中，可将中断内核栈分开）</p>
+<p><strong>保存线程</strong> ：和系统调用类似，为了后面的恢复，这里需要保存当前 CPU 上下文</p>
+<p><strong>中断服务程序</strong> ：根据不同的中断，系统会在中断向量表中，找到中断服务程序的入口，并执行中断服务程序</p>
+<p><strong>恢复现场</strong> ：执行完中断服务程序后，将之前保存的寄存器出栈，恢复到寄存器上，复原运行环境</p>
+<p>信号的处理流程：</p>
+<p><strong>信号的发送</strong>：使用 <code>kill</code> 程序可以在 shell 中发送信号；使用 <code>kill</code> 系统调用可以在程序中发送信号</p>
+<p><strong>信号的接收</strong> ：每个进程有一个待处理信号的集合。待处理信号表示发送给该进程但是还未被处理（接收）的信号，任何时刻同一类型的待处理信号最多只有一个，后续发送的同类型信号将会被丢弃（隐式阻塞）。</p>
+<p><strong>信号的处理</strong> </p>
+<p>信号的处理时机：</p>
+<ul>
+<li>当内核把进程<strong>从内核态切换到用户态时</strong>。例如，从系统调用返回，或是完成一次上下文切换</li>
+<li>内核通过<strong>控制转移</strong>来强制进程<em>接收&#x2F;处理</em>信号。如果进程的未被阻塞的待处理信号集合不为空，则内核会选择集合中的某个信号（通常是最小的），并将控制传递到信号处理程序；否则，内核正常地将控制传递到进程的下一条指令</li>
+</ul>
+<p>用户进程对信号的处理过程有三种：</p>
+<ol>
+<li><p>执行默认操作，Linux 对每种信号都规定了</p>
+<p>默认行为</p>
+<p>（见上图），是下面的一种</p>
+<ul>
+<li>进程终止</li>
+<li>进程终止并转储内存（core dump）</li>
+<li>进程停止（挂起）直到被 SIGCONT 信号重启</li>
+<li>进程忽略该信号</li>
+</ul>
+</li>
+<li><p>忽略信号。当不希望接收到的信号对进程的执行产生影响，而让进程继续执行时，可以忽略该信号，即不对信号进程作任何处理，<code>SIGSTOP</code> 和 <code>SIGKILL</code> 无法忽略，也无法修改其默认行为</p>
+</li>
+<li><p>处理信号。定义信号处理程序，当信号发生时，执行相应的处理程序，使用 <code>sigaction</code> 可修改行为</p>
+</li>
+</ol>
+<!-- TOC --><a name="-8"></a>
+<h4 id="常见的陷阱、中断、异常、信号有哪些？"><a href="#常见的陷阱、中断、异常、信号有哪些？" class="headerlink" title="常见的陷阱、中断、异常、信号有哪些？"></a>常见的陷阱、中断、异常、信号有哪些？</h4><p>常见的陷阱（系统调用）：fork，exec，open，read，write 等</p>
+<p>中断：中断包括 I&#x2F;O 设备发出的 I&#x2F;O 中断、各种定时器引起的时钟中断、调试程序中设置的断点等引起的调试中断等。</p>
+<p>异常：除法（除零）异常、缺页异常等</p>
+<p>信号：<img src="/./imgs/%E3%80%90%E7%BB%8F%E5%85%B8%E9%97%AE%E9%A2%98%E3%80%91%E6%8A%80%E6%9C%AF%E9%9D%A2%E8%AF%95%E9%A2%98%E6%B1%87%E6%80%BB/image-20240726085124985.png" alt="image-20240726085124985"></p>
+<p><img src="/./imgs/%E3%80%90%E7%BB%8F%E5%85%B8%E9%97%AE%E9%A2%98%E3%80%91%E6%8A%80%E6%9C%AF%E9%9D%A2%E8%AF%95%E9%A2%98%E6%B1%87%E6%80%BB/image-20240726085151116.png" alt="image-20240726085151116"></p>
+<!-- TOC --><a name="ctrl-cctrl-zkill-9-"></a>
+<h4 id="Ctrl-C、Ctrl-Z、kill-、kill-9-的原理"><a href="#Ctrl-C、Ctrl-Z、kill-、kill-9-的原理" class="headerlink" title="Ctrl + C、Ctrl + Z、kill 、kill -9 的原理"></a><code>Ctrl + C</code>、<code>Ctrl + Z</code>、<code>kill</code> 、<code>kill -9</code> 的原理</h4><p>按下 Ctrl+C 发送 <code>SIGINT</code> (2)信号</p>
+<p>按下 Ctrl+Z 发送 <code>SIGTSTP</code> (19)信号</p>
+<p>kill 默认发送 <code>SIGTERM</code> (15)信号，可以在退出之前让程序执行清理操作、保存其状态或执行任何其他操作</p>
+<p>kill -9 发送 <code>SIGKILL</code> (9)信号，程序会立即终止，没有机会保存其状态或释放资源。谨慎使用</p>
+
     </div>
 
     
@@ -326,7 +406,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E7%B4%A2%E5%BC%95"><span class="nav-number">1.</span> <span class="nav-text">问题索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F"><span class="nav-number">2.</span> <span class="nav-text">操作系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81"><span class="nav-number">2.1.</span> <span class="nav-text">用户态和内核态</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E6%80%81%E5%92%8C%E7%94%A8%E6%88%B7%E6%80%81%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">2.1.1.</span> <span class="nav-text">内核态和用户态的区别?</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BC%9A%E9%99%B7%E5%85%A5%E5%86%85%E6%A0%B8%E6%80%81"><span class="nav-number">2.1.2.</span> <span class="nav-text">什么时候会陷入内核态?</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C-%E8%AE%BF%E9%97%AE%E7%A9%BA%E6%8C%87%E9%92%88%E4%BC%9A%E4%B8%8D%E4%BC%9A%E9%99%B7%E5%85%A5%E5%86%85%E6%A0%B8%E6%80%81%EF%BC%9F"><span class="nav-number">2.1.3.</span> <span class="nav-text">C 访问空指针会不会陷入内核态？</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%99%B7%E9%98%B1%E3%80%81%E4%B8%AD%E6%96%AD%E3%80%81%E5%BC%82%E5%B8%B8%E3%80%81%E4%BF%A1%E5%8F%B7"><span class="nav-number">2.2.</span> <span class="nav-text">陷阱、中断、异常、信号</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%99%B7%E9%98%B1%E3%80%81%E4%B8%AD%E6%96%AD%E3%80%81%E5%BC%82%E5%B8%B8%E3%80%81%E4%BF%A1%E5%8F%B7%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="nav-number">2.2.1.</span> <span class="nav-text">陷阱、中断、异常、信号的概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%99%B7%E9%98%B1%E3%80%81%E4%B8%AD%E6%96%AD%E3%80%81%E5%BC%82%E5%B8%B8%E3%80%81%E4%BF%A1%E5%8F%B7%E7%9A%84%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B"><span class="nav-number">2.2.2.</span> <span class="nav-text">陷阱、中断、异常、信号的处理流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84%E9%99%B7%E9%98%B1%E3%80%81%E4%B8%AD%E6%96%AD%E3%80%81%E5%BC%82%E5%B8%B8%E3%80%81%E4%BF%A1%E5%8F%B7%E6%9C%89%E5%93%AA%E4%BA%9B%EF%BC%9F"><span class="nav-number">2.2.3.</span> <span class="nav-text">常见的陷阱、中断、异常、信号有哪些？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Ctrl-C%E3%80%81Ctrl-Z%E3%80%81kill-9-%E7%9A%84%E5%8E%9F%E7%90%86"><span class="nav-number">2.2.4.</span> <span class="nav-text">Ctrl + C、Ctrl + Z、kill -9 的原理</span></a></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E7%B4%A2%E5%BC%95"><span class="nav-number">1.</span> <span class="nav-text">问题索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F"><span class="nav-number">2.</span> <span class="nav-text">操作系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81"><span class="nav-number">2.1.</span> <span class="nav-text">用户态和内核态</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E6%80%81%E5%92%8C%E7%94%A8%E6%88%B7%E6%80%81%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">2.1.1.</span> <span class="nav-text">内核态和用户态的区别?</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BC%9A%E9%99%B7%E5%85%A5%E5%86%85%E6%A0%B8%E6%80%81"><span class="nav-number">2.1.2.</span> <span class="nav-text">什么时候会陷入内核态?</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C-%E8%AE%BF%E9%97%AE%E7%A9%BA%E6%8C%87%E9%92%88%E4%BC%9A%E4%B8%8D%E4%BC%9A%E9%99%B7%E5%85%A5%E5%86%85%E6%A0%B8%E6%80%81%EF%BC%9F"><span class="nav-number">2.1.3.</span> <span class="nav-text">C 访问空指针会不会陷入内核态？</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%99%B7%E9%98%B1%E3%80%81%E4%B8%AD%E6%96%AD%E3%80%81%E5%BC%82%E5%B8%B8%E3%80%81%E4%BF%A1%E5%8F%B7"><span class="nav-number">2.2.</span> <span class="nav-text">陷阱、中断、异常、信号</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%99%B7%E9%98%B1%E3%80%81%E4%B8%AD%E6%96%AD%E3%80%81%E5%BC%82%E5%B8%B8%E3%80%81%E4%BF%A1%E5%8F%B7%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="nav-number">2.2.1.</span> <span class="nav-text">陷阱、中断、异常、信号的概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%99%B7%E9%98%B1%E3%80%81%E4%B8%AD%E6%96%AD%E3%80%81%E5%BC%82%E5%B8%B8%E3%80%81%E4%BF%A1%E5%8F%B7%E7%9A%84%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B"><span class="nav-number">2.2.2.</span> <span class="nav-text">陷阱、中断、异常、信号的处理流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84%E9%99%B7%E9%98%B1%E3%80%81%E4%B8%AD%E6%96%AD%E3%80%81%E5%BC%82%E5%B8%B8%E3%80%81%E4%BF%A1%E5%8F%B7%E6%9C%89%E5%93%AA%E4%BA%9B%EF%BC%9F"><span class="nav-number">2.2.3.</span> <span class="nav-text">常见的陷阱、中断、异常、信号有哪些？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Ctrl-C%E3%80%81Ctrl-Z%E3%80%81kill-%E3%80%81kill-9-%E7%9A%84%E5%8E%9F%E7%90%86"><span class="nav-number">2.2.4.</span> <span class="nav-text">Ctrl + C、Ctrl + Z、kill 、kill -9 的原理</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
