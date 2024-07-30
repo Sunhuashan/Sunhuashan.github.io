@@ -20,18 +20,22 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="唯天下之至拙能胜天下之至巧">
+  <meta name="description" content="mmap 内存映射是一个用户空间很常用的系统调用，无论是分配内存、读写大文件、链接动态库文件，还是多进程间共享内存，都可以看到其身影。内存映射，简而言之就是将内核空间的一段内存区域映射到用户空间。映射成功后，用户对这段内存区域的修改可以直接反映到内核空间，相反，内核空间对这段区域的修改也直接反映用户空间。这篇文章力图从 mmap 在用户空间的使用，到内核空间的实现，再到驱动程序的编写，彻底搞懂 m">
 <meta property="og:type" content="article">
 <meta property="og:title" content="【Linux内核】深入理解 mmap">
 <meta property="og:url" content="http://example.com/2024/05/10/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/index.html">
 <meta property="og:site_name" content="sunhuashan">
-<meta property="og:description" content="唯天下之至拙能胜天下之至巧">
+<meta property="og:description" content="mmap 内存映射是一个用户空间很常用的系统调用，无论是分配内存、读写大文件、链接动态库文件，还是多进程间共享内存，都可以看到其身影。内存映射，简而言之就是将内核空间的一段内存区域映射到用户空间。映射成功后，用户对这段内存区域的修改可以直接反映到内核空间，相反，内核空间对这段区域的修改也直接反映用户空间。这篇文章力图从 mmap 在用户空间的使用，到内核空间的实现，再到驱动程序的编写，彻底搞懂 m">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730163654085.png">
+<meta property="og:image" content="http://example.com/imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730172756490.png">
+<meta property="og:image" content="http://example.com/imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730172849968.png">
 <meta property="article:published_time" content="2024-05-10T06:13:03.000Z">
-<meta property="article:modified_time" content="2024-07-27T09:58:37.301Z">
+<meta property="article:modified_time" content="2024-07-30T10:26:23.027Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="linux_kernel">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730163654085.png">
 
 <link rel="canonical" href="http://example.com/2024/05/10/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/">
 
@@ -207,7 +211,265 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        
+        <p>mmap 内存映射是一个用户空间很常用的系统调用，无论是分配内存、读写大文件、链接动态库文件，还是多进程间共享内存，都可以看到其身影。内存映射，简而言之就是将内核空间的一段内存区域映射到用户空间。映射成功后，用户对这段内存区域的修改可以直接反映到内核空间，相反，内核空间对这段区域的修改也直接反映用户空间。这篇文章力图从 mmap 在用户空间的使用，到内核空间的实现，再到驱动程序的编写，彻底搞懂 mmap 能做的一切以及实现原理。</p>
+<span id="more"></span>
+
+<h2 id="系统调用接口"><a href="#系统调用接口" class="headerlink" title="系统调用接口"></a>系统调用接口</h2><p>在学习具体的原理之前，我们先看看 <code>mmap</code> 系统调用应该如何使用，首先明确其功能，还是想开头说的那样：<strong>内存映射，简而言之就是将内核空间的一段文件&#x2F;普通内存区域映射到用户空间</strong>。函数原型如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> *<span class="title function_">mmap</span><span class="params">(<span class="type">void</span> *addr, <span class="type">size_t</span> length, <span class="type">int</span> prot, <span class="type">int</span> flags, <span class="type">int</span> fd, <span class="type">off_t</span> offset)</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><code>addr</code>：指定<strong>首选的映射虚拟内存起始</strong>地址，可以设置为 NULL，让 Linux 内核自动选择合适的虚拟内存地址。</p>
+</li>
+<li><p><code>length</code>：映射的<strong>长度</strong>。</p>
+</li>
+<li><p><code>prot</code>：映射内存的<strong>保护模式</strong>，可选值如下：</p>
+<ul>
+<li><code>PROT_EXEC</code>：可以被执行。</li>
+<li><code>PROT_READ</code>：可以被读取。</li>
+<li><code>PROT_WRITE</code>：可以被写入。</li>
+<li><code>PROT_NONE</code>：不可访问。</li>
+</ul>
+</li>
+<li><p><code>flags</code>：指定映射的<strong>类型</strong>，常用的可选值如下：</p>
+<ul>
+<li><code>MAP_FIXED</code>：使用指定的起始虚拟内存地址进行映射。</li>
+<li><code>MAP_SHARED</code>：与其它所有映射到这个文件的进程共享映射空间（可实现共享内存）。</li>
+<li><code>MAP_PRIVATE</code>：建立一个写时复制（Copy on Write）的私有映射空间。</li>
+<li><code>MAP_ANONYMOUS</code>：匿名映射。</li>
+</ul>
+</li>
+<li><p><code>fd</code>：进行映射的<strong>文件</strong>句柄。</p>
+</li>
+<li><p><code>offset</code>：文件<strong>偏移量</strong>（从文件的何处开始映射）。</p>
+</li>
+<li><p><code>返回值</code>：mmap( ) 返回被映射区的指针，该指针就是需要映射的内存区域在用户空间的虚拟地址。</p>
+</li>
+</ul>
+<h2 id="功能1：提高I-O效率"><a href="#功能1：提高I-O效率" class="headerlink" title="功能1：提高I&#x2F;O效率"></a>功能1：提高I&#x2F;O效率</h2><p>一般来说，修改一个文件的内容需要如下3个步骤：</p>
+<ul>
+<li>把文件内容读入到用户 <code>buf</code> 中。</li>
+<li>修改 <code>buf</code> 中的内容。</li>
+<li>把 <code>buf</code> 的数据写入到文件中。</li>
+</ul>
+<p>如果使用代码来实现上面的过程，代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">read(fd, buf, <span class="number">1024</span>);  <span class="comment">// 读取文件的内容到buf</span></span><br><span class="line">...                   <span class="comment">// 修改buf的内容</span></span><br><span class="line">write(fd, buf, <span class="number">1024</span>); <span class="comment">// 把buf的内容写入到文件</span></span><br></pre></td></tr></table></figure>
+
+<p>我们知道，为了包含系统软硬件资源，操作系统并不信任用户程序，所以操作系统分为了用户层和内核层。在用户层并没有办法直接读取数据，所以从内存的角度看，上述过程可以细分为如下步骤（假设文件已经被读入内存）：</p>
+<ul>
+<li>文件内容从内核缓冲区 （实际上是 <code>page cache</code>）拷贝到用户的 <code>buf</code></li>
+<li>用户对 <code>buf</code> 内容进行修改</li>
+<li>文件内容从用户的 <code>buf</code> 拷贝到内核 <code>page cache</code></li>
+</ul>
+<p>可以看到，一个简单的文件读写就涉及到两次数据的拷贝，再算上上下文切换耗费的时间，这无疑降低了文件读写效率，这点对于大文件或者频繁访问的文件而言尤其明显。</p>
+<p>使用 <code>mmap</code> 系统调用就可以解决上面的问题：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> *buf = (<span class="type">char</span>*)mmap(<span class="literal">NULL</span>, <span class="number">1024</span>, PROT_R | PROT_W, MAP_SHARED, fd, <span class="number">0</span>);</span><br><span class="line">...		<span class="comment">// 直接修改 buf</span></span><br></pre></td></tr></table></figure>
+
+<p>上面的描述既包括存放在磁盘上的文件，也包括为用户提供内存的设备文件，只是在设备驱动程序中我们需要协助内核完成内存的映射，一个简单的例子如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">my_map</span><span class="params">(<span class="keyword">struct</span> file *filp, <span class="keyword">struct</span> vm_area_struct *vma)</span>  </span><br><span class="line">&#123;      </span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> page;  </span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> i;  </span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> start = (<span class="type">unsigned</span> <span class="type">long</span>)vma-&gt;vm_start;  </span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> size = (<span class="type">unsigned</span> <span class="type">long</span>)(vma-&gt;vm_end - vma-&gt;vm_start);  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">//得到物理地址  </span></span><br><span class="line">    page = virt_to_phys(buffer); </span><br><span class="line">    <span class="comment">//将用户空间的一个vma虚拟内存区映射到以page开始的一段连续物理页面上  </span></span><br><span class="line">    <span class="comment">//第三个参数是页帧号，由物理地址右移PAGE_SHIFT得到  </span></span><br><span class="line">    <span class="keyword">if</span>(remap_pfn_range(vma, start, page &gt;&gt; PAGE_SHIFT, size, vma-&gt;vm_page_prot))</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;  </span><br><span class="line">      </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里的 <code>vm_area_struct</code> 是内核虚拟内存管理的核心，代表着虚拟地址空间中的一段内存，mmap 前两个参数就是问了确定一个 VMA 而提供的，具体细节会在原理中介绍。</p>
+<p>函数 <code>remap_pfn_range</code> 会在进程的页表中创建必要的页表项，并建立<strong>虚拟地址和物理地址</strong>之间的联系。</p>
+<h2 id="功能2：共享文件"><a href="#功能2：共享文件" class="headerlink" title="功能2：共享文件"></a>功能2：共享文件</h2><p>使用普通文件提供的内存映射：适用于任何进程之间；此时，需要打开或创建一个文件，然后再调用mmap()；典型调用代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">fd = open(name, flag, mode);   </span><br><span class="line"><span class="keyword">if</span>(fd&lt;<span class="number">0</span>)   </span><br><span class="line">   ...   </span><br><span class="line">buf = (<span class="type">char</span>*)mmap(<span class="literal">NULL</span>, len , PROT_READ|PROT_WRITE, MAP_SHARED , fd , <span class="number">0</span>); </span><br></pre></td></tr></table></figure>
+
+<h2 id="功能3：父子进程共享内存"><a href="#功能3：父子进程共享内存" class="headerlink" title="功能3：父子进程共享内存"></a>功能3：父子进程共享内存</h2><p>使用共享匿名内存映射：适用于具有亲缘关系的进程之间；由于父子进程特殊的亲缘关系，在父进程中先调用mmap()，然后调用fork()。那么在调用fork()之后，子进程继承父进程匿名映射后的地址空间，同样也继承mmap()返回的地址，这样，父子进程就可以通过映射区域进行通信了。</p>
+<p>注意，这里不是一般的继承关系。一般来说，子进程单独维护从父进程继承下来的一些变量。而mmap()返回的地址，却由父子进程共同维护。 对于具有亲缘关系的进程实现共享内存最好的方式应该是采用匿名内存映射的方式。此时，不必指定具体的文件，只要设置相应的标志即可，代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">   <span class="comment">/* 匿名映射,创建一块内存供父子进程通信 */</span>    </span><br><span class="line">   p_map = (<span class="type">char</span>*)mmap(<span class="literal">NULL</span>, <span class="number">1024</span>, PROT_READ | PROT_WRITE,    </span><br><span class="line">           MAP_SHARED | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);    </span><br><span class="line">   </span><br><span class="line"><span class="comment">/* 子进程 */</span></span><br><span class="line">   <span class="keyword">if</span>(fork() == <span class="number">0</span>) &#123;    </span><br><span class="line">       sleep(<span class="number">1</span>);    </span><br><span class="line">       <span class="built_in">printf</span>(<span class="string">&quot;child got a message: %s\n&quot;</span>, p_map);    </span><br><span class="line">       <span class="built_in">sprintf</span>(p_map, <span class="string">&quot;%s&quot;</span>, <span class="string">&quot;hi, dad, this is son&quot;</span>);    </span><br><span class="line">       munmap(p_map, BUF_SIZE); <span class="comment">//实际上，进程终止时，会自动解除映射。    </span></span><br><span class="line">       <span class="built_in">exit</span>(<span class="number">0</span>);    </span><br><span class="line">   &#125;    </span><br><span class="line">   </span><br><span class="line"><span class="comment">/* 父进程 */</span> </span><br><span class="line">   <span class="built_in">sprintf</span>(p_map, <span class="string">&quot;%s&quot;</span>, <span class="string">&quot;hi, this is father&quot;</span>);    </span><br><span class="line">   sleep(<span class="number">2</span>); </span><br></pre></td></tr></table></figure>
+
+<h2 id="功能4：私有匿名映射"><a href="#功能4：私有匿名映射" class="headerlink" title="功能4：私有匿名映射"></a>功能4：私有匿名映射</h2><p>我们常常利用这种映射方式来<strong>申请虚拟内存</strong>，比如，我们使用 glibc 库里封装的 malloc 函数进行虚拟内存申请时，当申请的内存大于 <strong>128K</strong> 的时候，<strong>malloc</strong> 就会调用 mmap 采用私有匿名映射的方式来申请堆内存。因为它是私有的，所以申请到的内存是进程独占的，多进程之间不能共享。</p>
+<p>mmap 的私有匿名映射除了用于为进程申请虚拟内存之外，还会应用在 execve 系统调用中，execve 用于在当前进程中加载并执行一个新的二进制执行文件：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">execve</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* filename, <span class="type">const</span> <span class="type">char</span>* argv[], <span class="type">const</span> <span class="type">char</span>* envp[])</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>filename</code> 指定新的可执行文件的文件名</li>
+<li><code>argv</code> 用于传递新程序的命令行参数</li>
+<li><code>envp</code> 用来传递环境变量</li>
+</ul>
+<p>该函数中会解析对应格式的可执行文件，并根据文件内容重新映射进程的虚拟内存空间。比如，虚拟内存空间中的 BSS 段，堆，栈这些内存区域中的内容不依赖于可执行文件，所以在 <code>execve</code> 中采用私有匿名映射的方式来创建新的虚拟内存空间中的 <strong>BSS 段</strong>，<strong>堆</strong>，<strong>栈</strong>。</p>
+<h2 id="实现：概述"><a href="#实现：概述" class="headerlink" title="实现：概述"></a>实现：概述</h2><h3 id="Linux-虚拟地址空间"><a href="#Linux-虚拟地址空间" class="headerlink" title="Linux 虚拟地址空间"></a>Linux 虚拟地址空间</h3><p>经典的 Linux 虚拟地址空间布局如下所示（32位）：</p>
+<p><img src="/./imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730163654085.png" alt="image-20240730163654085"></p>
+<p>在 <code>MMap</code> 这段虚拟内存区域中，包含了一段一段的虚拟映射区，每当我们调用一次 mmap 进行内存映射的时候，内核都会在文件映射与匿名映射区中划分出一段虚拟映射区出来，这段虚拟映射区就是我们申请到的虚拟内存。</p>
+<p>那么我们申请的这块虚拟内存到底有多大呢 ？这就用到了 mmap 系统调用的前两个参数：</p>
+<ul>
+<li>addr ： 表示我们要映射的这段虚拟内存区域在进程虚拟内存空间中的起始地址（虚拟内存地址），但是这个参数只是给内核的一个暗示，内核并非一定得从我们指定的 addr 虚拟内存地址上划分虚拟内存区域，内核只不过在划分虚拟内存区域的时候会优先考虑我们指定的 addr，如果这个虚拟地址已经被使用或者是一个无效的地址，那么内核则会自动选取一个合适的地址来划分虚拟内存区域。我们一般会将 addr 设置为 NULL，意思就是完全交由内核来帮我们决定虚拟映射区的起始地址。</li>
+<li>length ：从进程虚拟内存空间中的什么位置开始划分虚拟内存区域的问题解决了，那么我们要申请的这段虚拟内存有多大呢 ？ 这个就是 length 参数的作用了，如果是匿名映射，length 参数决定了我们要映射的匿名物理内存有多大，如果是文件映射，length 参数决定了我们要映射的文件区域有多大。</li>
+</ul>
+<h3 id="虚拟内存区域-VMA"><a href="#虚拟内存区域-VMA" class="headerlink" title="虚拟内存区域 VMA"></a>虚拟内存区域 VMA</h3><p><code>MMap</code> 区和进程虚拟内存空间中的<strong>代码段</strong>，<strong>数据段</strong>，<strong>BSS 段</strong>，<strong>堆</strong>，栈没有任何区别，在内核中都是 <code>struct vm_area_struct</code> 结构来表示的，下面我们把进程空间中的这些虚拟内存区域统称为 VMA。</p>
+<p>进程虚拟内存空间中的所有 VMA 在内核中有两种组织形式：一种是双向链表，用于高效的遍历进程 VMA，这个 VMA 双向链表是有顺序的，所有 VMA 节点在双向链表中的排列顺序是按照虚拟内存低地址到高地址进行的。</p>
+<p>另一种则是用红黑树进行组织，用于在进程空间中高效的查找 VMA。</p>
+<p>mmap 系统调用的本质是首先要在进程虚拟内存空间里的文件映射与匿名映射区中划分出一段虚拟内存区域 VMA 出来 ，这段 VMA 区域的大小用 vm_start，vm_end 来表示，它们由 mmap 系统调用参数 addr，length 决定。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vm_area_struct</span> &#123;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> vm_start;     <span class="comment">/* Our start address within vm_mm. */</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> vm_end;       <span class="comment">/* The first byte after our end address */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>随后内核会对这段 VMA 进行相关的映射，如果是文件映射的话，内核会将我们要映射的文件，以及要映射的文件区域在文件中的 offset，与 VMA 结构中的 vm_file，vm_pgoff 关联映射起来，它们由 mmap 系统调用参数 fd，offset 决定。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vm_area_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> * <span class="title">vm_file</span>;</span>      <span class="comment">/* File we map to (can be NULL). */</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> vm_pgoff;     <span class="comment">/* Offset (within vm_file) in PAGE_SIZE */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>另外由 mmap 在文件映射与匿名映射区中映射出来的这一段虚拟内存区域同进程虚拟内存空间中的其他虚拟内存区域一样，也都是有权限控制的。例如：</p>
+<ul>
+<li><p><strong>代码段</strong>，它是与磁盘上 ELF 格式可执行文件中的 .text section（磁盘文件中各个区域的单元组织结构）进行映射的，存放的是程序执行的机器码，所以在可执行文件与进程虚拟内存空间进行文件映射的时候，需要指定代码段这个虚拟内存区域的权限为可读（<strong>VM_READ</strong>），可执行的（<strong>VM_EXEC</strong>）。</p>
+</li>
+<li><p><strong>数据段</strong>也是通过文件映射进来的，内核会将磁盘上 ELF 格式可执行文件中的 .data section 与数据段映射起来，在映射的时候需要指定数据段这个虚拟内存区域的权限为可读（<strong>VM_READ</strong>），可写（<strong>VM_WRITE</strong>）。</p>
+</li>
+<li><p><strong>BSS 段</strong>中存放的是程序未初始化的全局变量，这段虚拟内存区域的权限是可读（<strong>VM_READ</strong>），可写（<strong>VM_WRITE</strong>）。</p>
+</li>
+<li><p><strong>堆</strong>是用来描述进程在运行期间动态申请的虚拟内存区域的，所以堆也会具有可读（VM_READ），可写（VM_WRITE）权限，在有些情况下，堆也具有可执行（VM_EXEC）的权限，比如 Java 中的字节码存储在堆中，所以需要可执行权限。</p>
+</li>
+<li><p><strong>栈</strong>是用来保存进程运行时的命令行参，环境变量，以及函数调用过程中产生的栈帧的，栈一般拥有可读（VM_READ），可写（VM_WRITE）的权限，但是也可以设置可执行（VM_EXEC）权限，不过出于安全的考虑，很少这么设置。</p>
+</li>
+<li><p><strong>MMap段</strong> 中的情况就变得更加复杂了，因为文件映射与匿名映射区里包含了数量众多的 VMA，尤其是在数据密集型应用进程里更是如此，我们每调用一次 mmap ，无论是匿名映射也好还是文件映射也好，都会在文件映射与匿名映射区里产生一个 VMA，而通过 mmap 映射出的这段 VMA 中的相关权限和标志位，<strong>是由 mmap 系统调用参数里的 <code>prot</code>，<code>flags</code> 决定的</strong>，最终会映射到虚拟内存区域 VMA 结构中的 <code>vm_page_prot</code>，<code>vm_flags</code> 属性中，指定进程对这块虚拟内存区域的访问权限和相关标志位。</p>
+</li>
+</ul>
+<blockquote>
+<p>除此之外，进程运行过程中所依赖的动态<strong>链接库 .so 文件</strong>，也是通过文件映射的方式将动态链接库中的代码段，数据段映射进 MMap 区中。</p>
+</blockquote>
+<h3 id="mmap-映射类型"><a href="#mmap-映射类型" class="headerlink" title="mmap 映射类型"></a>mmap 映射类型</h3><p>总的来说，mmap 系统调用有如下四种可以选择的映射类型：</p>
+<ul>
+<li>共享文件：通常用于内存映射 I&#x2F;O，无亲缘关系进程间通信 （功能1 和 功能2）</li>
+<li>私有文件：通常用于加载 .so 动态库</li>
+<li>共享匿名：通常用于父子进程间共享内存，默认打开<code>/dev/zero</code>这个特殊的设备文件 （功能3）</li>
+<li>私有匿名：通常用于内存分配 （功能4）</li>
+</ul>
+<p>那么虚拟地址空间中的各个段都是什么类型呢？如下：</p>
+<ul>
+<li>私有匿名：<strong>BSS</strong> 、<strong>堆区</strong> 、<strong>栈区</strong> </li>
+<li>私有文件：<strong>代码段（读共享）</strong> 、<strong>数据段（写私有）</strong> 、<strong>mmap 段中的动态链接库（读共享，写私有）</strong></li>
+</ul>
+<p>下面的内容，我们就逐步分析，各种类型的映射是如何实现的。</p>
+<h2 id="实现：私有文件（读共享，写私有，不写回）"><a href="#实现：私有文件（读共享，写私有，不写回）" class="headerlink" title="实现：私有文件（读共享，写私有，不写回）"></a>实现：私有文件（读共享，写私有，不写回）</h2><h4 id="分配-VMA，建立-VMA-与文件的联系"><a href="#分配-VMA，建立-VMA-与文件的联系" class="headerlink" title="分配 VMA，建立 VMA 与文件的联系"></a>分配 VMA，建立 VMA 与文件的联系</h4><p>我们在调用 mmap 进行内存文件映射的时候可以通过指定参数 flags 为 <code>MAP_PRIVATE</code>，然后将参数 fd 指定为要映射文件的文件描述符（file descriptor）来实现对文件的私有映射。</p>
+<p>假设现在磁盘上有一个名叫 file-read-write.txt 的磁盘文件，现在多个进程采用私有文件映射的方式，从文件 offset 偏移处开始，映射 length 长度的文件内容到各个进程的虚拟内存空间中，调用完 mmap 之后，相关内存映射内核数据结构关系如下图所示：</p>
+<p><img src="/./imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730172756490.png" alt="image-20240730172756490"></p>
+<p>当进程打开一个文件的时候，内核会为其创建一个 struct file 结构来描述被打开的文件，并在进程文件描述符列表 fd_array 数组中找到一个空闲位置分配给它，数组中对应的下标，就是我们在用户空间用到的文件描述符。</p>
+<p><img src="/./imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730172849968.png" alt="image-20240730172849968"></p>
+<p>而 struct file 结构是和进程相关的（ fd 的作用域也是和进程相关的），即使多个进程打开同一个文件，那么内核会为每一个进程创建一个 struct file 结构，如上图中所示，进程 1 和 进程 2 都打开了同一个 file-read-write.txt 文件，那么内核会为进程 1 创建一个 struct file 结构，也会为进程 2 创建一个 struct file 结构。</p>
+<p>每一个磁盘上的文件在内核中都会有一个唯一的 struct inode 结构，inode 结构和进程是没有关系的，一个文件在内核中只对应一个 inode，inode 结构用于描述文件的元信息，比如，文件的权限，文件中包含多少个磁盘块，每个磁盘块位于磁盘中的什么位置等等。</p>
+<p>调用 mmap 进行内存文件映射的时候，内核首先会在进程的虚拟内存空间中创建一个新的虚拟内存区域 VMA 用于映射文件，通过 vm_area_struct-&gt;vm_file 将映射文件的 struct flle 结构与虚拟内存映射关联起来。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vm_area_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> * <span class="title">vm_file</span>;</span>      <span class="comment">/* File we map to (can be NULL). */</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> vm_pgoff;     <span class="comment">/* Offset (within vm_file) in PAGE_SIZE */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>根据 vm_file-&gt;f_inode 我们可以关联到映射文件的 struct inode，近而关联到映射文件在磁盘中的磁盘块 i_block，<strong>这个就是 mmap 内存文件映射最本质的东西</strong>。</p>
+<p>站在文件系统的视角，映射文件中的数据是按照磁盘块来存储的，读写文件数据也是按照磁盘块为单位进行的，磁盘块大小为 4K，当进程读取磁盘块的内容到内存之后，站在内存管理系统的视角，磁盘块中的数据被 DMA 拷贝到了物理内存页中，这个物理内存页就是前面提到的文件页。</p>
+<p>根据程序的时间局部性原理我们知道，磁盘文件中的数据一旦被访问，那么它很有可能在短期内被再次访问，所以为了加快进程对文件数据的访问，内核会将已经访问过的磁盘块缓存在文件页中。</p>
+<p>一个文件包含多个磁盘块，当它们被读取到内存之后，一个文件也就对应了多个文件页，这些文件页在内存中统一被一个叫做 page cache 的结构所组织。</p>
+<p>每一个文件在内核中都会有一个唯一的 page cache 与之对应，用于缓存文件中的数据，page cache 是和文件相关的，它和进程是没有关系的，多个进程可以打开同一个文件，每个进程中都有有一个 struct file 结构来描述这个文件，但是一个文件在内核中只会对应一个 page cache。</p>
+<p>文件的 struct inode 结构中除了有磁盘块的信息之外，还有指向文件 page cache 的 i_mapping 指针。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">inode</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">address_space</span>	*<span class="title">i_mapping</span>;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>page cache 在内核中是使用 struct address_space 结构来描述的：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">address_space</span> &#123;</span></span><br><span class="line">    <span class="comment">// 这里就是 page cache。里边缓存了文件的所有缓存页面</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">radix_tree_root</span>  <span class="title">page_tree</span>;</span> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>page cache 在内核中是使用基树 radix_tree 结构来表示的，这里我们只需要知道文件页是挂在 radix_tree 的叶子结点上，radix_tree 中的 root 节点和 node 节点是文件页（叶子节点）的索引节点就可以了。</p>
+<p>当多个进程调用 mmap 对磁盘上同一个文件进行私有文件映射的时候，内核只是在每个进程的虚拟内存空间中创建出一段虚拟内存区域 VMA 出来，注意，此时内核只是为进程申请了用于映射的虚拟内存，并将虚拟内存与文件映射起来，mmap 系统调用就返回了，全程并没有物理内存的影子出现。文件的 page cache 也是空的，没有包含任何的文件页。</p>
+<h4 id="缺页异常：加载文件到物理内存，填充页表，设置只读权限"><a href="#缺页异常：加载文件到物理内存，填充页表，设置只读权限" class="headerlink" title="缺页异常：加载文件到物理内存，填充页表，设置只读权限"></a>缺页异常：加载文件到物理内存，填充页表，设置只读权限</h4><p>当任意一个进程，比如上图中的进程 1 开始访问这段映射的虚拟内存时，CPU 会把虚拟内存地址送到 MMU 中进行地址翻译，因为 mmap 只是为进程分配了虚拟内存，并没有分配物理内存，所以这段映射的虚拟内存在页表中是没有页表项 PTE 的。</p>
+<p>随后 MMU 就会触发缺页异常（page fault），进程切换到内核态，在内核缺页中断处理程序中会发现引起缺页的这段 VMA 是私有文件映射的，所以内核会首先通过 vm_area_struct-&gt;vm_pgoff 在文件 page cache 中查找是否有缓存相应的文件页（映射的磁盘块对应的文件页）。</p>
+<p>如果文件页不在 page cache 中，内核则会在物理内存中分配一个内存页，然后将新分配的内存页加入到 page cache 中，并增加页引用计数。</p>
+<p>随后会通过 address_space_operations 重定义的 readpage 激活块设备驱动从磁盘中读取映射的文件内容，然后将读取到的内容填充新分配的内存页。</p>
+<p>现在文件中映射的内容已经加载进 page cache 了，此时物理内存才正式登场，在缺页中断处理程序的最后一步，内核会为映射的这段虚拟内存在页表中创建 PTE，然后将虚拟内存与 page cache 中的文件页通过 PTE 关联起来，缺页处理就结束了，但是由于我们指定的私有文件映射，所以 PTE 中文件页的权限是<strong>只读</strong>的。此时进程 1 中的页表已经建立起了虚拟内存与文件页的映射关系，进程 1 再次访问这段虚拟内存的时候，其实就等于直接访问文件的 page cache。整个过程是在用户态进行的，不需要切态。</p>
+<h4 id="缺页异常2：分配物理页，填充页表，设置只读权限"><a href="#缺页异常2：分配物理页，填充页表，设置只读权限" class="headerlink" title="缺页异常2：分配物理页，填充页表，设置只读权限"></a><strong>缺页异常2：分配物理页，填充页表，设置只读权限</strong></h4><p>现在我们在将视角切换到进程 2 中，进程 2 和进程 1 一样，都是采用 mmap 私有文件映射的方式映射到了同一个文件中，虽然现在已经有了物理内存了（通过进程 1 的缺页产生），但是目前还和进程 2 没有关系。</p>
+<p>因为进程 2 的虚拟内存空间中这段映射的虚拟内存区域 VMA，在进程 2 的页表中还没有 PTE，所以当进程 2 访问这段映射虚拟内存时，同样会产生缺页中断，随后进程 2 切换到内核态，进行缺页处理，这里和进程 1 不同的是，此时被映射的文件内容已经加载到 page cache 中了，进程 2 只需要创建 PTE ,并将 page cache 中的文件页与进程 2 映射的这段虚拟内存通过 PTE 关联起来就可以了。同样，因为采用私有文件映射的原因，进程 2 的 PTE 也是只读的。</p>
+<p>现在进程 1 和进程 2 都可以根据各自虚拟内存空间中映射的这段虚拟内存对文件的 page cache 进行读取了，整个过程都发生在用户态，不需要切态，更不需要拷贝，因为虚拟内存现在已经直接映射到 page cache 了。</p>
+<h4 id="copy-on-write-写入"><a href="#copy-on-write-写入" class="headerlink" title="copy on write 写入"></a>copy on write 写入</h4><p>虽然我们采用的是私有文件映射的方式，但是进程 1 和进程 2 如果只是对文件映射部分进行读取的话，文件页其实在多进程之间是共享的，整个内核中只有一份。</p>
+<p>但是当任意一个进程通过虚拟映射区对文件进行写入操作的时候，情况就发生了变化，虽然通过 mmap 映射的时候指定的这段虚拟内存是可写的，但是由于采用的是私有文件映射的方式，各个进程页表中对应 PTE 却是只读的，当进程对这段虚拟内存进行写入的时候，MMU 会发现 PTE 是只读的，所以会产生一个写保护类型的缺页中断，写入进程，比如是进程 1，此时又会陷入到内核态，在写保护缺页处理中，内核会重新申请一个内存页，然后将 page cache 中的内容拷贝到这个新的内存页中，进程 1 页表中对应的 PTE 会重新关联到这个新的内存页上，此时 PTE 的权限变为可写。</p>
+<p>从此以后，进程 1 对这段虚拟内存区域进行读写的时候就不会再发生缺页了，<strong>读写操作都会发生在这个新申请的内存页上</strong>，但是有一点，进程 1 对这个内存页的任何修改均不会回写到磁盘文件上，这也体现了私有文件映射的特点，进程对映射文件的修改，其他进程是看不到的，并且修改不会同步回磁盘文件中。</p>
+<p>进程 2 对这段虚拟映射区进行写入的时候，也是一样的道理，同样会触发写保护类型的缺页中断，进程 2 陷入内核态，内核为进程 2 新申请一个物理内存页，并将 page cache 中的内容拷贝到刚为进程 2 申请的这个内存页中，进程 2 页表中对应的 PTE 会重新关联到新的内存页上， PTE 的权限变为可写。</p>
+<p>这样一来，进程 1 和进程 2 各自的这段虚拟映射区，就映射到了各自专属的物理内存页上，而且这两个内存页中的内容均是文件中映射的部分，他们已经和 page cache 脱离了。</p>
+<p>进程 1 和进程 2 对各自虚拟内存区的修改只能反应到各自对应的物理内存页上，而且各自的修改在进程之间是互不可见的，<strong>最重要的一点是这些修改均不会回写到磁盘文件中</strong>，<strong>这就是私有文件映射的核心特点</strong>。</p>
+<p>我们可以利用 mmap 私有文件映射这个特点来加载二进制可执行文件的 .text , .data section 到进程虚拟内存空间中的代码段和数据段中。</p>
+<p>因为同一份代码，也就是同一份二进制可执行文件可以运行多个进程，而代码段对于多进程来说是只读的，没有必要为每个进程都保存一份，多进程之间共享这一份代码就可以了，正好私有文件映射的<strong>读共享特点</strong>可以满足我们的这个需求。</p>
+<p>对于数据段来说，虽然它是可写的，但是我们需要的是多进程之间对数据段的修改相互之间是不可见的，而且对数据段的修改不能回写到磁盘上的二进制文件中，这样当我们利用这个可执行文件在启动一个进程的时候，进程看到的就是数据段初始化未被修改的状态。 mmap 私有文件映射的写时复制（copy on write）以及修改不会回写到映射文件中等特点正好也满足我们的需求。</p>
+<h3 id="小结（读共享，写私有，不写回）"><a href="#小结（读共享，写私有，不写回）" class="headerlink" title="小结（读共享，写私有，不写回）"></a>小结（读共享，写私有，不写回）</h3><p><strong>mmap 的过程</strong>：</p>
+<ul>
+<li>根据 <code>addr</code> ， <code>len</code> 参数找到一个合适位置的 VMA</li>
+<li>根据 <code>fd</code>，<code>off</code> 参数建立打开文件和 VMA 之间的联系 <code>vm_file</code> 与 <code>vm_pgoff</code></li>
+</ul>
+<p>上述过程并没有设置页表项，所以访问 VMA  内的地址时<strong>缺页异常</strong>：</p>
+<ul>
+<li>从 <code>vm_file</code> 找到 <code>inode</code> ，进一步找到 <code>page cache</code>，在通过 <code>vm_pgoff</code> 找到 物理页 <code>page</code></li>
+<li>若 <code>page</code> 不存在，分配新的 <code>page</code> 并从磁盘中读出文件数据，增加引用计数</li>
+<li>若 <code>page</code> 存在，只需增加引用计数即可</li>
+<li>创建<strong>只读</strong> PTE 页表项，建立虚拟地址和物理地址之间的关联，返回用户层，重新执行缺页的指令</li>
+</ul>
+<p>进程只对私有文件映射进行读取的话，是 <strong>读共享</strong> 的，写操作会触发 <strong>copy on write 机制</strong>：</p>
+<ul>
+<li>由于上述创建的 PTE 表项是只读的，进程对 VMA 内的区域进行<strong>写操作</strong>时会产生<strong>异常</strong>，陷入内核</li>
+<li>内核处理该异常时，会分配新的 <code>page</code> 并拷贝 <code>page cache</code> 中旧 <code>page</code> 的内容<ul>
+<li>新的 <code>page</code> 是和 <code>page cache</code> 分离的，即它脱离了这个文件，这就有了 <strong>写私有，不写回</strong> 的特点</li>
+</ul>
+</li>
+<li>创建<strong>可写</strong> PTE 页表项，返回用户层，重新执行指令</li>
+</ul>
+<h2 id="实现：共享文件"><a href="#实现：共享文件" class="headerlink" title="实现：共享文件"></a>实现：共享文件</h2><p>我们通过将 mmap 系统调用中的 flags 参数指定为 <code>MAP_SHARED</code> , 参数 fd 指定为要映射文件的文件描述符（file descriptor）来实现对文件的共享映射。</p>
+<p>共享文件映射其实和私有文件映射前面的映射过程是一样的，唯一不同的点在于私有文件映射是读共享的，写的时候会发生写时复制（copy on write），并且多进程针对同一映射文件的修改不会回写到磁盘文件上。</p>
+<p>而共享文件映射因为是共享的，多个进程中的虚拟内存映射区最终会通过缺页中断的方式映射到文件的 page cache 中，后续多个进程对各自的这段虚拟内存区域的读写都会直接发生在 page cache 上。</p>
+<p>因为映射文件的 page cache 在内核中只有一份，所以对于共享文件映射来说，多进程读写都是共享的，由于多进程直接读写的是 page cache ，所以多进程对共享映射区的任何修改，最终都会通过内核回写线程 pdflush 刷新到磁盘文件中。</p>
+<h3 id="小结（读写共享，且写回）"><a href="#小结（读写共享，且写回）" class="headerlink" title="小结（读写共享，且写回）"></a>小结（读写共享，且写回）</h3><p><strong>mmap 的过程</strong>：</p>
+<ul>
+<li>根据 <code>addr</code> ， <code>len</code> 参数找到一个合适位置的 VMA</li>
+<li>根据 <code>fd</code>，<code>off</code> 参数建立打开文件和 VMA 之间的联系 <code>vm_file</code> 与 <code>vm_pgoff</code></li>
+</ul>
+<p>上述过程并没有设置页表项，所以访问 VMA  内的地址时<strong>缺页异常</strong>：</p>
+<ul>
+<li><p>从 <code>vm_file</code> 找到 <code>inode</code> ，进一步找到 <code>page cache</code>，在通过 <code>vm_pgoff</code> 找到 物理页 <code>page</code></p>
+</li>
+<li><p>若 <code>page</code> 不存在，分配新的 <code>page</code> 并从磁盘中读出文件数据，增加引用计数</p>
+</li>
+<li><p>若 <code>page</code> 存在，只需增加引用计数即可</p>
+</li>
+<li><p>创建<strong>可写</strong> PTE 页表项，建立虚拟地址和物理地址之间的关联，返回用户层，重新执行缺页的指令</p>
+</li>
+<li><p>多进程对共享映射区的任何修改，最终都会通过内核回写线程 pdflush 刷新到磁盘文件中</p>
+</li>
+</ul>
+<h2 id="实现：私有匿名"><a href="#实现：私有匿名" class="headerlink" title="实现：私有匿名"></a>实现：私有匿名</h2><p><code>MAP_PRIVATE | MAP_ANONYMOUS</code> 表示私有匿名映射，我们常常利用这种映射方式来申请虚拟内存，比如，我们使用 glibc 库里封装的 malloc 函数进行虚拟内存申请时，当申请的内存大于 128K 的时候，malloc 就会调用 mmap 采用私有匿名映射的方式来申请堆内存。因为它是私有的，所以申请到的内存是进程独占的，多进程之间不能共享。</p>
+<p>这里需要特别强调一下 mmap 私有匿名映射申请到的只是虚拟内存，内核只是在进程虚拟内存空间中划分一段虚拟内存区域 VMA 出来，并将 VMA 该初始化的属性初始化好，mmap 系统调用就结束了。这里和物理内存还没有发生任何关系。在后面的章节中大家将会看到这个过程。</p>
+<p>当进程开始访问这段虚拟内存区域时，发现这段虚拟内存区域背后没有任何物理内存与其关联，体现在内核中就是这段虚拟内存地址在页表中的 PTE 项是空的。</p>
+<p>这时 MMU 就会触发缺页异常（page fault），这里的缺页指的就是缺少物理内存页，随后进程就会切换到内核态，在内核缺页中断处理程序中，<strong>为这段虚拟内存区域分配对应大小的物理内存页，随后将物理内存页中的内容全部初始化为 0</strong> ，最后在页表中建立虚拟内存与物理内存的映射关系，缺页异常处理结束。</p>
+<p>当缺页处理程序返回时，CPU 会重新启动引起本次缺页异常的访存指令，这时 MMU 就可以正常翻译出物理内存地址了。</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p><strong>mmap 的过程</strong>：</p>
+<ul>
+<li>根据 <code>addr</code> ， <code>len</code> 参数找到一个合适位置的 VMA</li>
+</ul>
+<p>上述过程并没有设置页表项，所以访问 VMA  内的地址时<strong>缺页异常</strong>：</p>
+<ul>
+<li>为这段虚拟内存区域分配对应大小的物理内存页，并清零</li>
+<li>创建 PTE 页表项，建立虚拟地址和物理地址之间的关联，返回用户层，重新执行缺页的指令</li>
+</ul>
+<h2 id="实现：共享匿名"><a href="#实现：共享匿名" class="headerlink" title="实现：共享匿名"></a>实现：共享匿名</h2><p>我们通过将 mmap 系统调用中的 flags 参数指定为 <code>MAP_SHARED | MAP_ANONYMOUS</code>，并将 fd 参数指定为 -1 来实现共享匿名映射，这种映射方式常用于<strong>父子进程</strong>之间共享内存，<strong>父子进程</strong>之间的通讯。注意，这里需要和大家强调一下是父子进程，为什么只能是父子进程，笔者后面再给大家解答。</p>
+<p>在笔者介绍完 mmap 的私有匿名映射，私有文件映射，以及共享文件映射之后，共享匿名映射看似就非常简单了，由于不对文件进行映射，所以它不涉及到文件系统相关的知识，而且又是共享的，多个进程通过将自己的页表指向同一个物理内存页面不就实现共享匿名映射了吗？</p>
+<p>看起来简单，实际上并没有那么简单，甚至可以说共享匿名映射是 mmap 这四种映射方式中最为复杂的，为什么这么说的 ？我们一起来看下共享匿名映射的映射过程。</p>
+<p>首先和其他几种映射方式一样，mmap 只是负责在各个进程的虚拟内存空间中划分一段用于共享匿名映射的虚拟内存区域而已，这点笔者已经强调过很多遍了，整个映射过程并不涉及到物理内存的分配。</p>
+<p>当多个进程调用 mmap 进行共享匿名映射之后，内核只不过是为每个进程在各自的虚拟内存空间中分配了一段虚拟内存而已，由于并不涉及物理内存的分配，所以这段用于映射的虚拟内存在各个进程的页表中对应的页表项 <strong>PTE 都还是空的</strong>。</p>
+<p>当任一进程，比如上图中的进程 1 开始访问这段虚拟映射区的时候，MMU 会产生缺页中断，进程 1 切换到内核态，开始处理缺页中断逻辑，在缺页中断处理程序中，内核为进程 1 分配一个物理内存页，并创建对应的 PTE 插入到进程 1 的页表中，随后用 PTE 将进程 1 的这段虚拟映射区与物理内存映射关联起来。进程 1 的缺页处理结束，从此以后，进程 1 就可以读写这段共享映射的物理内存了。</p>
+<p>现在我们把视角切换到进程 2 中，当进程 2 访问它自己的这段虚拟映射区的时候，由于进程 2 页表中对应的 PTE 为空，所以进程 2 也会发生缺页中断，随后切换到内核态处理缺页逻辑。</p>
+<p>当进程 2 开始处理缺页逻辑的时候，进程 2 就懵了，为什么呢 ？原因是进程 2 和进程 1 进行的是共享映射，所以进程 2 不能随便找一个物理内存页进行映射，进程 2 必须和 进程 1 映射到同一个物理内存页面，这样才能共享内存。那现在的问题是，进程 2 面对着茫茫多的物理内存页，进程 2 怎么知道进程 1 已经映射了哪个物理内存页 ？</p>
+<p>内核在缺页中断处理中只能知道当前正在缺页的进程是谁，以及发生缺页的虚拟内存地址是什么，内核根据这些信息，根本无法知道，此时是否已经有其他进程把共享的物理内存页准备好了。</p>
+<p>这一点对于共享文件映射来说特别简单，因为有文件的 page cache 存在，进程 2 可以根据映射的文件内容在文件中的偏移 offset，从 page cache 中查找是否已经有其他进程把映射的文件内容加载到文件页中。如果文件页已经存在 page cache 中了，进程 2 直接映射这个文件页就可以了。</p>
+<p>由于共享匿名映射并没有对文件映射，所以其他进程想要在内存中查找要进行共享的内存页就非常困难了，那怎么解决这个问题呢 ？</p>
+<p>既然共享文件映射可以轻松解决这个问题，那我们何不借鉴一下文件映射的方式 ？</p>
+<p><strong>共享匿名映射在内核中是通过一个叫做 tmpfs 的虚拟文件系统来实现的，tmpfs 不是传统意义上的文件系统，它是基于内存实现的，挂载在 <code>dev/zero</code> 目录下。</strong></p>
+<p>当多个进程通过 mmap 进行共享匿名映射的时候，内核会在 tmpfs 文件系统中创建一个匿名文件，这个匿名文件并不是真实存在于磁盘上的，它是内核为了共享匿名映射而模拟出来的，匿名文件也有自己的 inode 结构以及 page cache。</p>
+<p>在 mmap 进行共享匿名映射的时候，内核会把这个匿名文件关联到进程的虚拟映射区 VMA 中。这样一来，当进程虚拟映射区域与 tmpfs 文件系统中的这个匿名文件映射起来之后，后面的流程就和共享文件映射一模一样了。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vm_area_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> * <span class="title">vm_file</span>;</span>      <span class="comment">/* File we map to (can be NULL). */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后，共享匿名映射只适用于<strong>父子进程</strong>之间的通讯，为什么只能是父子进程呢 ？</p>
+<p>因为当父进程进行 mmap 共享匿名映射的时候，内核会为其创建一个匿名文件，并关联到父进程的虚拟内存空间中 vm_area_struct-&gt;vm_file 中。但是这时候其他进程并不知道父进程虚拟内存空间中关联的这个匿名文件，因为进程之间的虚拟内存空间都是隔离的。</p>
+<p>子进程就不一样了，在父进程调用完 mmap 之后，父进程的虚拟内存空间中已经有了一段虚拟映射区 VMA 并关联到匿名文件了。这时父进程进行 fork() 系统调用创建子进程，子进程会拷贝父进程的所有资源，当然也包括父进程的虚拟内存空间以及父进程的页表。</p>
+<h3 id="小结（除了是和匿名文件建立联系，其余与-共享文件-一致）"><a href="#小结（除了是和匿名文件建立联系，其余与-共享文件-一致）" class="headerlink" title="小结（除了是和匿名文件建立联系，其余与 共享文件 一致）"></a>小结（除了是和匿名文件建立联系，其余与 共享文件 一致）</h3><p><strong>mmap 的过程</strong>：</p>
+<ul>
+<li>根据 <code>addr</code> ， <code>len</code> 参数找到一个合适位置的 VMA</li>
+<li>建匿名文件 <code>dev/zero</code> 和 VMA 之间的联系 <code>vm_file</code> 与 <code>vm_pgoff</code></li>
+</ul>
+<p>上述过程并没有设置页表项，所以访问 VMA  内的地址时<strong>缺页异常</strong>：</p>
+<ul>
+<li><p>从 <code>vm_file</code> 找到 <code>inode</code> ，进一步找到 <code>page cache</code>，在通过 <code>vm_pgoff</code> 找到 物理页 <code>page</code></p>
+</li>
+<li><p>若 <code>page</code> 不存在，分配新的 <code>page</code> 并从磁盘中读出文件数据，增加引用计数</p>
+</li>
+<li><p>若 <code>page</code> 存在，只需增加引用计数即可</p>
+</li>
+<li><p>创建<strong>可写</strong> PTE 页表项，建立虚拟地址和物理地址之间的关联，返回用户层，重新执行缺页的指令</p>
+</li>
+<li><p>多进程对共享映射区的任何修改，最终都会通过内核回写线程 pdflush 刷新到磁盘文件中</p>
+</li>
+</ul>
+
     </div>
 
     
@@ -290,6 +552,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E6%8E%A5%E5%8F%A3"><span class="nav-number">1.</span> <span class="nav-text">系统调用接口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%9F%E8%83%BD1%EF%BC%9A%E6%8F%90%E9%AB%98I-O%E6%95%88%E7%8E%87"><span class="nav-number">2.</span> <span class="nav-text">功能1：提高I&#x2F;O效率</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%9F%E8%83%BD2%EF%BC%9A%E5%85%B1%E4%BA%AB%E6%96%87%E4%BB%B6"><span class="nav-number">3.</span> <span class="nav-text">功能2：共享文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%9F%E8%83%BD3%EF%BC%9A%E7%88%B6%E5%AD%90%E8%BF%9B%E7%A8%8B%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98"><span class="nav-number">4.</span> <span class="nav-text">功能3：父子进程共享内存</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%9F%E8%83%BD4%EF%BC%9A%E7%A7%81%E6%9C%89%E5%8C%BF%E5%90%8D%E6%98%A0%E5%B0%84"><span class="nav-number">5.</span> <span class="nav-text">功能4：私有匿名映射</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9A%E6%A6%82%E8%BF%B0"><span class="nav-number">6.</span> <span class="nav-text">实现：概述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Linux-%E8%99%9A%E6%8B%9F%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4"><span class="nav-number">6.1.</span> <span class="nav-text">Linux 虚拟地址空间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F-VMA"><span class="nav-number">6.2.</span> <span class="nav-text">虚拟内存区域 VMA</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mmap-%E6%98%A0%E5%B0%84%E7%B1%BB%E5%9E%8B"><span class="nav-number">6.3.</span> <span class="nav-text">mmap 映射类型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9A%E7%A7%81%E6%9C%89%E6%96%87%E4%BB%B6%EF%BC%88%E8%AF%BB%E5%85%B1%E4%BA%AB%EF%BC%8C%E5%86%99%E7%A7%81%E6%9C%89%EF%BC%8C%E4%B8%8D%E5%86%99%E5%9B%9E%EF%BC%89"><span class="nav-number">7.</span> <span class="nav-text">实现：私有文件（读共享，写私有，不写回）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E9%85%8D-VMA%EF%BC%8C%E5%BB%BA%E7%AB%8B-VMA-%E4%B8%8E%E6%96%87%E4%BB%B6%E7%9A%84%E8%81%94%E7%B3%BB"><span class="nav-number">7.0.1.</span> <span class="nav-text">分配 VMA，建立 VMA 与文件的联系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%BA%E9%A1%B5%E5%BC%82%E5%B8%B8%EF%BC%9A%E5%8A%A0%E8%BD%BD%E6%96%87%E4%BB%B6%E5%88%B0%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%EF%BC%8C%E5%A1%AB%E5%85%85%E9%A1%B5%E8%A1%A8%EF%BC%8C%E8%AE%BE%E7%BD%AE%E5%8F%AA%E8%AF%BB%E6%9D%83%E9%99%90"><span class="nav-number">7.0.2.</span> <span class="nav-text">缺页异常：加载文件到物理内存，填充页表，设置只读权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%BA%E9%A1%B5%E5%BC%82%E5%B8%B82%EF%BC%9A%E5%88%86%E9%85%8D%E7%89%A9%E7%90%86%E9%A1%B5%EF%BC%8C%E5%A1%AB%E5%85%85%E9%A1%B5%E8%A1%A8%EF%BC%8C%E8%AE%BE%E7%BD%AE%E5%8F%AA%E8%AF%BB%E6%9D%83%E9%99%90"><span class="nav-number">7.0.3.</span> <span class="nav-text">缺页异常2：分配物理页，填充页表，设置只读权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#copy-on-write-%E5%86%99%E5%85%A5"><span class="nav-number">7.0.4.</span> <span class="nav-text">copy on write 写入</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93%EF%BC%88%E8%AF%BB%E5%85%B1%E4%BA%AB%EF%BC%8C%E5%86%99%E7%A7%81%E6%9C%89%EF%BC%8C%E4%B8%8D%E5%86%99%E5%9B%9E%EF%BC%89"><span class="nav-number">7.1.</span> <span class="nav-text">小结（读共享，写私有，不写回）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9A%E5%85%B1%E4%BA%AB%E6%96%87%E4%BB%B6"><span class="nav-number">8.</span> <span class="nav-text">实现：共享文件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93%EF%BC%88%E8%AF%BB%E5%86%99%E5%85%B1%E4%BA%AB%EF%BC%8C%E4%B8%94%E5%86%99%E5%9B%9E%EF%BC%89"><span class="nav-number">8.1.</span> <span class="nav-text">小结（读写共享，且写回）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9A%E7%A7%81%E6%9C%89%E5%8C%BF%E5%90%8D"><span class="nav-number">9.</span> <span class="nav-text">实现：私有匿名</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">9.1.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9A%E5%85%B1%E4%BA%AB%E5%8C%BF%E5%90%8D"><span class="nav-number">10.</span> <span class="nav-text">实现：共享匿名</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93%EF%BC%88%E9%99%A4%E4%BA%86%E6%98%AF%E5%92%8C%E5%8C%BF%E5%90%8D%E6%96%87%E4%BB%B6%E5%BB%BA%E7%AB%8B%E8%81%94%E7%B3%BB%EF%BC%8C%E5%85%B6%E4%BD%99%E4%B8%8E-%E5%85%B1%E4%BA%AB%E6%96%87%E4%BB%B6-%E4%B8%80%E8%87%B4%EF%BC%89"><span class="nav-number">10.1.</span> <span class="nav-text">小结（除了是和匿名文件建立联系，其余与 共享文件 一致）</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
