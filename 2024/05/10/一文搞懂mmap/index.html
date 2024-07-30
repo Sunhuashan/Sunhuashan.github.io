@@ -31,7 +31,7 @@
 <meta property="og:image" content="http://example.com/imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730172756490.png">
 <meta property="og:image" content="http://example.com/imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730172849968.png">
 <meta property="article:published_time" content="2024-05-10T06:13:03.000Z">
-<meta property="article:modified_time" content="2024-07-30T10:36:08.517Z">
+<meta property="article:modified_time" content="2024-07-30T10:38:07.961Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="linux_kernel">
 <meta name="twitter:card" content="summary">
@@ -406,16 +406,11 @@
 </ul>
 <p>上述过程并没有设置页表项，所以访问 VMA  内的地址时<strong>缺页异常</strong>：</p>
 <ul>
-<li><p>从 <code>vm_file</code> 找到 <code>inode</code> ，进一步找到 <code>page cache</code>，在通过 <code>vm_pgoff</code> 找到 物理页 <code>page</code></p>
-</li>
-<li><p>若 <code>page</code> 不存在，分配新的 <code>page</code> 并从磁盘中读出文件数据，增加引用计数</p>
-</li>
-<li><p>若 <code>page</code> 存在，只需增加引用计数即可</p>
-</li>
-<li><p>创建<strong>可写</strong> PTE 页表项，建立虚拟地址和物理地址之间的关联，返回用户层，重新执行缺页的指令</p>
-</li>
-<li><p>多进程对共享映射区的任何修改，最终都会通过内核回写线程 pdflush 刷新到磁盘文件中</p>
-</li>
+<li>从 <code>vm_file</code> 找到 <code>inode</code> ，进一步找到 <code>page cache</code>，在通过 <code>vm_pgoff</code> 找到 物理页 <code>page</code></li>
+<li>若 <code>page</code> 不存在，分配新的 <code>page</code> 并从磁盘中读出文件数据，增加引用计数</li>
+<li>若 <code>page</code> 存在，只需增加引用计数即可</li>
+<li>创建<strong>可写</strong> PTE 页表项，建立虚拟地址和物理地址之间的关联，返回用户层，重新执行缺页的指令</li>
+<li>多进程对共享映射区的任何修改，最终都会通过内核回写线程 pdflush 刷新到磁盘文件中</li>
 </ul>
 <h2 id="实现：私有匿名"><a href="#实现：私有匿名" class="headerlink" title="实现：私有匿名"></a>实现：私有匿名</h2><p><code>MAP_PRIVATE | MAP_ANONYMOUS</code> 表示私有匿名映射，我们常常利用这种映射方式来申请虚拟内存，比如，我们使用 glibc 库里封装的 malloc 函数进行虚拟内存申请时，当申请的内存大于 128K 的时候，malloc 就会调用 mmap 采用私有匿名映射的方式来申请堆内存。因为它是私有的，所以申请到的内存是进程独占的，多进程之间不能共享。</p>
 <p>这里需要特别强调一下 mmap 私有匿名映射申请到的只是虚拟内存，内核只是在进程虚拟内存空间中划分一段虚拟内存区域 VMA 出来，并将 VMA 该初始化的属性初始化好，mmap 系统调用就结束了。这里和物理内存还没有发生任何关系。在后面的章节中大家将会看到这个过程。</p>
