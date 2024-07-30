@@ -31,7 +31,7 @@
 <meta property="og:image" content="http://example.com/imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730172756490.png">
 <meta property="og:image" content="http://example.com/imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82mmap/image-20240730172849968.png">
 <meta property="article:published_time" content="2024-05-10T06:13:03.000Z">
-<meta property="article:modified_time" content="2024-07-30T10:38:07.961Z">
+<meta property="article:modified_time" content="2024-07-30T10:39:45.085Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="linux_kernel">
 <meta name="twitter:card" content="summary">
@@ -390,10 +390,9 @@
 <ul>
 <li>由于上述创建的 PTE 表项是只读的，进程对 VMA 内的区域进行<strong>写操作</strong>时会产生<strong>异常</strong>，陷入内核</li>
 <li>内核处理该异常时，会分配新的 <code>page</code> 并拷贝 <code>page cache</code> 中旧 <code>page</code> 的内容<ul>
-<li>新的 <code>page</code> 是和 <code>page cache</code> 分离的，即它脱离了这个文件，这就有了 <strong>写私有，不写回</strong> 的特点</li>
+<li>新的 <code>page</code> 是和 <code>page cache</code> 分离的，即它脱离了这个文件，这就有了 <strong>写私有，不写回</strong> 的特点<br>创建<strong>可写</strong> PTE 页表项，返回用户层，重新执行指令</li>
 </ul>
 </li>
-<li>创建<strong>可写</strong> PTE 页表项，返回用户层，重新执行指令</li>
 </ul>
 <h2 id="实现：共享文件"><a href="#实现：共享文件" class="headerlink" title="实现：共享文件"></a>实现：共享文件</h2><p>我们通过将 mmap 系统调用中的 flags 参数指定为 <code>MAP_SHARED</code> , 参数 fd 指定为要映射文件的文件描述符（file descriptor）来实现对文件的共享映射。</p>
 <p>共享文件映射其实和私有文件映射前面的映射过程是一样的，唯一不同的点在于私有文件映射是读共享的，写的时候会发生写时复制（copy on write），并且多进程针对同一映射文件的修改不会回写到磁盘文件上。</p>
@@ -409,8 +408,7 @@
 <li>从 <code>vm_file</code> 找到 <code>inode</code> ，进一步找到 <code>page cache</code>，在通过 <code>vm_pgoff</code> 找到 物理页 <code>page</code></li>
 <li>若 <code>page</code> 不存在，分配新的 <code>page</code> 并从磁盘中读出文件数据，增加引用计数</li>
 <li>若 <code>page</code> 存在，只需增加引用计数即可</li>
-<li>创建<strong>可写</strong> PTE 页表项，建立虚拟地址和物理地址之间的关联，返回用户层，重新执行缺页的指令</li>
-<li>多进程对共享映射区的任何修改，最终都会通过内核回写线程 pdflush 刷新到磁盘文件中</li>
+<li>创建<strong>可写</strong> PTE 页表项，建立虚拟地址和物理地址之间的关联，返回用户层，重新执行缺页的指令<br>多进程对共享映射区的任何修改，最终都会通过内核回写线程 pdflush 刷新到磁盘文件中</li>
 </ul>
 <h2 id="实现：私有匿名"><a href="#实现：私有匿名" class="headerlink" title="实现：私有匿名"></a>实现：私有匿名</h2><p><code>MAP_PRIVATE | MAP_ANONYMOUS</code> 表示私有匿名映射，我们常常利用这种映射方式来申请虚拟内存，比如，我们使用 glibc 库里封装的 malloc 函数进行虚拟内存申请时，当申请的内存大于 128K 的时候，malloc 就会调用 mmap 采用私有匿名映射的方式来申请堆内存。因为它是私有的，所以申请到的内存是进程独占的，多进程之间不能共享。</p>
 <p>这里需要特别强调一下 mmap 私有匿名映射申请到的只是虚拟内存，内核只是在进程虚拟内存空间中划分一段虚拟内存区域 VMA 出来，并将 VMA 该初始化的属性初始化好，mmap 系统调用就结束了。这里和物理内存还没有发生任何关系。在后面的章节中大家将会看到这个过程。</p>
@@ -423,8 +421,7 @@
 </ul>
 <p>上述过程并没有设置页表项，所以访问 VMA  内的地址时<strong>缺页异常</strong>：</p>
 <ul>
-<li>为这段虚拟内存区域分配对应大小的物理内存页，并清零</li>
-<li>创建 PTE 页表项，建立虚拟地址和物理地址之间的关联，返回用户层，重新执行缺页的指令</li>
+<li>为这段虚拟内存区域分配对应大小的物理内存页，并清零<br>创建 PTE 页表项，建立虚拟地址和物理地址之间的关联，返回用户层，重新执行缺页的指令</li>
 </ul>
 <h2 id="实现：共享匿名"><a href="#实现：共享匿名" class="headerlink" title="实现：共享匿名"></a>实现：共享匿名</h2><p>我们通过将 mmap 系统调用中的 flags 参数指定为 <code>MAP_SHARED | MAP_ANONYMOUS</code>，并将 fd 参数指定为 -1 来实现共享匿名映射，这种映射方式常用于<strong>父子进程</strong>之间共享内存，<strong>父子进程</strong>之间的通讯。注意，这里需要和大家强调一下是父子进程，为什么只能是父子进程，笔者后面再给大家解答。</p>
 <p>在笔者介绍完 mmap 的私有匿名映射，私有文件映射，以及共享文件映射之后，共享匿名映射看似就非常简单了，由于不对文件进行映射，所以它不涉及到文件系统相关的知识，而且又是共享的，多个进程通过将自己的页表指向同一个物理内存页面不就实现共享匿名映射了吗？</p>
