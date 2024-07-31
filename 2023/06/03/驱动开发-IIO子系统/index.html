@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="工业 I&#x2F;O 子系统（IIO）的主要目的是为在某种意义上执行模拟到数字转换（ADC）或数字到模拟转换（DAC）或两者兼有的设备提供支持。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【驱动开发】Linux 驱动开发-IIO子系统">
+<meta property="og:url" content="http://example.com/2023/06/03/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-IIO%E5%AD%90%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="工业 I&#x2F;O 子系统（IIO）的主要目的是为在某种意义上执行模拟到数字转换（ADC）或数字到模拟转换（DAC）或两者兼有的设备提供支持。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-06-03T12:13:32.000Z">
+<meta property="article:modified_time" content="2024-07-31T07:18:12.802Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="linux_driver">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2023/06/03/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-IIO%E5%AD%90%E7%B3%BB%E7%BB%9F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【驱动开发】Linux 驱动开发-IIO子系统 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/03/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-IIO%E5%AD%90%E7%B3%BB%E7%BB%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【驱动开发】Linux 驱动开发-IIO子系统
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-06-03 20:13:32" itemprop="dateCreated datePublished" datetime="2023-06-03T20:13:32+08:00">2023-06-03</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8/" itemprop="url" rel="index"><span itemprop="name">设备驱动</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>工业 I&#x2F;O 子系统（IIO）的主要目的是为在某种意义上执行模拟到数字转换（ADC）或数字到模拟转换（DAC）或两者兼有的设备提供支持。</p>
+<span id="more"></span>
+
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>IIO 子系统的提出是为了支持一些 ADC 或 DAC 设备，这些设备的分类介于 Hwmon 子系统和 Input 子系统的设备分类之间。Hwmon 子系统针对用于监测和控制系统本身的低采样率传感器，如风扇速度控制或温度测量。Input 子系统正如其名称所示，专注于人机交互输入设备（键盘、鼠标、触摸屏）。在某些情况下，这些与 IIO 之间存在相当大的重叠。IIO 子系统是为了支持下面这些类型的设备：</p>
+<ol>
+<li>ADC芯片；</li>
+<li>DAC芯片；</li>
+<li>温度传感器；</li>
+<li>光感器；</li>
+<li>陀螺仪；</li>
+<li>加速度计；</li>
+<li>CDCs；</li>
+<li>IMUs</li>
+<li>压力传感器等等</li>
+</ol>
+<p>通常，这些传感器通过 SPI 或 I2C 进行连接。这些传感器设备的一个常见用例是具有组合功能（例如，光加接近传感器）。</p>
+<h2 id="组成元素"><a href="#组成元素" class="headerlink" title="组成元素"></a>组成元素</h2><p>IIO core 为编写许多不同类型嵌入式传感器的驱动程序提供了一个<strong>统一框架</strong>，还为用户空间应用程序操纵传感器提供了<strong>标准接口</strong>。其实现可以在 <code>drivers/iio/industrialio-*</code> 下找到。</p>
+<h3 id="IIO-设备"><a href="#IIO-设备" class="headerlink" title="IIO 设备"></a>IIO 设备</h3><ul>
+<li>struct <a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/core.html#c.iio_dev"><code>iio_dev</code></a> - 表示一个 IIO 设备</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/core.html#c.iio_device_alloc"><code>iio_device_alloc()</code></a> - 分配 IIO 设备内存</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/core.html#c.iio_device_free"><code>iio_device_free()</code></a> - 释放 IIO 设备内存</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/core.html#c.iio_device_register"><code>iio_device_register()</code></a> - 注册一个 IIO设备到内核</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/core.html#c.iio_device_unregister"><code>iio_device_unregister()</code></a> - 取消注册一个 IIO设备到内核</li>
+</ul>
+<p>IIO 设备通常与单个硬件传感器相对应，并且为处理该设备的驱动程序提供所需的所有信息。存在两种方式可供用户空间应用程序与 IIO 驱动程序进行交互。</p>
+<ul>
+<li><p><code>/sys/bus/iio/iio:deviceX/</code> 代表一个硬件传感器，并将同一芯片的数据通道组合在一起。</p>
+</li>
+<li><p><code>dev/iio:deviceX</code> 是用于缓冲数据传输和事件信息检索的字符设备节点接口。</p>
+</li>
+</ul>
+<h4 id="设备分配和注册"><a href="#设备分配和注册" class="headerlink" title="设备分配和注册"></a>设备分配和注册</h4><p>通常情况下，IIO 驱动程序将自己注册为 <strong>I2C 或 SPI</strong> 驱动程序，并创建两个例程: <code>probe</code> 和 <code>remove</code>。</p>
+<p><code>probe</code>:</p>
+<ul>
+<li><p>调用 <code>iio_device_alloc()</code> ，为 IIO 设备<strong>分配内存</strong>。</p>
+</li>
+<li><p>使用驱动程序特定信息 (例如设备名称、设备通道) <strong>初始化</strong> IIO 设备字段。</p>
+</li>
+<li><p>调用 <code>iio_device_register()</code> ，这将向 IIO 核心<strong>注册设备</strong>。在此调用之后，设备就可以接受来自用户空间应用程序的请求了。</p>
+</li>
+</ul>
+<p>在 <code>remove</code> 时，我们以相反的顺序释放探针中分配的资源:</p>
+<ul>
+<li><p><code>iio_device_unregister()</code> ，从 IIO 核<strong>取消设备注册</strong>。</p>
+</li>
+<li><p><code>iio_device_free()</code>  ，<strong>释放</strong>为 IIO 设备分配的<strong>内存</strong>。</p>
+</li>
+</ul>
+<h4 id="设备属性和-sysfs-接口"><a href="#设备属性和-sysfs-接口" class="headerlink" title="设备属性和 sysfs 接口"></a>设备属性和 sysfs 接口</h4><p>属性是 sysfs 下的文件文件，用于公开芯片信息，还允许应用程序设置各种<strong>配置参数</strong>。对于索引为 X 的设备，属性可以在 <code>/sys/bus/iio/iio: deviceX/</code> 目录下找到。常见的属性包括:	</p>
+<ul>
+<li><p>“name” 表示物理芯片的<strong>描述</strong>。</p>
+</li>
+<li><p>“dev” 展示了与<code>/dev/iio:deviceX</code>节点相关联的<strong>主设备号和次设备号对</strong>。</p>
+</li>
+<li><p>“sampling_frequency_available” 指的是设备可用的离散<strong>采样频率</strong>值集合。</p>
+</li>
+</ul>
+<p>关于 IIO 设备的可用标准属性在 Linux 内核源中的 <code>Documentation/ABI/testing/sysfs-bus-iio</code> 文件中有描述。</p>
+<h3 id="IIO-通道"><a href="#IIO-通道" class="headerlink" title="IIO 通道"></a>IIO 通道</h3><p>struct <a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/core.html#c.iio_chan_spec"><code>iio_chan_spec</code></a> - 表示一个 IIO 设备通道。</p>
+<p>IIO 设备通道是<strong>数据通道</strong>的表示形式。IIO 设备可以有一个或多个通道。例如:</p>
+<ul>
+<li><p>温度计传感器具有一个表示温度测量的通道。</p>
+</li>
+<li><p>有两个通道指示可见光和红外光谱测量值的光传感器。</p>
+</li>
+<li><p>一个加速度计最多可以有3个代表 X、 Y 和 Z 轴上的加速度的通道。</p>
+</li>
+</ul>
+<p>IIO 通道由 <code>struct iio_chan_spec</code> 描述。在上述例子中，温度传感器的驱动程序必须描述其通道如下:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">iio_chan_spec</span> <span class="title">temp_channel</span>[] =</span> &#123;</span><br><span class="line">     &#123;</span><br><span class="line">         .type = IIO_TEMP,</span><br><span class="line">         .info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),</span><br><span class="line">     &#125;,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>公开给用户空间的通道 sysfs 属性以位掩码的形式指定。根据它们的共享信息，可以在下列掩码之一中设置属性:</p>
+<ul>
+<li><code>Info_ask_different</code>，属性将特定于此通道</li>
+<li><code>Info_block_share_by_type</code>，属性由同一<strong>类型</strong>的所有通道共享</li>
+<li><code>Info_block_share_by_dir</code>，属性由同一<strong>方向</strong>的所有通道共享</li>
+<li><code>Info_ask_share_by_all</code>，属性由所有通道共享</li>
+</ul>
+<p>当同一通道<strong>类型</strong>有<strong>多个数据</strong>通道时，我们有两种方法来区分它们:</p>
+<ul>
+<li><p>将 <code>iio_chan_spec</code> 的 <code>.modified</code> 字段设置为 1 。修饰符通过同一 <code>iio_chan_spec</code> 结构的<code>.channel2</code> 字段来指定，用于表明通道的物理上独特的特性，例如其方向或光谱响应。例如，一个光传感器可以有两个通道，一个用于红外光，一个用于红外和可见光。</p>
+</li>
+<li><p>将 <code>iio_chan_spec</code>  的 <code>.indexed</code> 字段的设置为 1 。在这种情况下，该通道由 <code>.channel</code> 字段指定索引的来区分两个实例。</p>
+</li>
+</ul>
+<p><strong>使用 modified 字段区分同一类型的通道：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">iio_chan_spec</span> <span class="title">light_channels</span>[] =</span> &#123;</span><br><span class="line">        &#123;</span><br><span class="line">                .type = IIO_INTENSITY,</span><br><span class="line">                .modified = <span class="number">1</span>,</span><br><span class="line">                .channel2 = IIO_MOD_LIGHT_IR,</span><br><span class="line">                .info_mask_separate = BIT(IIO_CHAN_INFO_RAW),</span><br><span class="line">                .info_mask_shared = BIT(IIO_CHAN_INFO_SAMP_FREQ),</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">                .type = IIO_INTENSITY,</span><br><span class="line">                .modified = <span class="number">1</span>,</span><br><span class="line">                .channel2 = IIO_MOD_LIGHT_BOTH,</span><br><span class="line">                .info_mask_separate = BIT(IIO_CHAN_INFO_RAW),</span><br><span class="line">                .info_mask_shared = BIT(IIO_CHAN_INFO_SAMP_FREQ),</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">                .type = IIO_LIGHT,</span><br><span class="line">                .info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED),</span><br><span class="line">                .info_mask_shared = BIT(IIO_CHAN_INFO_SAMP_FREQ),</span><br><span class="line">        &#125;,</span><br><span class="line">   &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>上述 channels 的定义，会生成两个不同的 sysfs 文件用于用户空间获取<strong>原始数据</strong>：</p>
+<ul>
+<li><code>/sys/bus/iio/iio:deviceX/in_intensity_ir_raw</code></li>
+<li><code>/sys/bus/iio/iio:deviceX/in_intensity_both_raw</code></li>
+</ul>
+<p>还会生成一个文件用于<strong>处理数据</strong> ：</p>
+<ul>
+<li><code>/sys/bus/iio/iio:deviceX/in_illuminance_input</code></li>
+</ul>
+<p>还有一个共享的文件，用于用户空间获取<strong>采样频率</strong>：</p>
+<ul>
+<li><code>/sys/bus/iio/iio:deviceX/sampling_frequency</code></li>
+</ul>
+<p><strong>使用 index 字段区分同一类型的通道：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">static const struct iio_chan_spec light_channels[] = &#123;</span><br><span class="line">        &#123;</span><br><span class="line">                .type = IIO_VOLTAGE,</span><br><span class="line">                .indexed = 1,</span><br><span class="line">                .channel = 0,</span><br><span class="line">                .info_mask_separate = BIT(IIO_CHAN_INFO_RAW),</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">                .type = IIO_VOLTAGE,</span><br><span class="line">                .indexed = 1,</span><br><span class="line">                .channel = 1,</span><br><span class="line">                .info_mask_separate = BIT(IIO_CHAN_INFO_RAW),</span><br><span class="line">        &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述 channels 的定义，会生成两个不同的 sysfs 文件用于用户空间获取<strong>原始数据</strong>：</p>
+<ul>
+<li><code>/sys/bus/iio/devices/iio:deviceX/in_voltage0_raw</code>，代表了 channel 0 的电压测量值</li>
+<li><code>/sys/bus/iio/devices/iio:deviceX/in_voltage1_raw</code>，代表了 channel 1 的电压测量值</li>
+</ul>
+<h3 id="IIO-缓冲区"><a href="#IIO-缓冲区" class="headerlink" title="IIO 缓冲区"></a>IIO 缓冲区</h3><p>工业 I&#x2F;O 核心提供了一种连续数据捕获方法。可以同时从 <code>/dev/iio:deviceX</code> 字符设备节点读取多个数据通道，从而减少 CPU 负载。</p>
+<ul>
+<li><code>struct iio_buffer</code> — 通用的缓存结构</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/buffers.html#c.iio_validate_scan_mask_onehot"><code>iio_validate_scan_mask_onehot()</code></a> — 验证所选通道是否正好是一个</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/buffers.html#c.iio_buffer_get"><code>iio_buffer_get()</code></a> — 增加 buffer 引用计数</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/buffers.html#c.iio_buffer_put"><code>iio_buffer_put()</code></a> — 减少 buffer 引用计数</li>
+</ul>
+<h4 id="sysfs-接口"><a href="#sysfs-接口" class="headerlink" title="sysfs 接口"></a>sysfs 接口</h4><p>IIO 缓冲区在 <code>/sys/bus/iio/iio:deviceX/buffer/*</code> 下有一个关联的属性目录:</p>
+<ul>
+<li><strong>length</strong>：指的是缓冲区能够存储的数据样本的总数（<strong>容量</strong>）。</li>
+<li><strong>enable</strong>：表示<strong>使能</strong>缓冲区捕获。</li>
+</ul>
+<h4 id="IIO-buffer-设置"><a href="#IIO-buffer-设置" class="headerlink" title="IIO buffer 设置"></a>IIO buffer 设置</h4><p>与放置在缓冲区中的通道读取相关的元信息被称为扫描元素。配置扫描元素的重要位通过 <code>/sys/bus/iio/iio:deviceX/scan_elements/*</code> 目录向用户空间应用程序公开。此文件包含以下形式的属性： </p>
+<ul>
+<li><p><strong>enable</strong>：用于启用通道。当且仅当其属性<strong>非零</strong>时，触发捕获将包含此通道的数据样本。</p>
+</li>
+<li><p><strong>type</strong>：缓冲区中扫描元素数据存储的描述，也是从用户空间读取它的形式。格式是 <code>[be|le]:[s|u]bits/storagebitsXrepeat[&gt;&gt;shift]</code></p>
+<ul>
+<li>be或le，指定大端或小端。</li>
+<li>s或u，指定是有符号的（2的补码）还是无符号的。</li>
+<li>bit，是有效数据位数。</li>
+<li>storagebit，是它在缓冲区中占用的位数（填充后）。</li>
+<li>shift，如果指定，是在屏蔽未使用的位之前需要应用的移位。</li>
+<li>repeat，指定位&#x2F;存储位重复的数量。当重复元素为0或1时，则省略重复值。</li>
+</ul>
+</li>
+</ul>
+<p>例如，一个具有 12 位分辨率的 3 轴加速度计的驱动程序，其中数据按如下方式存储在两个 8 位寄存器中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">  7   6   5   4   3   2   1   0</span><br><span class="line">+---+---+---+---+---+---+---+---+</span><br><span class="line">|D3 |D2 |D1 |D0 | X | X | X | X | (LOW byte, address 0x06)</span><br><span class="line">+---+---+---+---+---+---+---+---+</span><br><span class="line"></span><br><span class="line">  7   6   5   4   3   2   1   0</span><br><span class="line">+---+---+---+---+---+---+---+---+</span><br><span class="line">|D11|D10|D9 |D8 |D7 |D6 |D5 |D4 | (HIGH byte, address 0x07)</span><br><span class="line">+---+---+---+---+---+---+---+---+</span><br></pre></td></tr></table></figure>
+<p>对于每个轴的加速度，将会有以下扫描元素类型</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ cat /sys/bus/iio/devices/iio:device0/scan_elements/in_accel_y_type</span><br><span class="line">le:s12/16&gt;&gt;4</span><br></pre></td></tr></table></figure>
+
+<p>用户空间应用程序将从缓冲区读取的数据样本解释为<strong>两字节的小端有符号</strong>数据，这需要在屏蔽<strong>12位有效数据</strong>之前进行<strong>4位右移</strong>。</p>
+<p>为了支持 buffer ，在驱动程序中必须按照如下方式定义 <code>iio_chan_spec</code>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">iio_chan_spec</span> &#123;</span></span><br><span class="line"><span class="comment">/* other members */</span></span><br><span class="line">        <span class="type">int</span> scan_index</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">                <span class="type">char</span> sign;</span><br><span class="line">                u8 realbits;</span><br><span class="line">                u8 storagebits;</span><br><span class="line">                u8 shift;</span><br><span class="line">                u8 repeat;</span><br><span class="line">                <span class="class"><span class="keyword">enum</span> <span class="title">iio_endian</span> <span class="title">endianness</span>;</span></span><br><span class="line">        &#125; scan_type;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="keyword">struct</span> <span class="title">iio_chan_spec</span> <span class="title">accel_channels</span>[] =</span> &#123;</span><br><span class="line">        &#123;</span><br><span class="line">                .type = IIO_ACCEL,</span><br><span class="line">                .modified = <span class="number">1</span>,</span><br><span class="line">                .channel2 = IIO_MOD_X,</span><br><span class="line">                <span class="comment">/* other stuff here */</span></span><br><span class="line">                .scan_index = <span class="number">0</span>,</span><br><span class="line">                .scan_type = &#123;</span><br><span class="line">                        .sign = <span class="string">&#x27;s&#x27;</span>,</span><br><span class="line">                        .realbits = <span class="number">12</span>,</span><br><span class="line">                        .storagebits = <span class="number">16</span>,</span><br><span class="line">                        .shift = <span class="number">4</span>,</span><br><span class="line">                        .endianness = IIO_LE,</span><br><span class="line">                &#125;,</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">/* similar for Y (with channel2 = IIO_MOD_Y, scan_index = 1)</span></span><br><span class="line"><span class="comment">         * and Z (with channel2 = IIO_MOD_Z, scan_index = 2) axis</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里 <code>scan_index</code> 定义启用的通道在缓冲区中的<strong>放置顺序</strong>。<code>scan_index</code> 较低的通道将放置在索引较高的通道之前。每个通道都需要有一个<strong>唯一</strong>的 <code>scan_index</code>。 将 <code>scan_index</code> 设置为 -1 可用于指示特定通道<strong>不支持</strong>缓冲捕获。在这种情况下，不会为 <code>scan_elements</code> 目录中的通道创建任何条目。</p>
+<h3 id="IIO-触发器"><a href="#IIO-触发器" class="headerlink" title="IIO 触发器"></a>IIO 触发器</h3><p>在许多情况下，对于驱动程序而言，能够<strong>基于某些外部事件（触发）捕获数据</strong>，而不是定期轮询数据是有用的。IIO 触发可以由同时具有基于硬件生成事件（例如数据准备就绪或超过阈值）的 IIO 设备的设备驱动程序提供，也可以由来自独立中断源（例如连接到某些外部系统的 GPIO 线路、定时器中断或用户空间在 sysfs 中写入特定文件）的单独驱动程序提供。触发可能会为多个传感器启动数据捕获，并且它可能与传感器本身完全无关。</p>
+<ul>
+<li>struct <a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/triggers.html#c.iio_trigger"><code>iio_trigger</code></a> — IIO 触发器</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/triggers.html#c.devm_iio_trigger_alloc"><code>devm_iio_trigger_alloc()</code></a> — 为 IIO 触发器分配内存</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/triggers.html#c.devm_iio_trigger_free"><code>devm_iio_trigger_free()</code></a> — 释放 IIO 触发器 内存</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/triggers.html#c.devm_iio_trigger_register"><code>devm_iio_trigger_register()</code></a> — 注册 IIO 触发器</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/triggers.html#c.devm_iio_trigger_unregister"><code>devm_iio_trigger_unregister()</code></a> — 取消 IIO 触发器 注册</li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/triggers.html#c.iio_trigger_validate_own_device"><code>iio_trigger_validate_own_device()</code></a> — 检查 IIO 触发器 和 IIO 设备 是否属于同一设备</li>
+</ul>
+<h4 id="sysfs-接口-1"><a href="#sysfs-接口-1" class="headerlink" title="sysfs 接口"></a>sysfs 接口</h4><p>在 sysfs 中有两个与触发相关的位置：</p>
+<ul>
+<li><code>/sys/bus/iio/devices/triggerY/* </code>，一旦 IIO 触发向 IIO 核心注册，就会创建此文件，并对应索引为 Y 的触发。由于触发因类型不同可能差异很大，因此这里我们可以描述的标准属性很少：<ul>
+<li><strong>name</strong> ：可用于与设备关联的触发名称。 </li>
+<li><code>sampling_frequency</code>，一些基于定时器的触发器使用此属性来指定触发调用的频率。</li>
+</ul>
+</li>
+<li><code>/sys/bus/iio/devices/iio:deviceX/trigger/*</code>，一旦设备支持触发缓冲区，就会创建此目录。我们可以通过在 current_trigger 文件中写入触发器的名称将触发器与我们的设备相关联。</li>
+</ul>
+<h4 id="IIO-trigger-设置"><a href="#IIO-trigger-设置" class="headerlink" title="IIO trigger 设置"></a>IIO trigger 设置</h4><p>下面的代码展示了在驱动程序中，使用 触发器的例子：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">iio_trigger_ops</span> <span class="title">trigger_ops</span> =</span> &#123;</span><br><span class="line">    .set_trigger_state = sample_trigger_state,</span><br><span class="line">    .validate_device = sample_validate_device,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> iio_trigger *trig;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* first, allocate memory for our trigger */</span></span><br><span class="line">trig = iio_trigger_alloc(dev, <span class="string">&quot;trig-%s-%d&quot;</span>, name, idx);</span><br><span class="line"></span><br><span class="line"><span class="comment">/* setup trigger operations field */</span></span><br><span class="line">trig-&gt;ops = &amp;trigger_ops;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* now register the trigger with the IIO core */</span></span><br><span class="line">iio_trigger_register(trig);</span><br></pre></td></tr></table></figure>
+
+<p>其中，struct <a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/v4.13/driver-api/iio/triggers.html#c.iio_trigger_ops"><code>iio_trigger_ops</code></a>  表示 IIO trigger 的操作：</p>
+<ul>
+<li>set_trigger_state，根据需求打开&#x2F;关闭触发。</li>
+<li>validate_device，当当前触发发生变化时用于验证设备的函数。</li>
+</ul>
+<h3 id="IIO-触发缓存区"><a href="#IIO-触发缓存区" class="headerlink" title="IIO 触发缓存区"></a>IIO 触发缓存区</h3><p>在 <strong>缓冲区</strong> 和 <strong>触发器</strong> 的基础上，二者合在一起工作就是 IIO 触发缓冲区</p>
+<h4 id="IIO-triggered-buffer-设置"><a href="#IIO-triggered-buffer-设置" class="headerlink" title="IIO triggered buffer 设置"></a>IIO triggered buffer 设置</h4><p><code>iio_triggered_buffer_setup()</code>：设置触发缓冲区和 poll function</p>
+<p><code>iio_triggered_buffer_cleanup()</code>：释放上述函数申请的资源</p>
+<p><code>struct iio_buffer_setup_ops</code>：缓冲区设置相关回调函数</p>
+<p>下面是一个使用例子：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">iio_buffer_setup_ops</span> <span class="title">sensor_buffer_setup_ops</span> =</span> &#123;</span><br><span class="line">  .preenable    = sensor_buffer_preenable,</span><br><span class="line">  .postenable   = sensor_buffer_postenable,</span><br><span class="line">  .postdisable  = sensor_buffer_postdisable,</span><br><span class="line">  .predisable   = sensor_buffer_predisable,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">irqreturn_t</span> <span class="title function_">sensor_iio_pollfunc</span><span class="params">(<span class="type">int</span> irq, <span class="type">void</span> *p)</span></span><br><span class="line">&#123;</span><br><span class="line">    pf-&gt;timestamp = iio_get_time_ns((<span class="keyword">struct</span> indio_dev *)p);</span><br><span class="line">    <span class="keyword">return</span> IRQ_WAKE_THREAD;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">irqreturn_t</span> <span class="title function_">sensor_trigger_handler</span><span class="params">(<span class="type">int</span> irq, <span class="type">void</span> *p)</span></span><br><span class="line">&#123;</span><br><span class="line">    u16 buf[<span class="number">8</span>];</span><br><span class="line">    <span class="type">int</span> i = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* read data for each active channel */</span></span><br><span class="line">    for_each_set_bit(bit, active_scan_mask, masklength)</span><br><span class="line">        buf[i++] = sensor_get_data(bit)</span><br><span class="line"></span><br><span class="line">    iio_push_to_buffers_with_timestamp(indio_dev, buf, timestamp);</span><br><span class="line"></span><br><span class="line">    iio_trigger_notify_done(trigger);</span><br><span class="line">    <span class="keyword">return</span> IRQ_HANDLED;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* setup triggered buffer, usually in probe function */</span></span><br><span class="line">iio_triggered_buffer_setup(indio_dev, sensor_iio_polfunc,</span><br><span class="line">                           sensor_trigger_handler,</span><br><span class="line">                           sensor_buffer_setup_ops);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><code>iio_buffer_setup_ops</code>，缓冲区设置函数在缓冲区配置序列中的预定义点被调用（例如启用前，禁用后）。如果未指定，IIO内核使用 <code>defaultiio_triggered_buffer_setup_ops</code>。</p>
+</li>
+<li><p><code>sensor_iio_pollfunc</code>，该函数将用作 <code>poll function</code> 的上半部分。它应该尽可能少地处理，因为它在<strong>中断上下文中</strong>运行。最常见的操作是记录当前时间戳，因此可以使用IIO核心定义的 <code>iio_pollfunc_store_time()</code> 函数。 </p>
+</li>
+<li><p><code>sensor_trigger_handler</code>，将用作轮询函数下半部分的函数。这在<strong>内核线程的上下文</strong>中运行，所有处理都在这里进行。它通常从设备中读取数据并将其与记录在上半部分的时间戳一起存储在内部缓冲区中。</p>
+</li>
+</ul>
+<h2 id="IIO-例子"><a href="#IIO-例子" class="headerlink" title="IIO 例子"></a>IIO 例子</h2><p>本文以 6 轴传感器 ICM-20608 为例编写驱动程序，其包括 3 轴加速度和 3 轴陀螺仪 ，通过 SPI 协议通信。</p>
+<h3 id="基本使用"><a href="#基本使用" class="headerlink" title="基本使用"></a>基本使用</h3><h4 id="模块相关"><a href="#模块相关" class="headerlink" title="模块相关"></a>模块相关</h4><p>主要是 注册和注销 spi_driver：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> __init <span class="title function_">icm20608_init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="keyword">return</span> spi_register_driver(&amp;icm20608_drv);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> __exit <span class="title function_">icm20608_exit</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">        spi_unregister_driver(&amp;icm20608_drv);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">module_init(icm20608_init);</span><br><span class="line">module_exit(icm20608_exit);</span><br><span class="line"></span><br><span class="line">MODULE_LICENSE(<span class="string">&quot;GPL&quot;</span>);</span><br><span class="line">MODULE_AUTHOR(<span class="string">&quot;huashan sun &lt;sunhuashan624@gmail.com&gt;&quot;</span>);</span><br><span class="line">MODULE_DESCRIPTION(<span class="string">&quot;A demo ICM-20608 driver&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<h4 id="驱动框架和-probe-函数"><a href="#驱动框架和-probe-函数" class="headerlink" title="驱动框架和 probe 函数"></a>驱动框架和 probe 函数</h4>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux-driver/" rel="tag"># linux_driver</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/05/23/%E9%A9%B1%E5%8A%A8%E5%BC%80%E5%8F%91-ioctrl/" rel="prev" title="【驱动开发】Linux 驱动开发-ioctl">
+      <i class="fa fa-chevron-left"></i> 【驱动开发】Linux 驱动开发-ioctl
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/10/13/%E7%BD%91%E7%BB%9C-mqtt%E5%8D%8F%E8%AE%AE/" rel="next" title="【计算机网络】mqtt 通信协议入门（〇）概述">
+      【计算机网络】mqtt 通信协议入门（〇）概述 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%84%E6%88%90%E5%85%83%E7%B4%A0"><span class="nav-number">2.</span> <span class="nav-text">组成元素</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#IIO-%E8%AE%BE%E5%A4%87"><span class="nav-number">2.1.</span> <span class="nav-text">IIO 设备</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AE%BE%E5%A4%87%E5%88%86%E9%85%8D%E5%92%8C%E6%B3%A8%E5%86%8C"><span class="nav-number">2.1.1.</span> <span class="nav-text">设备分配和注册</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AE%BE%E5%A4%87%E5%B1%9E%E6%80%A7%E5%92%8C-sysfs-%E6%8E%A5%E5%8F%A3"><span class="nav-number">2.1.2.</span> <span class="nav-text">设备属性和 sysfs 接口</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IIO-%E9%80%9A%E9%81%93"><span class="nav-number">2.2.</span> <span class="nav-text">IIO 通道</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IIO-%E7%BC%93%E5%86%B2%E5%8C%BA"><span class="nav-number">2.3.</span> <span class="nav-text">IIO 缓冲区</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sysfs-%E6%8E%A5%E5%8F%A3"><span class="nav-number">2.3.1.</span> <span class="nav-text">sysfs 接口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#IIO-buffer-%E8%AE%BE%E7%BD%AE"><span class="nav-number">2.3.2.</span> <span class="nav-text">IIO buffer 设置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IIO-%E8%A7%A6%E5%8F%91%E5%99%A8"><span class="nav-number">2.4.</span> <span class="nav-text">IIO 触发器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sysfs-%E6%8E%A5%E5%8F%A3-1"><span class="nav-number">2.4.1.</span> <span class="nav-text">sysfs 接口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#IIO-trigger-%E8%AE%BE%E7%BD%AE"><span class="nav-number">2.4.2.</span> <span class="nav-text">IIO trigger 设置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IIO-%E8%A7%A6%E5%8F%91%E7%BC%93%E5%AD%98%E5%8C%BA"><span class="nav-number">2.5.</span> <span class="nav-text">IIO 触发缓存区</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#IIO-triggered-buffer-%E8%AE%BE%E7%BD%AE"><span class="nav-number">2.5.1.</span> <span class="nav-text">IIO triggered buffer 设置</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IIO-%E4%BE%8B%E5%AD%90"><span class="nav-number">3.</span> <span class="nav-text">IIO 例子</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8"><span class="nav-number">3.1.</span> <span class="nav-text">基本使用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E7%9B%B8%E5%85%B3"><span class="nav-number">3.1.1.</span> <span class="nav-text">模块相关</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A9%B1%E5%8A%A8%E6%A1%86%E6%9E%B6%E5%92%8C-probe-%E5%87%BD%E6%95%B0"><span class="nav-number">3.1.2.</span> <span class="nav-text">驱动框架和 probe 函数</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">47</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
