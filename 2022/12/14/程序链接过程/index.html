@@ -32,7 +32,7 @@
 <meta property="og:image" content="http://example.com/imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814192022694.png">
 <meta property="og:image" content="http://example.com/imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814192316600.png">
 <meta property="article:published_time" content="2022-12-14T10:20:21.000Z">
-<meta property="article:modified_time" content="2024-08-17T01:39:36.001Z">
+<meta property="article:modified_time" content="2024-08-17T01:40:55.599Z">
 <meta property="article:author" content="sunhuashan">
 <meta property="article:tag" content="linux">
 <meta name="twitter:card" content="summary">
@@ -279,7 +279,7 @@
 <p>我们可以考虑下如何让多个不同的进程共享一份库代码，即让内存中只存在一份库代码。为了保证符号地址引用的正确性，可以让每个进程保留一块固定的地址空间用于存放共享库，如每个进程都将地址0x500000至0x502000的区域用来放模块A，这样可以让不同进程引用这个地址范围内的变量和函数。这样做确实可以实现代码共享，但是当内存中共享库很多的时候将会很难管理。因此，目前通常采用生成位置无关代码的方式来解决这一问题。</p>
 <h3 id="位置无关代码"><a href="#位置无关代码" class="headerlink" title="位置无关代码"></a>位置无关代码</h3><p>实际上，共享库实现代码共享的最大问题是地址引用问题，现代系统以一种特别的方式编译共享库模块，使得它可以被加载到内存的任何地址而无需链接器修改，可以加载而无需重定位的代码被称为「位置无关代码(Position-Independent Code PIC)」。</p>
 <p>对于一个共享目标文件，显然其内部的代码段和数据段之间的相对地址偏移是固定的，因此对于模块内部的变量和函数引用可以使用相对地址引用，这样不管模块被装载到内存的任何位置引用都是生效的。比较棘手的问题是解决<strong>共享模块中对于外部其它模块变量和函数的引用问题</strong>，我们并不知道这些外部符号被装载在了内存的什么地址。</p>
-<p>为了解决这个问题，编译器在编译共享模块时，在其 <code>.data</code> <strong>数据段开始</strong>的地方创建了一个「全局偏移表(Global Offset Table,GOT)」。这个表记录了共享模块中所有对于外部符号引用的地址条目：</p>
+<p>为了解决这个问题，编译器在编译共享模块时，在其 <code>.data</code>  <strong>数据段开始</strong>的地方创建了一个「全局偏移表(Global Offset Table,GOT)」。这个表记录了共享模块中所有对于外部符号引用的地址条目：</p>
 <p><img src="/./imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814192022694.png" alt="image-20240814192022694"></p>
 <p>代码段中对这些变量引用就可以使用相对地址引用至这个GOT表中的条目，在共享模块加载至内存中时，动态链接器会重定位GOT中每个条目，而不需要重定位代码段中的地址。例如上面的<code>addvec</code>函数中需要对<code>addcnt</code>变量进行引用，而这个<code>addcnt</code>变量处于另一个共享模块中，在编译时并不知道它的地址，因此需要通过GOT表进行间接引用，在加载的时候动态链接器是知道内存中<code>addcnt</code>变量的地址的，因此可以修正这个GOT条目。</p>
 <p>实际上，为了实现代码的共享，动态链接通过GOT表解决了静态链接中的地址重定位问题，或者说<strong>将代码中的地址重定位转变为了共享模块加载进内存时由动态链接器进行GOT条目修正</strong>，这样代码段相当于是固定的无需修改的，每个进程之间可以共享，而数据段可以不同的进程拥有一份自己的<strong>副本</strong>。</p>
