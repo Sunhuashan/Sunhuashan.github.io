@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="链接可以将多个目标文件合并为一个可执行文件，这使得分离编译成为了可能。通常一个项目由多个文件组成，这些文件可以分别编译为目标文件(Windows下为.obj，Unix下一般命名为.o文件)，链接器通过符号识别和重定位等方法解决不同目标文件中的符号引用问题，最终生成可执行文件。链接分为静态链接和动态链接，本文将分别介绍其原理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【计算机底层原理】程序链接过程详解">
+<meta property="og:url" content="http://example.com/2024/12/14/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="链接可以将多个目标文件合并为一个可执行文件，这使得分离编译成为了可能。通常一个项目由多个文件组成，这些文件可以分别编译为目标文件(Windows下为.obj，Unix下一般命名为.o文件)，链接器通过符号识别和重定位等方法解决不同目标文件中的符号引用问题，最终生成可执行文件。链接分为静态链接和动态链接，本文将分别介绍其原理。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814185349490.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814191550309.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814192022694.png">
+<meta property="og:image" content="http://example.com/imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814192316600.png">
+<meta property="article:published_time" content="2024-12-14T10:20:21.000Z">
+<meta property="article:modified_time" content="2024-08-14T11:23:30.815Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814185349490.png">
+
+<link rel="canonical" href="http://example.com/2024/12/14/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【计算机底层原理】程序链接过程详解 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/12/14/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【计算机底层原理】程序链接过程详解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-12-14 18:20:21" itemprop="dateCreated datePublished" datetime="2024-12-14T18:20:21+08:00">2024-12-14</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">底层原理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>链接可以将多个目标文件合并为一个可执行文件，这使得分离编译成为了可能。通常一个项目由多个文件组成，这些文件可以分别编译为目标文件(Windows下为.obj，Unix下一般命名为.o文件)，链接器通过符号识别和重定位等方法解决不同目标文件中的符号引用问题，最终生成可执行文件。链接分为静态链接和动态链接，本文将分别介绍其原理。</p>
+<span id="more"></span>
+
+<h2 id="目标文件"><a href="#目标文件" class="headerlink" title="目标文件"></a>目标文件</h2><p>目标文件共有三种形式：「可重定位目标文件」、「可执行目标文件」、「共享目标文件」。编译器和汇编器将源程序进行编译和汇编生成二进制可重定位目标文件，链接器将多个可重定位目标文件进行链接生成可执行目标文件，共享目标文件是一种特殊的可重定位目标文件，可以在加载或运行时被动态地进行链接。</p>
+<p>为了搞清楚链接过程，首先需要知道可重定位目标文件的结构，这里以Unix系统中的ELF(Executable Linkable Format)格式文件为例。典型的可重定位目标文件结构如下：</p>
+<p><img src="/./imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814185349490.png" alt="image-20240814185349490"></p>
+<p>实际上，一个源文件编译成为目标文件之后，目标文件中肯定会包含程序指令、全局变量和静态变量(局部变量在运行时栈上分配)。实际上，除了上面说到的内容之外，还有一些额外的内容，这些内容用于指示链接器进行链接。从图中我们可以看出，目标文件将内容分为很多个<strong>节(section)<strong>，也称为</strong>段</strong>，各段的含义如下：</p>
+<ul>
+<li><code>.text</code>：用于存放程序的机器指令代码。</li>
+<li><code>.rodata</code>：用于存放只读数据。通常是一些字符串和 const 修饰的变量。</li>
+<li><code>.data</code>：已初始化的全局和静态(static)变量。</li>
+<li><code>.bss</code>：存放未初始化的全局变量和静态变量，以及初始化为0的全局或静态变量。实际上，该段在目标文件中并不占据实际空间，这些变量会被默认初始化为0，所以不将它们放在 <code>.data</code> 段，在程序执行时在内存中分配这些变量，目的是节省磁盘空间。</li>
+<li><code>.symtab</code>：符号表，存放程序中定义和引用的函数和全局变量信息。</li>
+<li><code>.rel.text</code>：<code>.text</code> 段的重定位表，因为单独编译得到的目标文件有很多函数和变量引用地址是未确定的，这个段就是用于<code>.text</code> 段重定位(在静态链接时还会介绍)。</li>
+<li><code>.rel.data</code>：<code>.data</code> 段的重定位表。</li>
+<li><code>.debug</code>：调试符号表，使用-g选项编译时生成，存放用于调试的符号。</li>
+<li><code>.line</code>：存放源程序中行号和 <code>.text</code> 段中指令的映射。</li>
+<li><code>.strtab</code>：字符串表，存储各种其他段使用的字符串。</li>
+</ul>
+<h2 id="静态链接"><a href="#静态链接" class="headerlink" title="静态链接"></a>静态链接</h2><p>考虑最简单的例子：</p>
+<p><strong>main.c:</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="type">int</span> shared;</span><br><span class="line"><span class="type">void</span> <span class="title function_">swap</span><span class="params">(<span class="type">int</span>*, <span class="type">int</span>*)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">int</span> a = <span class="number">64</span>;</span><br><span class="line">    swap(&amp;a, &amp;shared);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>swap.c:</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> shared = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">swap</span><span class="params">(<span class="type">int</span>* a, <span class="type">int</span>* b)</span> &#123;</span><br><span class="line">    <span class="type">int</span> tmp = *a;</span><br><span class="line">    *a = *b;</span><br><span class="line">    *b = tmp;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>将其分别编译得到目标文件，得到main.o和 swap.o：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -c main.c swap.c</span><br></pre></td></tr></table></figure>
+
+<p>其中main.c文件引用了swap.c文件中的shared变量和swap函数。静态链接主要解决以下两个主要问题：「符号解析」和「重定位」。</p>
+<h3 id="符号解析（生成-symtab-段）"><a href="#符号解析（生成-symtab-段）" class="headerlink" title="符号解析（生成 .symtab 段）"></a>符号解析（生成 .symtab 段）</h3><p>main.c文件编译得到的main.o目标文件中，显然是有对swap和shared的引用，我们看一下main.o的符号表(也就是<code>.symtab</code>段的内容)：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">readelf -s main.o</span><br><span class="line">plaintext</span><br><span class="line"></span><br><span class="line">Symbol table &#x27;.symtab&#x27; contains 14 entries:</span><br><span class="line">   Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line">     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND </span><br><span class="line">     1: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS main.c</span><br><span class="line">     2: 0000000000000000     0 SECTION LOCAL  DEFAULT    1 </span><br><span class="line">     3: 0000000000000000     0 SECTION LOCAL  DEFAULT    3 </span><br><span class="line">     4: 0000000000000000     0 SECTION LOCAL  DEFAULT    4 </span><br><span class="line">     5: 0000000000000000     0 SECTION LOCAL  DEFAULT    6 </span><br><span class="line">     6: 0000000000000000     0 SECTION LOCAL  DEFAULT    7 </span><br><span class="line">     7: 0000000000000000     0 SECTION LOCAL  DEFAULT    8 </span><br><span class="line">     8: 0000000000000000     0 SECTION LOCAL  DEFAULT    5 </span><br><span class="line">     9: 0000000000000000    77 FUNC    GLOBAL DEFAULT    1 main</span><br><span class="line">    10: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND shared</span><br><span class="line">    11: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND _GLOBAL_OFFSET_TABLE_</span><br><span class="line">    12: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND swap</span><br><span class="line">    13: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND __stack_chk_fail</span><br></pre></td></tr></table></figure>
+
+<p>我们可以看到有 shared 和 swap符号，且所属的段都是<code>UND</code>，也就是未定义的符号，说明这两个符号是在外部定义的。当链接时没有另一个含有这些符号的目标文件参与时，将会得到undefined reference错误。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ld main.o</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ld: main.o: in function `main&#x27;:</span><br><span class="line">main.c:(.text+0x29): undefined reference to `shared&#x27;</span><br><span class="line">ld: main.c:(.text+0x2e): undefined reference to `swap&#x27;</span><br><span class="line">ld: main.c:(.text+0x49): undefined reference to `__stack_chk_fail&#x27;</span><br></pre></td></tr></table></figure>
+
+<h3 id="重定位（修正符号地址）"><a href="#重定位（修正符号地址）" class="headerlink" title="重定位（修正符号地址）"></a>重定位（修正符号地址）</h3><p>我们先看main.o反汇编的结果：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">objdump -dx main.o</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">Disassembly of section .text:</span><br><span class="line"></span><br><span class="line">0000000000000000 &lt;main&gt;:</span><br><span class="line">   0:   f3 0f 1e fa             endbr64 </span><br><span class="line">   4:   53                      push   %rbx</span><br><span class="line">   5:   48 83 ec 10             sub    $0x10,%rsp</span><br><span class="line">   9:   bb 28 00 00 00          mov    $0x28,%ebx</span><br><span class="line">   e:   64 48 8b 03             mov    %fs:(%rbx),%rax</span><br><span class="line">  12:   48 89 44 24 08          mov    %rax,0x8(%rsp)</span><br><span class="line">  17:   31 c0                   xor    %eax,%eax</span><br><span class="line">  19:   c7 44 24 04 40 00 00    movl   $0x40,0x4(%rsp)</span><br><span class="line">  20:   00 </span><br><span class="line">  21:   48 8d 7c 24 04          lea    0x4(%rsp),%rdi</span><br><span class="line">  26:   48 8d 35 00 00 00 00    lea    0x0(%rip),%rsi        # 2d &lt;main+0x2d&gt;</span><br><span class="line">                        29: R_X86_64_PC32       shared-0x4</span><br><span class="line">  2d:   e8 00 00 00 00          callq  32 &lt;main+0x32&gt;</span><br><span class="line">                        2e: R_X86_64_PLT32      swap-0x4</span><br><span class="line">  32:   48 8b 44 24 08          mov    0x8(%rsp),%rax</span><br><span class="line">  37:   64 48 33 03             xor    %fs:(%rbx),%rax</span><br><span class="line">  3b:   75 0b                   jne    48 &lt;main+0x48&gt;</span><br><span class="line">  3d:   b8 00 00 00 00          mov    $0x0,%eax</span><br><span class="line">  42:   48 83 c4 10             add    $0x10,%rsp</span><br><span class="line">  46:   5b                      pop    %rbx</span><br><span class="line">  47:   c3                      retq   </span><br><span class="line">  48:   e8 00 00 00 00          callq  4d &lt;main+0x4d&gt;</span><br><span class="line">                        49: R_X86_64_PLT32      __stack_chk_fail-0x4</span><br></pre></td></tr></table></figure>
+
+<p>首先可以看到，<code>&lt;main&gt;</code>的地址为0，所以并不是最终运行时的函数地址，因为这个目标文件还没有进行符号解析和重定位。</p>
+<p>观察 <code>26</code> 和 <code>2d</code> 处的两条指令，第一条是将shared变量的地址放入<code>%rsi</code>寄存器，第二条是调用swap函数，main.o是单独编译的，在编译的时候并不知道shared变量和swap函数的地址，因此实际上这两个地址都是假地址，需要在最终静态链接的时候进行重定位。在main.o中，地址都暂时以0进行代替，即对shared的引用暂时是相对<code>%rip</code>寄存器地址为0的地址，对swap引用的地址偏移量也为0。</p>
+<p>重定位主要由以下两个步骤：</p>
+<ol>
+<li>将不同目标文件的同类型的段进行合并，例如将main.o和swap.o的<code>.text</code>段进行合并，这这一步完成之后，程序中<strong>每条指令和变量的地址</strong>都是确定的。</li>
+<li>链接器对上述合并后的<code>.text</code>段和<code>.data</code>段中的每个符号引用地址进行修改，将之前的占位地址修改成引用符号的真实地址。</li>
+</ol>
+<p>编译器生成目标文件时，当遇到引用的外部定义的函数或变量时<strong>并不知道其位置</strong>，这时候会生成一个「重定位条目」，用于告诉链接器如何修改最终的地址。指令的重定位条目放置在<code>.rel.text</code>段中，数据的重定位条目放在<code>.rel.data</code>段中。</p>
+<p>重定位条目内容如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="type">long</span> offset; 	<span class="comment">/* 待重定向符号的段偏移 */</span></span><br><span class="line">    <span class="type">long</span> type:<span class="number">32</span>, 	<span class="comment">/* 重定位类型 */</span></span><br><span class="line">    symbol:<span class="number">32</span>; 		<span class="comment">/* 重定位符号在符号表中的索引 */</span></span><br><span class="line">    <span class="type">long</span> addend; 	<span class="comment">/* 地址修正时用到的常数 */</span></span><br><span class="line">&#125; Elf64_Rela;</span><br></pre></td></tr></table></figure>
+
+<p>重定位类型指示了重定位地址的计算方法，从上面的反汇编结果可以看到，shared变量的重定位类型为：<code>R_X86_64_PC32</code>，而swap函数的重定位类型为：<code>R_X86_64_PLT32</code>。</p>
+<p>现在我们来看怎么得到修正后的地址，实际的 shared 地址实际上在各段合并之后就是已知的，这个地址在我机器上是： <code>0x4010</code>，引用 shared 的指令的地址也是已知的： <code>0x1176</code>，因此修正的地址为两者之差：即 <code>0x2e9a</code></p>
+<p>swap函数也是以类似的方法修正地址，现在看一下链接之后被修正过的地址：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gcc -o main main.o swap.o</span><br><span class="line">objdump -d main</span><br></pre></td></tr></table></figure>
+
+<p><img src="/./imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814191550309.png" alt="image-20240814191550309"></p>
+<p>可以看到，链接之后，shared变量的地址相对偏移量修正为<code>0x2e9a</code>，swap变量的地址相对偏移量修正为<code>1b</code>，也就是跳转到<code>1196</code>的位置。</p>
+<h2 id="动态链接"><a href="#动态链接" class="headerlink" title="动态链接"></a>动态链接</h2><p>前面我们看到了静态链接将多个可重定位目标文件进行符号解析和重定位，然后合并成一个可执行目标文件，这个文件可以直接加载至内存运行。显然这个过程还存在些缺点，比如可能多个程序会使用到相同的库程序，当然这些程序可以分别将这些库程序静态链接至各自的可执行文件中，这样的话会使得内存中有很多份相同的库指令，这是一种对内存空间的浪费。再者，在静态链接中，倘若某个库更新了版本，必须对整个项目进行重新链接。</p>
+<p>共享库(shared library，在Windows也称为动态链接库)是为了解决上述问题而产生的。共享库本质上也是一个目标文件，这个目标文件在运行或加载时，可以放在内存的任意地址，并和内存中的程序进行链接。这个过程称为动态链接，由动态链接器(dynamic linker)完成。</p>
+<p>我们可以考虑下如何让多个不同的进程共享一份库代码，即让内存中只存在一份库代码。为了保证符号地址引用的正确性，可以让每个进程保留一块固定的地址空间用于存放共享库，如每个进程都将地址0x500000至0x502000的区域用来放模块A，这样可以让不同进程引用这个地址范围内的变量和函数。这样做确实可以实现代码共享，但是当内存中共享库很多的时候将会很难管理。因此，目前通常采用生成位置无关代码的方式来解决这一问题。</p>
+<h3 id="位置无关代码"><a href="#位置无关代码" class="headerlink" title="位置无关代码"></a>位置无关代码</h3><p>实际上，共享库实现代码共享的最大问题是地址引用问题，现代系统以一种特别的方式编译共享库模块，使得它可以被加载到内存的任何地址而无需链接器修改，可以加载而无需重定位的代码被称为「位置无关代码(Position-Independent Code PIC)」。</p>
+<p>对于一个共享目标文件，显然其内部的代码段和数据段之间的相对地址偏移是固定的，因此对于模块内部的变量和函数引用可以使用相对地址引用，这样不管模块被装载到内存的任何位置引用都是生效的。比较棘手的问题是解决<strong>共享模块中对于外部其它模块变量和函数的引用问题</strong>，我们并不知道这些外部符号被装载在了内存的什么地址。</p>
+<p>为了解决这个问题，编译器在编译共享模块时，在其 <code>.data</code> <strong>数据段开始</strong>的地方创建了一个「全局偏移表(Global Offset Table,GOT)」。这个表记录了共享模块中所有对于外部符号引用的地址条目：</p>
+<p><img src="/./imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814192022694.png" alt="image-20240814192022694"></p>
+<p>代码段中对这些变量引用就可以使用相对地址引用至这个GOT表中的条目，在共享模块加载至内存中时，动态链接器会重定位GOT中每个条目，而不需要重定位代码段中的地址。例如上面的<code>addvec</code>函数中需要对<code>addcnt</code>变量进行引用，而这个<code>addcnt</code>变量处于另一个共享模块中，在编译时并不知道它的地址，因此需要通过GOT表进行间接引用，在加载的时候动态链接器是知道内存中<code>addcnt</code>变量的地址的，因此可以修正这个GOT条目。</p>
+<p>实际上，为了实现代码的共享，动态链接通过GOT表解决了静态链接中的地址重定位问题，或者说<strong>将代码中的地址重定位转变为了共享模块加载进内存时由动态链接器进行GOT条目修正</strong>，这样代码段相当于是固定的无需修改的，每个进程之间可以共享，而数据段可以不同的进程拥有一份自己的<strong>副本</strong>。</p>
+<h3 id="延迟绑定-PLT"><a href="#延迟绑定-PLT" class="headerlink" title="延迟绑定(PLT)"></a>延迟绑定(PLT)</h3><p>当调用共享库中函数时，因为共享库可以加载至内存中的任何位置，因此有了上述的GOT表用于修正地址。但是在程序执行时并不是所有的指向外部模块的函数都会被执行，在加载程序时一次性将所有GOT表条目地址都修正是一种浪费。因此可以采用「延迟绑定(Lazing Binding)」的方法，在函数第一次被调用的时候修正其GOT相关条目，没有执行的函数不进行GOT地址修改。</p>
+<p>延迟绑定的基本思想如上，实际实现通过增加一个过程链接表(PLT)来实现：</p>
+<p><img src="/./imgs/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/image-20240814192316600.png" alt="image-20240814192316600"></p>
+<p>当第一次调用动态库中的函数时，会跳转到PLT表中相关的条目，上图中调用函数<code>addvec</code>时跳转到<code>PLT[2]</code>，而每个PLT条目和GOT表中的一个条目对应，因此其跳转至<code>GOT[4]</code>处。由于第一次调用函数，GOT表相关条目地址并没有被修正，且其初始值被设置为PLT表条目的下一条指令<code>pushq $0x1</code>，这个指令将<code>addvec</code>符号在<code>.rel.plt</code>表中的下标<code>1</code>压入堆栈中，然后跳转至<code>PLT[0]</code>条目，这个条目是一个特殊条目，其指向动态链接器，动态链接器根据栈中的下标来修正<code>addvec</code>函数在GOT表中的地址。最后再将控制交给<code>addvec</code>，这个函数再次调用时，因为其GOT表中条目地址已被修正，因此不需要再执行上述复杂步骤，而是直接执行。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux/" rel="tag"># linux</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/08/07/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82signal/" rel="prev" title="【Linux内核】深入理解信号处理机制">
+      <i class="fa fa-chevron-left"></i> 【Linux内核】深入理解信号处理机制
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87%E6%96%87%E4%BB%B6"><span class="nav-number">1.</span> <span class="nav-text">目标文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%99%E6%80%81%E9%93%BE%E6%8E%A5"><span class="nav-number">2.</span> <span class="nav-text">静态链接</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90%EF%BC%88%E7%94%9F%E6%88%90-symtab-%E6%AE%B5%EF%BC%89"><span class="nav-number">2.1.</span> <span class="nav-text">符号解析（生成 .symtab 段）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D%EF%BC%88%E4%BF%AE%E6%AD%A3%E7%AC%A6%E5%8F%B7%E5%9C%B0%E5%9D%80%EF%BC%89"><span class="nav-number">2.2.</span> <span class="nav-text">重定位（修正符号地址）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5"><span class="nav-number">3.</span> <span class="nav-text">动态链接</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%8D%E7%BD%AE%E6%97%A0%E5%85%B3%E4%BB%A3%E7%A0%81"><span class="nav-number">3.1.</span> <span class="nav-text">位置无关代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BB%B6%E8%BF%9F%E7%BB%91%E5%AE%9A-PLT"><span class="nav-number">3.2.</span> <span class="nav-text">延迟绑定(PLT)</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="最近在面试时被问到了 Linux 中的信号处理机制，之前对于信号的了解不够深入，这篇文章就来回顾一下 Linux 中信号的使用与底层实现机制。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Linux内核】深入理解信号处理机制">
+<meta property="og:url" content="http://example.com/2024/08/07/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82signal/index.html">
+<meta property="og:site_name" content="sunhuashan">
+<meta property="og:description" content="最近在面试时被问到了 Linux 中的信号处理机制，之前对于信号的了解不够深入，这篇文章就来回顾一下 Linux 中信号的使用与底层实现机制。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82signal/image-20240815113108355.png">
+<meta property="article:published_time" content="2024-08-07T02:19:48.000Z">
+<meta property="article:modified_time" content="2024-08-17T01:05:50.154Z">
+<meta property="article:author" content="sunhuashan">
+<meta property="article:tag" content="linux_kernel">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82signal/image-20240815113108355.png">
+
+<link rel="canonical" href="http://example.com/2024/08/07/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82signal/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Linux内核】深入理解信号处理机制 | sunhuashan</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">sunhuashan</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/08/07/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82signal/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jfif">
+      <meta itemprop="name" content="sunhuashan">
+      <meta itemprop="description" content="唯天下之至拙能胜天下之至巧">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="sunhuashan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Linux内核】深入理解信号处理机制
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-08-07 10:19:48" itemprop="dateCreated datePublished" datetime="2024-08-07T10:19:48+08:00">2024-08-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%86%85%E6%A0%B8/" itemprop="url" rel="index"><span itemprop="name">内核</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>最近在面试时被问到了 Linux 中的信号处理机制，之前对于信号的了解不够深入，这篇文章就来回顾一下 Linux 中信号的使用与底层实现机制。</p>
+<span id="more"></span>
+
+<h2 id="使用信号"><a href="#使用信号" class="headerlink" title="使用信号"></a>使用信号</h2><h3 id="信号的产生"><a href="#信号的产生" class="headerlink" title="信号的产生"></a>信号的产生</h3><p>信号可以由内核产生，也可以由用户产生，这边举几个例子：</p>
+<ul>
+<li>用户在终端输入 <code>ctrl + c</code> 时，会产生一个 <code>SIGINT</code> 信号</li>
+<li>在程序中对一个数除0，会产生一个异常，最终由内核产生一个 <code>SIGFPE</code> 信号</li>
+<li>在程序中非法访问一段内存，会由内核产生一个 <code>SIGBUS</code> 信号</li>
+<li>在终端或程序中手动发送一个信号<ul>
+<li>终端：比如说 <code>kill -9 [pid]</code></li>
+<li>程序：调用 <code>kill</code> 函数，<code>raise</code> 函数等</li>
+</ul>
+</li>
+</ul>
+<h3 id="信号种类"><a href="#信号种类" class="headerlink" title="信号种类"></a>信号种类</h3><p>在 Linux 中，信号被分为不可靠信号和可靠信号，一共64种，可以通过 <code>kill -l</code> 命令来查看</p>
+<ul>
+<li>不可靠信号：也称为非实时信号，不支持排队，信号可能会丢失，比如发送多次相同的信号，进程只能收到一次，信号值取值区间为1~31</li>
+<li>可靠信号：也称为实时信号，支持排队，信号不会丢失，发多少次，就可以收到多少次，信号值取值区间为32~64</li>
+</ul>
+<p>在早期的 Linux 中，只定义了前面的不可靠信号，随着时间的发展，发现有必要对信号机制加以改进和扩充，又由于原先定义的信号已有应用，出于兼容性考虑，不能再做改动，于是又新增了一部分信号，这些信号被定义为可靠信号。</p>
+<p>在 <code>arch/x86/include/uapi/asm/signal.h</code> 中，我们可以发现这些信号的定义。</p>
+<h3 id="发送信号"><a href="#发送信号" class="headerlink" title="发送信号"></a>发送信号</h3><p>之前提过，用户是可以手动向一个进程发送信号的，我们可以使用以下一些函数：</p>
+<h4 id="kill"><a href="#kill" class="headerlink" title="kill"></a>kill</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">kill</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">int</span> sig)</span>; </span><br></pre></td></tr></table></figure>
+
+<p>这个函数的作用是向指定进程（或进程组）发送一个信号，成功返回0，失败返回-1</p>
+<p>其中的<code>pid</code>参数：</p>
+<ul>
+<li>当<code>pid &gt; 0</code>时，发送信号给 <code>pid</code> 对应的进程</li>
+<li>当<code>pid = 0</code>时，发送信号给<strong>本进程组</strong>中的所有进程</li>
+<li>当<code>pid = -1</code>时，发送信号给<strong>所有调用进程有权给其发送信号的进程</strong>，除了 <code>init</code> 进程</li>
+<li>当<code>pid &lt; -1</code>时，发送信号给进程组 id 为 <code>-pid</code> 的所有进程</li>
+</ul>
+<p>当<code>sig</code>参数为0时，不会发送任何信号，但仍然会进行参数检测，我们可以用这种方法检查<code>pid</code>对应进程是否存在或允许发送信号。</p>
+<h4 id="raise"><a href="#raise" class="headerlink" title="raise"></a>raise</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">raise</span><span class="params">(<span class="type">int</span> sig)</span>; </span><br></pre></td></tr></table></figure>
+
+<p>这个函数的作用是<strong>向本进程或本线程</strong>发送信号，成功返回 0，失败返回 -1</p>
+<p>这个函数对于主线程来说，相当于<code>kill(getpid(), sig)</code>，对于子线程来说，相当于<code>pthread_kill(pthread_self(), sig)</code></p>
+<h3 id="处理信号"><a href="#处理信号" class="headerlink" title="处理信号"></a>处理信号</h3><p>我们是可以自定义一些信号的处理方式，需要注意的是，<code>SIGKILL</code> 和 <code>SIGSTOP</code> 是两个特殊的信号，它们不允许被忽略、处理和阻塞。</p>
+<h4 id="sigaction"><a href="#sigaction" class="headerlink" title="sigaction"></a>sigaction</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sigaction</span><span class="params">(<span class="type">int</span> signum, <span class="type">const</span> <span class="keyword">struct</span> sigaction *act,</span></span><br><span class="line"><span class="params">                     <span class="keyword">struct</span> sigaction *oldact)</span>; </span><br></pre></td></tr></table></figure>
+
+<p>这是较新的一个信号处理函数，它的作用是，对一个信号注册一个新的信号处理方式，并获取以前的信号处理方式，成功返回0，失败返回-1</p>
+<ul>
+<li><p>第一个参数 <code>signum</code> ，用来指定信号的编号（需要设置哪个信号）</p>
+</li>
+<li><p>第二个参数 <code>act</code> 用来指定注册的新的信号处理方式</p>
+</li>
+<li><p>第三个参数 <code>oldact</code> 不为 <code>null</code> 时，可以用来获取该信号<strong>原来的</strong>处理方式</p>
+</li>
+</ul>
+<p>当参数 <code>act</code> 为 <code>null</code>，<code>oldact</code> 不为 <code>null</code> 时，这个函数可以用来只获取信号当前的处理方式</p>
+<p><strong>sigaction</strong> 的结构如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sigaction</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">	  <span class="type">signalfn_t</span> _sa_handler;</span><br><span class="line">	  <span class="type">void</span> (*_sa_sigaction)(<span class="type">int</span>, <span class="keyword">struct</span> siginfo *, <span class="type">void</span> *);</span><br><span class="line">	&#125; _u;</span><br><span class="line">	<span class="type">sigset_t</span> sa_mask;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> sa_flags;</span><br><span class="line">	<span class="type">void</span> (*sa_restorer)(<span class="type">void</span>);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="title function_">void</span> <span class="params">(*<span class="type">signalfn_t</span>)</span><span class="params">(<span class="type">int</span>)</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> sa_handler	_u._sa_handler</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> sa_sigaction	_u._sa_sigaction</span></span><br></pre></td></tr></table></figure>
+
+<p>当参数 <code>sa_mask</code> 中含有 <code>SA_SIGINFO</code> 的时候，回调的是 <code>_sa_sigaction</code> 函数，当没有这个参数时，回调的是<code>_sa_handler</code> 这个旧版本函数</p>
+<p><code>sa_handler</code> 可以被赋值成 <code>SIG_DFL</code> 或 <code>SIG_IGN</code>，它们分别对应着默认处理和忽略信号，需要注意的时，它们只是一个 <code>int</code> 值，是不能被直接调用的</p>
+<h4 id="signal"><a href="#signal" class="headerlink" title="signal"></a>signal</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">sighandler_t</span> <span class="title function_">signal</span><span class="params">(<span class="type">int</span> signum, <span class="type">sighandler_t</span> handler)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>这个函数的作用是，设置下一次的信号处理函数（只生效一次），成功返回上一次设置的信号处理函数，失败返回<code>SIG_ERR</code></p>
+<p>这个函数在新版本中实际上是通过<code>sigaction</code>函数实现的，推荐使用更加强大的<code>sigaction</code>函数</p>
+<h3 id="阻塞信号"><a href="#阻塞信号" class="headerlink" title="阻塞信号"></a>阻塞信号</h3><p>信号有几种状态，首先是信号的 <code>产生 (Genertion)</code> ，而实际执行信号处理动作时，状态为 <code>递达 (Delivery)</code>，信号在 <code>产生</code> 到 <code>递达</code> 中的状态被称为 <code>未决 (Pending)</code></p>
+<p>进程可以选择 <code>阻塞 (Blocking)</code> 某些信号，被 <code>阻塞</code> 的信号在产生后将保持在 <code>未决</code> 状态，直到进程解除对该信号的 <code>阻塞</code>，才执行 <code>递达</code> 的动作</p>
+<p>我们可以用信号集函数改变当前进程的 <code>信号屏蔽字（Signal Mask）</code> ，控制信号的阻塞与否</p>
+<h4 id="sigpromask"><a href="#sigpromask" class="headerlink" title="sigpromask"></a>sigpromask</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sigpromask</span><span class="params">(<span class="type">int</span> how, <span class="type">const</span> <span class="type">sigset_t</span> *<span class="built_in">set</span>, <span class="type">sigset_t</span> *oldset)</span></span><br></pre></td></tr></table></figure>
+
+<p>这个函数通过指定的方法和信号集修改进程的信号屏蔽字，成功返回0，失败返回-1</p>
+<p>第一个参数 <code>how</code> 有3种取值：</p>
+<ul>
+<li><code>SIG_BLOCK</code>：将set中的信号添加到信号屏蔽字中（不改变原有已存在信号屏蔽字，相当于用set中的信号与原有信号取并集设置）</li>
+<li><code>SIG_UNBLOCK</code>：将set中的信号移除信号屏蔽字（相当于用set中的信号的补集与原有信号取交集设置）</li>
+<li><code>SIG_SETMASK</code>：使用set中的信号直接代替原有信号屏蔽字中的信号</li>
+</ul>
+<p>第二个参数 <code>set</code> 是一个信号集，怎么使用和参数how相关</p>
+<p>第三个参数 <code>oldset</code>，如果不为null，会将原有信号屏蔽字的信号集保存进去</p>
+<h4 id="sigpending"><a href="#sigpending" class="headerlink" title="sigpending"></a>sigpending</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sigpending</span><span class="params">(<span class="type">sigset_t</span> *<span class="built_in">set</span>)</span>; </span><br></pre></td></tr></table></figure>
+
+<p>这个函数的作用是获得当前进程的信号屏蔽字，将结果保存到传入的<code>set</code>中，成功返回0，失败返回-1</p>
+<h2 id="信号原理"><a href="#信号原理" class="headerlink" title="信号原理"></a>信号原理</h2><p><strong>信号是一种异步通信机制，它是在软件层面上对中断机制的一种模拟</strong>，该怎么理解这句话呢？</p>
+<p>当我们对一个进程发送信号后，会将这个信号暂时存放到这个进程所对应的 <code>task_struct</code> 的 <code>pending</code> 队列中，此时，进程并不知道有新的信号过来了，这也就是异步的意思。那么进程什么时候才能得知并处理这个信号呢？有两个时机，一个是进程<strong>从内核态返回到用户态</strong>时，一个是进程<strong>从睡眠状态被唤醒</strong>。让信号看起来是一个异步中断的关键就是，正常的用户进程是会频繁的在用户态和内核态之间切换的，所以信号能很快的得到执行</p>
+<p>下面是内核中对进程有关信号的组织：</p>
+<p><img src="/./imgs/%E4%B8%80%E6%96%87%E6%90%9E%E6%87%82signal/image-20240815113108355.png" alt="image-20240815113108355"></p>
+<h3 id="信号发送原理"><a href="#信号发送原理" class="headerlink" title="信号发送原理"></a>信号发送原理</h3><h4 id="从-libc-库函数出发"><a href="#从-libc-库函数出发" class="headerlink" title="从 libc 库函数出发"></a>从 libc 库函数出发</h4><p>我们以 <code>kill</code> 函数为例，看看信号是如何发送的，它被定义在 <code>tools/include/nolibc/nolibc.h</code> 中</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">kill</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">int</span> signal)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">int</span> ret = sys_kill(pid, signal);</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">sys_kill</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">int</span> signal)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">return</span> my_syscall2(__NR_kill, pid, signal);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这里使用了系统调用，在 <code>Linux</code> 内核中，每个 <code>syscall</code> 都对应着唯一的系统调用号，<code>kill</code> 函数的系统调用号为 <code>__NR_kill</code>，它被定义在 <code>tools/include/uapi/asm-generic/unistd.h</code> 中</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> __NR_kill 129</span></span><br><span class="line">__SYSCALL(__NR_kill, sys_kill)</span><br></pre></td></tr></table></figure>
+
+<p>在 <code>x86_64</code> 架构的机器上，<code>my_syscall2</code> 是这样被定义的</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> my_syscall2(num, arg1, arg2)                                          \</span></span><br><span class="line"><span class="meta">(&#123;                                                                            \</span></span><br><span class="line"><span class="meta">	long _ret;                                                            \</span></span><br><span class="line"><span class="meta">	register long _num  asm(<span class="string">&quot;rax&quot;</span>) = (num);                               \</span></span><br><span class="line"><span class="meta">	register long _arg1 asm(<span class="string">&quot;rdi&quot;</span>) = (long)(arg1);                        \</span></span><br><span class="line"><span class="meta">	register long _arg2 asm(<span class="string">&quot;rsi&quot;</span>) = (long)(arg2);                        \</span></span><br><span class="line"><span class="meta">									      \</span></span><br><span class="line"><span class="meta">	asm volatile (                                                        \</span></span><br><span class="line"><span class="meta">		<span class="string">&quot;syscall\n&quot;</span>                                                   \</span></span><br><span class="line"><span class="meta">		: <span class="string">&quot;=a&quot;</span>(_ret)                                                  \</span></span><br><span class="line"><span class="meta">		: <span class="string">&quot;r&quot;</span>(_arg1), <span class="string">&quot;r&quot;</span>(_arg2),                                     \</span></span><br><span class="line"><span class="meta">		  <span class="string">&quot;0&quot;</span>(_num)                                                   \</span></span><br><span class="line"><span class="meta">		: <span class="string">&quot;rcx&quot;</span>, <span class="string">&quot;r11&quot;</span>, <span class="string">&quot;memory&quot;</span>, <span class="string">&quot;cc&quot;</span>                                \</span></span><br><span class="line"><span class="meta">	);                                                                    \</span></span><br><span class="line"><span class="meta">	_ret;                                                                 \</span></span><br><span class="line"><span class="meta">&#125;)</span></span><br></pre></td></tr></table></figure>
+
+<p>这里涉及到了扩展内联汇编，<code>syscall</code>指令需要一个系统调用号和一些参数，在<code>x86_64</code>架构中，系统调用号需要存放在<code>rax</code>寄存器中，参数依次存放在<code>rdi</code>, <code>rsi</code>, <code>rdx</code>, <code>r10</code>, <code>r8</code>, <code>r9</code>寄存器中，执行<code>syscall</code>指令后，<strong>进入内核</strong>，内核会通过系统调用号去从系统调用表找到对应函数的入口</p>
+<h4 id="内核系统调用"><a href="#内核系统调用" class="headerlink" title="内核系统调用"></a>内核系统调用</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> *  sys_kill - send a signal to a process</span></span><br><span class="line"><span class="comment"> *  @pid: the PID of the process</span></span><br><span class="line"><span class="comment"> *  @sig: signal to be sent</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">SYSCALL_DEFINE2(kill, <span class="type">pid_t</span>, pid, <span class="type">int</span>, sig)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">kernel_siginfo</span> <span class="title">info</span>;</span></span><br><span class="line">    prepare_kill_siginfo(sig, &amp;info);</span><br><span class="line">    <span class="keyword">return</span> kill_something_info(sig, &amp;info, pid);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>内核会根据系统调用号找到 <code>sys_kill</code> 函数，像上面的代码展示的那样，该函数是使用<code>SYSCALL_DEFINE2</code> 宏隐式定义的，末尾的 <code>2</code> 表示系统调用的参数数量</p>
+<p>可以看到，<code>sys_kill</code> 系统调用的核心函数为 <code>kill_something_info</code> ，Linux 中很多功能的实现都是分层实现的，所有我们会看到从上层函数到真正的核心函数需要经过层层函数，这里我们直接看<strong>发送信号给一个进程的核心函数</strong> </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">kill_something_info</span><span class="params">(<span class="type">int</span> sig, <span class="keyword">struct</span> kernel_siginfo *info, <span class="type">pid_t</span> pid)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> ret;</span><br><span class="line">    <span class="comment">//这里我们就只看对一个进程发送信号</span></span><br><span class="line">    <span class="keyword">if</span> (pid &gt; <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">return</span> kill_proc_info(sig, info, pid);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里省略复杂的函数调用链，直接看最后的 <code>__send_signal</code> 函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> __send_signal(<span class="type">int</span> sig, <span class="keyword">struct</span> kernel_siginfo *info, <span class="keyword">struct</span> task_struct *t,</span><br><span class="line">            <span class="keyword">enum</span> pid_type type, <span class="type">bool</span> force)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sigpending</span> *<span class="title">pending</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sigqueue</span> *<span class="title">q</span>;</span></span><br><span class="line">    <span class="type">int</span> override_rlimit;</span><br><span class="line">    <span class="type">int</span> ret = <span class="number">0</span>, result;</span><br><span class="line"></span><br><span class="line">    result = TRACE_SIGNAL_IGNORED;</span><br><span class="line">    <span class="comment">//判断是否可以忽略信号</span></span><br><span class="line">    <span class="keyword">if</span> (!prepare_signal(sig, t, force))</span><br><span class="line">        <span class="keyword">goto</span> ret;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//选择信号pending队列</span></span><br><span class="line">    <span class="comment">//线程组共享队列(t-&gt;signal-&gt;shared_pending) 或 进程私有队列(t-&gt;pending)</span></span><br><span class="line">    pending = (type != PIDTYPE_PID) ? &amp;t-&gt;signal-&gt;shared_pending : &amp;t-&gt;pending;</span><br><span class="line">    </span><br><span class="line">    result = TRACE_SIGNAL_ALREADY_PENDING;</span><br><span class="line">    <span class="comment">//如果该信号是不可靠信号，且已经在padding队列中，则忽略这个信号</span></span><br><span class="line">    <span class="keyword">if</span> (legacy_queue(pending, sig))</span><br><span class="line">        <span class="keyword">goto</span> ret;</span><br><span class="line"></span><br><span class="line">    result = TRACE_SIGNAL_DELIVERED;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//对SIGKILL信号和内核进程跳过信号的pending</span></span><br><span class="line">    <span class="keyword">if</span> ((sig == SIGKILL) || (t-&gt;flags &amp; PF_KTHREAD))</span><br><span class="line">        <span class="keyword">goto</span> out_set;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//实时信号可以突破队列大小限制，否则丢弃信号</span></span><br><span class="line">    <span class="keyword">if</span> (sig &lt; SIGRTMIN)</span><br><span class="line">        override_rlimit = (is_si_special(info) || info-&gt;si_code &gt;= <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        override_rlimit = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//新分配一个sigqueue，并将其加入pending队尾</span></span><br><span class="line">    q = __sigqueue_alloc(sig, t, GFP_ATOMIC, override_rlimit, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (q) &#123;</span><br><span class="line">        list_add_tail(&amp;q-&gt;<span class="built_in">list</span>, &amp;pending-&gt;<span class="built_in">list</span>);</span><br><span class="line">        <span class="keyword">switch</span> ((<span class="type">unsigned</span> <span class="type">long</span>) info) &#123;</span><br><span class="line">        <span class="keyword">case</span> (<span class="type">unsigned</span> <span class="type">long</span>) SEND_SIG_NOINFO:</span><br><span class="line">            clear_siginfo(&amp;q-&gt;info);</span><br><span class="line">            q-&gt;info.si_signo = sig;</span><br><span class="line">            q-&gt;info.si_errno = <span class="number">0</span>;</span><br><span class="line">            q-&gt;info.si_code = SI_USER;</span><br><span class="line">            q-&gt;info.si_pid = task_tgid_nr_ns(current,</span><br><span class="line">                            task_active_pid_ns(t));</span><br><span class="line">            rcu_read_lock();</span><br><span class="line">            q-&gt;info.si_uid =</span><br><span class="line">                from_kuid_munged(task_cred_xxx(t, user_ns),</span><br><span class="line">                         current_uid());</span><br><span class="line">            rcu_read_unlock();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> (<span class="type">unsigned</span> <span class="type">long</span>) SEND_SIG_PRIV:</span><br><span class="line">            clear_siginfo(&amp;q-&gt;info);</span><br><span class="line">            q-&gt;info.si_signo = sig;</span><br><span class="line">            q-&gt;info.si_errno = <span class="number">0</span>;</span><br><span class="line">            q-&gt;info.si_code = SI_KERNEL;</span><br><span class="line">            q-&gt;info.si_pid = <span class="number">0</span>;</span><br><span class="line">            q-&gt;info.si_uid = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            copy_siginfo(&amp;q-&gt;info, info);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!is_si_special(info) &amp;&amp;</span><br><span class="line">           sig &gt;= SIGRTMIN &amp;&amp; info-&gt;si_code != SI_USER) &#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">out_set:</span><br><span class="line">    signalfd_notify(t, sig);</span><br><span class="line">    sigaddset(&amp;pending-&gt;signal, sig);</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">//设置 _TIF_SIGPENDING</span></span><br><span class="line">    complete_signal(sig, t, type);</span><br><span class="line">ret:</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从代码里我们可以看出来，和我们之前说的原理是一样的，新分配了一个<code>sigqueue</code>，并将其加入到对应进程<code>task_struct</code>的<code>pending</code>队列队尾</p>
+<p>接下来调用的 <code>complete_signal</code> 函数会调用 <code>signal_wake_up</code>。这个函数会将线程的 <code>TIF_SIGPENDING</code> 标志设为 1。这样后面就可以快速检测是否有未处理的信号了。</p>
+<h3 id="信号传递原理"><a href="#信号传递原理" class="headerlink" title="信号传递原理"></a>信号传递原理</h3><p>在 <code>arm64</code> 中，无论是 <strong>系统调用</strong>还是<strong>中断</strong>，当进程想要从内核退出进入用户空间时，都会调用 <code>prepare_exit_to_user_mode</code> 函数，紧接着会调用 <code>do_notify_resume</code> 检测未完成的工作，该函数会检查当前的进程<strong>状态位</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">do_notify_resume</span><span class="params">(<span class="keyword">struct</span> pt_regs *regs, <span class="type">unsigned</span> <span class="type">long</span> thread_flags)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> (thread_flags &amp; _TIF_NEED_RESCHED) &#123;</span><br><span class="line">			schedule();</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			</span><br><span class="line">            ...</span><br><span class="line">			<span class="keyword">if</span> (thread_flags &amp; (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL))</span><br><span class="line">				do_signal(regs);</span><br><span class="line">			...</span><br><span class="line">        </span><br><span class="line">		&#125;</span><br><span class="line">		...</span><br><span class="line">            </span><br><span class="line">	&#125; <span class="keyword">while</span> (thread_flags &amp; _TIF_WORK_MASK);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于在信号发送时，<code>complete_signal</code> 函数设置了 <code>_TIF_SIGPENDING</code> 状态位，所以，在进程下一次由于<strong>中断</strong> 、<strong>异常</strong>或<strong>系统调用</strong>返回用户空间时，会调用 <code>do_signal</code> ：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux-kernel/" rel="tag"># linux_kernel</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/07/21/%E3%80%90%E7%BB%8F%E5%85%B8%E9%97%AE%E9%A2%98%E3%80%91%E6%8A%80%E6%9C%AF%E9%9D%A2%E8%AF%95%E9%A2%98%E6%B1%87%E6%80%BB/" rel="prev" title="【经典问题】技术面试题汇总">
+      <i class="fa fa-chevron-left"></i> 【经典问题】技术面试题汇总
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/12/14/%E7%A8%8B%E5%BA%8F%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B/" rel="next" title="【计算机底层原理】程序链接过程详解">
+      【计算机底层原理】程序链接过程详解 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E4%BF%A1%E5%8F%B7"><span class="nav-number">1.</span> <span class="nav-text">使用信号</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E7%9A%84%E4%BA%A7%E7%94%9F"><span class="nav-number">1.1.</span> <span class="nav-text">信号的产生</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E7%A7%8D%E7%B1%BB"><span class="nav-number">1.2.</span> <span class="nav-text">信号种类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%91%E9%80%81%E4%BF%A1%E5%8F%B7"><span class="nav-number">1.3.</span> <span class="nav-text">发送信号</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#kill"><span class="nav-number">1.3.1.</span> <span class="nav-text">kill</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#raise"><span class="nav-number">1.3.2.</span> <span class="nav-text">raise</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%84%E7%90%86%E4%BF%A1%E5%8F%B7"><span class="nav-number">1.4.</span> <span class="nav-text">处理信号</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sigaction"><span class="nav-number">1.4.1.</span> <span class="nav-text">sigaction</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#signal"><span class="nav-number">1.4.2.</span> <span class="nav-text">signal</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%98%BB%E5%A1%9E%E4%BF%A1%E5%8F%B7"><span class="nav-number">1.5.</span> <span class="nav-text">阻塞信号</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sigpromask"><span class="nav-number">1.5.1.</span> <span class="nav-text">sigpromask</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sigpending"><span class="nav-number">1.5.2.</span> <span class="nav-text">sigpending</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">信号原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E5%8F%91%E9%80%81%E5%8E%9F%E7%90%86"><span class="nav-number">2.1.</span> <span class="nav-text">信号发送原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%8E-libc-%E5%BA%93%E5%87%BD%E6%95%B0%E5%87%BA%E5%8F%91"><span class="nav-number">2.1.1.</span> <span class="nav-text">从 libc 库函数出发</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8"><span class="nav-number">2.1.2.</span> <span class="nav-text">内核系统调用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E4%BC%A0%E9%80%92%E5%8E%9F%E7%90%86"><span class="nav-number">2.2.</span> <span class="nav-text">信号传递原理</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunhuashan"
+      src="/images/avatar.jfif">
+  <p class="site-author-name" itemprop="name">sunhuashan</p>
+  <div class="site-description" itemprop="description">唯天下之至拙能胜天下之至巧</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+      
+      
+        <div class="links-of-blogroll motion-element links-of-blogroll-block">
+          <div class="links-of-blogroll-title">
+            <!-- modify icon to fire by szw -->
+            <i class="fa fa-history fa-" aria-hidden="true"></i>
+            近期文章
+          </div>
+          <ul class="links-of-blogroll-list">
+            
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+              <li class="recent_posts_li">
+                <a href="/" title="" target="_blank"></a>
+              </li>
+            
+          </ul>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunhuashan</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
