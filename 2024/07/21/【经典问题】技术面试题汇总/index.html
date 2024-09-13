@@ -54,7 +54,7 @@
 <meta property="og:image" content="https://kqa3yyvhjg0.feishu.cn/space/api/box/stream/download/asynccode/?code=ZGVkYzRjOGZkZWFlM2I4MDA4OTJmM2NmNmRlNTIwNmRfRmllMktOQVdLNWowWlpUUnJ2WFpoSGdsbndBdGdKaFhfVG9rZW46RWVPVGIyS1pPb1BQeTV4QWFzNGM3b3M0blFjXzE3MjYyMjE2NTE6MTcyNjIyNTI1MV9WNA">
 <meta property="og:image" content="https://kqa3yyvhjg0.feishu.cn/space/api/box/stream/download/asynccode/?code=OGQ3OTEzNjMxMzUzNzM1M2NiOWY4OGVkNmVjZTYxYTlfYmlxUlR5Z0VGZW5icHIwMUoxbkVCclNVMzNKWjB1Q0lfVG9rZW46T1NxWGJSZHFMb2dkVkV4V1laS2M4SFQ3bjJlXzE3MjYyMjE2NTE6MTcyNjIyNTI1MV9WNA">
 <meta property="article:published_time" content="2024-07-21T09:05:03.000Z">
-<meta property="article:modified_time" content="2024-09-13T10:01:06.296Z">
+<meta property="article:modified_time" content="2024-09-13T11:32:20.573Z">
 <meta property="article:author" content="sunhuashan">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/imgs/%E3%80%90%E7%BB%8F%E5%85%B8%E9%97%AE%E9%A2%98%E3%80%91%E6%8A%80%E6%9C%AF%E9%9D%A2%E8%AF%95%E9%A2%98%E6%B1%87%E6%80%BB/image-20240726085124985.png">
@@ -1066,7 +1066,19 @@
 <li><code>valgrind</code> 是一个内存管理分析工具，可以检测内存泄露、未初始化的内存访问、数组越界等问题。使用命令 <code>valgrind --leak-check=yes ./bin</code> 检测内存泄漏；</li>
 <li><code>address_sanitizer</code> 是一个用于检测内存错误的编译器插件，大部分编译器集成了它，编译时使用  <code>-fsanitize=address</code> 选项启用；</li>
 </ol>
-<h3 id="C-C"><a href="#C-C" class="headerlink" title="C&#x2F;C++"></a>C&#x2F;C++</h3><h4 id="static-关键字"><a href="#static-关键字" class="headerlink" title="static 关键字"></a>static 关键字</h4><h4 id="volatile-关键字"><a href="#volatile-关键字" class="headerlink" title="volatile 关键字"></a>volatile 关键字</h4><h4 id="inline-关键字"><a href="#inline-关键字" class="headerlink" title="inline 关键字"></a>inline 关键字</h4><h3 id="通信协议"><a href="#通信协议" class="headerlink" title="通信协议"></a>通信协议</h3><h4 id="UART-总线协议"><a href="#UART-总线协议" class="headerlink" title="UART 总线协议"></a>UART 总线协议</h4><ul>
+<h3 id="C-C"><a href="#C-C" class="headerlink" title="C&#x2F;C++"></a>C&#x2F;C++</h3><h4 id="static-关键字"><a href="#static-关键字" class="headerlink" title="static 关键字"></a>static 关键字</h4><ul>
+<li>static 修饰函数或全局变量时，可以将函数和全局变量的作用域限制在当前文件，带来了更好的封装，避免命名冲突</li>
+<li>static 修饰局部变量时，会影响局部变量的生命周期（编译时分配，程序结束时释放），并且仅初始化一次</li>
+</ul>
+<h4 id="volatile-关键字"><a href="#volatile-关键字" class="headerlink" title="volatile 关键字"></a>volatile 关键字</h4><ul>
+<li>禁止编译器优化，不让变量被缓存在寄存器中，而是每次都直接从内存读取或者写入，这样保证了每次都能获取最新的值</li>
+</ul>
+<p><strong>场景</strong>：</p>
+<ol>
+<li>硬件寄存器的值，这些外部寄存器的值可能随时被设备更改，因此需要声明为 volatile</li>
+<li>中断服务程序修改的值，</li>
+</ol>
+<h4 id="inline-关键字"><a href="#inline-关键字" class="headerlink" title="inline 关键字"></a>inline 关键字</h4><h3 id="通信协议"><a href="#通信协议" class="headerlink" title="通信协议"></a>通信协议</h3><h4 id="UART-总线协议"><a href="#UART-总线协议" class="headerlink" title="UART 总线协议"></a>UART 总线协议</h4><ul>
 <li><strong>概述</strong> ：uart 是一种<strong>硬件</strong> 通信协议，使用 uart 协议可以实现<strong>异步、串行、全双工</strong> 的数据通信（异步–即无需时钟信号）</li>
 <li><strong>接口&#x2F;物理层</strong> ：使用 <strong>TX</strong> 接口串行发送数据，<strong>RX</strong> 接口串行接收数据，此外还有一根<strong>接地线</strong> <ul>
 <li><img src="https://kqa3yyvhjg0.feishu.cn/space/api/box/stream/download/asynccode/?code=Y2E4ZjIxN2I0YTIxZmYyMzI5NGRjMDA3NmI0NjdjMDhfV0p2b2tlRG5CMEdGOEg0a3ppS1JsNVNVTEpNWkVkOE9fVG9rZW46SkNkZ2JGUkhIb0Z3bjh4Z3JqSGNSNmNIbnZmXzE3MjYyMjA2NjI6MTcyNjIyNDI2Ml9WNA" alt="img"></li>
